@@ -1,0 +1,149 @@
+import { Telegraf, Markup } from 'telegraf';
+import { BotContext, UserState } from '../types';
+import { Database } from '../database';
+
+export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
+  bot.action('profile', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const balance = await Database.getUserBalance(userId);
+
+    const profileMessage = `
+Это ваш личный кабинет, тут вы можете:
+- Посмотреть свой баланс
+- Пополнить баланс
+- Посмотреть документы
+
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽</blockquote>
+    `.trim();
+
+    await ctx.editMessageText(
+      profileMessage,
+      {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
+          [
+            Markup.button.callback('Мои фото', 'my_photos'),
+            Markup.button.callback('Мои треки', 'my_tracks')
+          ],
+          [Markup.button.callback('💳 Пополнить баланс', 'refill_balance')],
+          [Markup.button.callback('Документы', 'documents')],
+          [Markup.button.callback('Главное меню', 'main_menu')]
+        ])
+      }
+    );
+  });
+
+  bot.action('my_photos', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const photos = await Database.getUserPhotos(userId);
+    
+    if (photos.length === 0) {
+      await ctx.editMessageText(
+        '📹 У вас пока нет сгенерированных видео',
+        Markup.inlineKeyboard([
+          [Markup.button.callback('Назад', 'profile')]
+        ])
+      );
+      return;
+    }
+
+    await ctx.editMessageText(
+      `📹 Ваши видео (${photos.length}):`,
+      Markup.inlineKeyboard([
+        [Markup.button.callback('Назад', 'profile')]
+      ])
+    );
+    
+    for (const photo of photos) {
+      await ctx.telegram.sendVideo(userId, photo.file_id, {
+        caption: photo.prompt ? `Описание: ${photo.prompt}` : undefined
+      });
+    }
+  });
+
+  bot.action('my_tracks', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const tracks = await Database.getUserTracks(userId);
+    
+    if (tracks.length === 0) {
+      await ctx.editMessageText(
+        '🎵 У вас пока нет сгенерированных треков',
+        Markup.inlineKeyboard([
+          [Markup.button.callback('Назад', 'profile')]
+        ])
+      );
+      return;
+    }
+
+    await ctx.editMessageText(
+      `🎵 Ваши треки (${tracks.length}):`,
+      Markup.inlineKeyboard([
+        [Markup.button.callback('Назад', 'profile')]
+      ])
+    );
+    
+    for (const track of tracks) {
+      await ctx.telegram.sendAudio(userId, track.file_id, {
+        caption: track.prompt ? `Описание: ${track.prompt}` : undefined
+      });
+    }
+  });
+
+  bot.action('documents', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+
+    const documentsMessage = `
+Используя данный бот, вы автоматически соглашаетесь с условиями следующих документов ⤵️
+
+📌 <a href="https://docs.google.com/document/d/1xhYtLwGktBxqbVTGalJ0PnlKdRWxafZn/edit?usp=sharing&ouid=100123280935677219338&rtpof=true&sd=true">Политика конфиденциальности</a>
+📌 <a href="https://docs.google.com/document/d/1T9YFGmVCMaOUYKhWBu7V8hjL-OV-WpFL/edit?usp=sharing&ouid=100123280935677219338&rtpof=true&sd=true">Согласие на обработку персональных данных</a>
+📌 <a href="https://docs.google.com/document/d/1lBw4BXuPKiFjXrRxeXnFBhJm_TTbsWd8iXoPO7Fw5YQ/edit?usp=sharing">Договор Оферты</a>
+    `.trim();
+
+    await ctx.editMessageText(
+      documentsMessage,
+      {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
+          [Markup.button.callback('Назад', 'profile')]
+        ])
+      }
+    );
+  });
+}

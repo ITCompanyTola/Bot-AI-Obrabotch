@@ -67,18 +67,24 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
       return;
     }
 
-    await ctx.editMessageText(
+    for (const photo of photos) {
+      try {
+        await ctx.telegram.sendVideo(userId, photo.file_id, {
+          caption: photo.prompt ? `Описание: ${photo.prompt}` : undefined
+        });
+      } catch (error) {
+        console.error('Ошибка отправки видео:', error);
+        await ctx.telegram.sendMessage(userId, `❌ Видео недоступно (ID: ${photo.id})`);
+      }
+    }
+
+    await ctx.telegram.sendMessage(
+      userId,
       `📹 Ваши видео (${photos.length}):`,
       Markup.inlineKeyboard([
         [Markup.button.callback('Назад', 'profile')]
       ])
     );
-    
-    for (const photo of photos) {
-      await ctx.telegram.sendVideo(userId, photo.file_id, {
-        caption: photo.prompt ? `Описание: ${photo.prompt}` : undefined
-      });
-    }
   });
 
   bot.action('my_tracks', async (ctx) => {
@@ -105,18 +111,24 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
       return;
     }
 
-    await ctx.editMessageText(
+    for (const track of tracks) {
+      try {
+        await ctx.telegram.sendAudio(userId, track.file_id, {
+          caption: track.prompt ? `Описание: ${track.prompt}` : undefined
+        });
+      } catch (error) {
+        console.error('Ошибка отправки трека:', error);
+        await ctx.telegram.sendMessage(userId, `❌ Трек недоступен (ID: ${track.id})`);
+      }
+    }
+
+    await ctx.telegram.sendMessage(
+      userId,
       `🎵 Ваши треки (${tracks.length}):`,
       Markup.inlineKeyboard([
         [Markup.button.callback('Назад', 'profile')]
       ])
     );
-    
-    for (const track of tracks) {
-      await ctx.telegram.sendAudio(userId, track.file_id, {
-        caption: track.prompt ? `Описание: ${track.prompt}` : undefined
-      });
-    }
   });
 
   bot.action('documents', async (ctx) => {

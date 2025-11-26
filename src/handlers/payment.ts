@@ -53,29 +53,33 @@ ${payment.confirmationUrl}
 
 export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('refill_balance', async (ctx) => {
-    try {
-      await ctx.answerCbQuery();
-    } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
-      }
+  try {
+    await ctx.answerCbQuery();
+  } catch (error: any) {
+    if (!error.description?.includes('query is too old')) {
+      console.error('Ошибка answerCbQuery:', error.message);
     }
-    
-    const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
+  }
+  
+  const userId = ctx.from?.id;
+  if (!userId) return;
+  
+  const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
 
-    await ctx.editMessageText(
-      refillMessage,
-      Markup.inlineKeyboard([
-        [
-          Markup.button.callback('150₽', 'refill_150'),
-          Markup.button.callback('300₽', 'refill_300'),
-          Markup.button.callback('800₽', 'refill_800'),
-          Markup.button.callback('1600₽', 'refill_1600')
-        ],
-        [Markup.button.callback('Назад', 'photo_animation')]
-      ])
-    );
-  });
+  await ctx.telegram.sendMessage(
+    userId,
+    refillMessage,
+    Markup.inlineKeyboard([
+      [
+        Markup.button.callback('150₽', 'refill_150'),
+        Markup.button.callback('300₽', 'refill_300'),
+        Markup.button.callback('800₽', 'refill_800'),
+        Markup.button.callback('1600₽', 'refill_1600')
+      ],
+      [Markup.button.callback('Назад', 'photo_animation')]
+    ])
+  );
+});
 
   bot.action('refill_150', async (ctx) => {
     try {

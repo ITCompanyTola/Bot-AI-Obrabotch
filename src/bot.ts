@@ -3,6 +3,7 @@ import { config } from './config';
 import { BotContext, UserState } from './types';
 import { Database } from './database';
 import { registerAllHandlers } from './handlers';
+import { startWebhookServer } from './services/webhookServer';  // Из services!
 
 const bot = new Telegraf<BotContext>(config.botToken);
 
@@ -12,6 +13,7 @@ Database.initialize().catch(console.error);
 
 registerAllHandlers(bot, userStates);
 
+startWebhookServer(3000);
 
 bot.launch()
   .then(() => console.log('✅ Бот запущен'))

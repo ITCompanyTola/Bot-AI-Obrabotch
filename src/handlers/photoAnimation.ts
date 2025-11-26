@@ -4,7 +4,7 @@ import { Database } from '../database';
 import { PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
 
-const VIDEO_FILE_ID = 'BAACAgIAAxkBAAMNaSZOxgV3Or3JoIzQ-3bPCnJl_5cAAqKBAAKgZDlJU_59LbGnMaY2BA';
+const VIDEO_FILE_ID = 'BAACAgIAAxkBAAIBH2km5Rt3UcQ7DKMRkBqXL24VltNCAAL4hwACoGQ5SQmm0Y-dteu1NgQ';
 const PHOTO_FILE_ID = 'AgACAgIAAxkBAAMLaSZOu8yXsSJKGncuKt58JtsmMXUAAkgSaxuNDDFJNu-IvUjWSRABAAMCAAN5AAM2BA';
 
 export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
@@ -41,7 +41,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
-          [{ text: 'Оживить фото', callback_data: 'animate_photo' }],
+          [{ text: '📸 Оживить фото', callback_data: 'animate_photo' }],
           [{ text: 'Видео-инструкция', callback_data: 'video_instruction' }],
           [{ text: 'Пополнить баланс', callback_data: 'refill_balance' }],
           [{ text: 'Заказать видео под ключ', callback_data: 'order_video' }],
@@ -66,7 +66,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
     }
     
     await ctx.telegram.sendPhoto(userId, PHOTO_FILE_ID, {
-      caption: 'Пришлите фотографию, которую хотите оживить',
+      caption: 'Пример ⤴️\n\nПришлите фотографию, которую хотите оживить',
       reply_markup: {
         inline_keyboard: [
           [{ text: 'Назад', callback_data: 'photo_animation' }]
@@ -87,18 +87,18 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
   });
 
   bot.action('order_video', async (ctx) => {
-    try {
-      await ctx.answerCbQuery();
-    } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
-      }
+  try {
+    await ctx.answerCbQuery();
+  } catch (error: any) {
+    if (!error.description?.includes('query is too old')) {
+      console.error('Ошибка answerCbQuery:', error.message);
     }
-    
-    const userId = ctx.from?.id;
-    if (!userId) return;
-    
-    const orderVideoMessage = `
+  }
+  
+  const userId = ctx.from?.id;
+  if (!userId) return;
+  
+  const orderVideoMessage = `
 🎁 Пример готового видеоподарка ⤴️
 
 Хотите трогательный подарок, но нет времени или желания самим оживлять фото и монтировать видео? Мы всё сделаем за вас!
@@ -116,17 +116,17 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
 ✔️ Отправляем вам готовый ролик, готовый для показа или подарка
 
 📸 Вам остаётся только отправить фотографии — всё остальное мы берём на себя.
-    `.trim();
+  `.trim();
 
-    await ctx.telegram.sendMessage(
-      userId,
-      orderVideoMessage,
-      Markup.inlineKeyboard([
-        [Markup.button.callback('Заказать видео подарок', 'order_video_gift')],
-        [Markup.button.callback('Главное меню', 'main_menu')]
-      ])
-    );
-  });
+  await ctx.telegram.sendMessage(
+    userId,
+    orderVideoMessage,
+    Markup.inlineKeyboard([
+      [Markup.button.url('Заказать видео подарок', 'https://t.me/khodunow')],
+      [Markup.button.callback('Главное меню', 'main_menu')]
+    ])
+  );
+});
 
   bot.action('order_video_gift', async (ctx) => {
     try {

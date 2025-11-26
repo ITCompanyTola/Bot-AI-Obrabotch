@@ -149,4 +149,53 @@ https://t.me/khodunow
       ])
     );
   });
+
+  // Команды для меню
+  bot.command('help', async (ctx) => {
+    const supportMessage = `
+💬 Поддержка
+
+По всем вопросам обращайтесь:
+https://t.me/khodunow
+    `.trim();
+    
+    await ctx.reply(
+      supportMessage,
+      Markup.inlineKeyboard([
+        [Markup.button.callback('Главное меню', 'main_menu')]
+      ])
+    );
+  });
+
+  bot.command('pay', async (ctx) => {
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
+
+    await ctx.reply(
+      refillMessage,
+      Markup.inlineKeyboard([
+        [
+          Markup.button.callback('150₽', 'refill_150'),
+          Markup.button.callback('300₽', 'refill_300'),
+          Markup.button.callback('800₽', 'refill_800'),
+          Markup.button.callback('1600₽', 'refill_1600')
+        ],
+        [Markup.button.callback('Главное меню', 'main_menu')]
+      ])
+    );
+  });
+
+  bot.command('privacy', async (ctx) => {
+    await ctx.reply(
+      '📌 Политика конфиденциальности:\nhttps://docs.google.com/document/d/1xhYtLwGktBxqbVTGalJ0PnlKdRWxafZn/edit?usp=sharing&ouid=100123280935677219338&rtpof=true&sd=true'
+    );
+  });
+
+  bot.command('agreement', async (ctx) => {
+    await ctx.reply(
+      '📌 Пользовательское соглашение:\nhttps://docs.google.com/document/d/1T9YFGmVCMaOUYKhWBu7V8hjL-OV-WpFL/edit?usp=sharing&ouid=100123280935677219338&rtpof=true&sd=true'
+    );
+  });
 }

@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  # Telegram Bot
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: telegram-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://user:S3T9B9o541C-A2NE1@212.233.79.197:5432/PostgreSQL-1348
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount for logs or data persistence if needed
+      - ./logs:/app/logs
+
+volumes:
+  postgres_data:

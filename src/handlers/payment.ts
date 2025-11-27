@@ -81,6 +81,35 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
   );
 });
 
+  bot.action('refill_balance_from_profile', async (ctx) => {
+  try {
+    await ctx.answerCbQuery();
+  } catch (error: any) {
+    if (!error.description?.includes('query is too old')) {
+      console.error('Ошибка answerCbQuery:', error.message);
+    }
+  }
+  
+  const userId = ctx.from?.id;
+  if (!userId) return;
+  
+  const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
+
+  await ctx.telegram.sendMessage(
+    userId,
+    refillMessage,
+    Markup.inlineKeyboard([
+      [
+        Markup.button.callback('150₽', 'refill_150'),
+        Markup.button.callback('300₽', 'refill_300'),
+        Markup.button.callback('800₽', 'refill_800'),
+        Markup.button.callback('1600₽', 'refill_1600')
+      ],
+      [Markup.button.callback('Назад', 'profile')]
+    ])
+  );
+});
+
   bot.action('refill_150', async (ctx) => {
     try {
       await ctx.answerCbQuery();

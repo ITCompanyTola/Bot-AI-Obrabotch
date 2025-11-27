@@ -3,9 +3,10 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
+import { config } from '../config';
 
-const VIDEO_FILE_ID = 'BAACAgIAAxkBAAIBH2km5Rt3UcQ7DKMRkBqXL24VltNCAAL4hwACoGQ5SQmm0Y-dteu1NgQ';
-const PHOTO_FILE_ID = 'AgACAgIAAxkBAAMLaSZOu8yXsSJKGncuKt58JtsmMXUAAkgSaxuNDDFJNu-IvUjWSRABAAMCAAN5AAM2BA';
+const VIDEO_FILE_ID = config.videoFileId;
+const PHOTO_FILE_ID = config.photoFileId;
 
 export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('photo_animation', async (ctx) => {
@@ -23,14 +24,16 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
     const balance = await Database.getUserBalance(userId);
     
     const photoAnimationMessage = `
-Наш Бот умеет оживлять и реставрировать фото!
+📸 Наш бот умеет оживлять и реставрировать фото!
 
-Инструкция по оживлению фото:
-1) Отправьте фото в бот
-2) Напишите описание того, что должно произойти на фото
-3) Ожидайте готовое видео (в течение 3 минут бот пришлет ваше видео)
+Вот как создать своё анимированное фото:
 
-Также вы можете заказать видео под ключ (по кнопке "🎁 Заказать видео под ключ"), и мы сами его для вас сделаем
+1️⃣ Отправьте фото в бот.
+2️⃣ Опишите, что именно должно произойти на изображении — движение, эмоции, детали, любые пожелания ✨
+3️⃣ Немного подождите — примерно через 3 минуты бот отправит вам готовое видео 🎬⚡️
+
+🎁 Хотите видео "под ключ"?
+Нажмите кнопку «Заказать видео под ключ», и мы создадим его полностью для вас!
 
 <blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽
 📹 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION}₽</blockquote>
@@ -66,7 +69,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
     }
     
     await ctx.telegram.sendPhoto(userId, PHOTO_FILE_ID, {
-      caption: 'Пример ⤴️\n\nПришлите фотографию, которую хотите оживить',
+      caption: '📸 Пример ⤴️\n\nОтправьте фотографию, которую хотите оживить, и бот превратит её в волшебное видео ✨🎬',
       reply_markup: {
         inline_keyboard: [
           [{ text: 'Назад', callback_data: 'photo_animation' }]
@@ -83,7 +86,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
         console.error('Ошибка answerCbQuery:', error.message);
       }
     }
-    await ctx.reply('🎬 Видео-инструкция...');
+    await ctx.reply('🎬 Видео-инструкция по генерации фото\nСмотрите короткое видео, чтобы легко и быстро понять, как оживлять свои фотографии и получать потрясающие результаты ✨📸');
   });
 
   bot.action('order_video', async (ctx) => {

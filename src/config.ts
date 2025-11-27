@@ -9,5 +9,7 @@ export const config = {
   sunoApiKey: process.env.SUNO_API_KEY || '',
   paymentApiKey: process.env.PAYMENT_API_KEY || '',
   shopId: process.env.SHOP_ID || '',
-  callbackUrl: process.env.CALLBACK_URL || 'https://your-domain.com/api/callback'
+  callbackUrl: process.env.CALLBACK_URL || 'https://your-domain.com/api/callback',
+  videoFileId: process.env.VIDEO_FILE_ID || '',
+  photoFileId: process.env.PHOTO_FILE_ID || ''
 };

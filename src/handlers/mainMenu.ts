@@ -177,7 +177,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
 💬 Поддержка
 
 По всем вопросам обращайтесь:
-https://t.me/khodunow
+https://t.me/obrabotych_support
     `.trim();
     
     await ctx.editMessageText(

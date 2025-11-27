@@ -212,8 +212,11 @@ https://t.me/khodunow
       refillMessage,
       Markup.inlineKeyboard([
         [
+          Markup.button.callback('5₽', 'refill_5'),
           Markup.button.callback('150₽', 'refill_150'),
-          Markup.button.callback('300₽', 'refill_300'),
+          Markup.button.callback('300₽', 'refill_300')
+        ],
+        [
           Markup.button.callback('800₽', 'refill_800'),
           Markup.button.callback('1600₽', 'refill_1600')
         ],

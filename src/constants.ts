@@ -1,4 +1,4 @@
 export const PRICES = {
-  PHOTO_ANIMATION: 85,
+  PHOTO_ANIMATION: 5,
   MUSIC_CREATION: 15
 };

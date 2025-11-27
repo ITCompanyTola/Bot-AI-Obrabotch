@@ -21,7 +21,7 @@ export async function createPayment(amount: number, description: string, userId:
       },
       confirmation: {
         type: 'redirect',
-        return_url: `https://t.me/your_bot_username`
+        return_url: `https://t.me/your_bot_username` // Замените на имя вашего бота
       },
       capture: true,
       description: description,
@@ -30,14 +30,14 @@ export async function createPayment(amount: number, description: string, userId:
       }
     }, idempotenceKey);
 
-    console.log('Платеж создан:', payment);
+    console.log('💳 Платеж создан:', payment.id);
 
     return {
       paymentId: payment.id,
       confirmationUrl: (payment.confirmation as any).confirmation_url
     };
   } catch (error) {
-    console.error('Ошибка создания платежа:', error);
+    console.error('❌ Ошибка создания платежа:', error);
     throw error;
   }
 }
@@ -45,10 +45,10 @@ export async function createPayment(amount: number, description: string, userId:
 export async function checkPaymentStatus(paymentId: string): Promise<string> {
   try {
     const payment = await checkout.getPayment(paymentId);
-    console.log(`Статус платежа ${paymentId}: ${payment.status}`);
+    console.log(`📊 Статус платежа ${paymentId}: ${payment.status}`);
     return payment.status; // 'pending', 'succeeded', 'canceled'
   } catch (error) {
-    console.error('Ошибка проверки платежа:', error);
+    console.error('❌ Ошибка проверки платежа:', error);
     throw error;
   }
 }

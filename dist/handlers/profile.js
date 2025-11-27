@@ -18,10 +18,15 @@ function registerProfileHandlers(bot, userStates) {
             return;
         const balance = await database_1.Database.getUserBalance(userId);
         const profileMessage = `
-Это ваш личный кабинет, тут вы можете:
-- Посмотреть свой баланс
-- Пополнить баланс
-- Посмотреть документы
+Это ваш личный кабинет!
+Здесь вы можете:
+
+
+• Проверить <b><i>свой баланс</i></b> 💰
+• <b><i>Пополнить</i></b> его в пару кликов ➕
+• Просмотреть важные <b><i>документы</i></b> 📄
+• Посмотреть свои <b><i>фото</i></b> 📸
+• Посмотреть свои <b><i>треки</i></b> 🎵
 
 <blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽</blockquote>
     `.trim();
@@ -32,7 +37,7 @@ function registerProfileHandlers(bot, userStates) {
                     telegraf_1.Markup.button.callback('Мои фото', 'my_photos'),
                     telegraf_1.Markup.button.callback('Мои треки', 'my_tracks')
                 ],
-                [telegraf_1.Markup.button.callback('💳 Пополнить баланс', 'refill_balance')],
+                [telegraf_1.Markup.button.callback('💳 Пополнить баланс', 'refill_balance_from_profile')],
                 [telegraf_1.Markup.button.callback('Документы', 'documents')],
                 [telegraf_1.Markup.button.callback('Главное меню', 'main_menu')]
             ])

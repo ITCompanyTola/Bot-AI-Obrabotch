@@ -10,6 +10,8 @@ export const config = {
   paymentApiKey: process.env.PAYMENT_API_KEY || '',
   shopId: process.env.SHOP_ID || '',
   callbackUrl: process.env.CALLBACK_URL || 'https://your-domain.com/api/callback',
+  callbackUrlPay: process.env.CALLBACK_URL_PAY || 'https://mybotai.ru/webhook/yookassa',
   videoFileId: process.env.VIDEO_FILE_ID || '',
-  photoFileId: process.env.PHOTO_FILE_ID || ''
+  photoFileId: process.env.PHOTO_FILE_ID || '',
+  orderVideoFileId: process.env.ORDER_VIDEO_FILE_ID || ''
 };

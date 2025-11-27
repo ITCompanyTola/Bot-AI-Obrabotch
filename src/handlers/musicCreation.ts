@@ -36,9 +36,9 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
 
 Вот как написать свою песню:
 
-1️⃣ <b>Отправьте сообщение</b> с описанием того, какую музыку хотите получить.
+1️⃣ <b><i>Отправьте сообщение</i></b> с описанием того, какую музыку хотите получить.
 Укажите тему, жанр, стиль, язык вокала, инструменты — любые детали, которые важны именно вам 🎼✨
-2️⃣ <b>Подождите немного</b> — в течение примерно 2 минут бот создаст и отправит вам готовый трек 🎧⚡️
+2️⃣ <b><i>Подождите немного</i></b> — в течение примерно 2 минут бот создаст и отправит вам готовый трек 🎧⚡️
 
 <blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽
 🎵 Создать 1 трек = ${PRICES.MUSIC_CREATION}₽</blockquote>
@@ -51,6 +51,7 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
         ...Markup.inlineKeyboard([
           [Markup.button.callback('🎶 Начать творить', 'start_music_creation')],
           [Markup.button.callback('Видео-инструкция', 'music_video_instruction')],
+          [Markup.button.callback('💳 Пополнить баланс', 'refill_balance_from_music')],
           [Markup.button.callback('Главное меню', 'main_menu')]
         ])
       }
@@ -72,10 +73,13 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
     }
     
     await ctx.editMessageText(
-      'Отправьте ниже <b>1–2 предложения</b> о том, какую музыку хотите создать, или напишите полный текст для будущего трека 🎵',
-      Markup.inlineKeyboard([
-        [Markup.button.callback('Назад', 'music_creation')]
-      ])
+      'Отправьте ниже <b><i>1–2 предложения</i></b> о том, какую музыку хотите создать, или напишите полный текст для будущего трека 🎵',
+      {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
+          [Markup.button.callback('Назад', 'music_creation')]
+        ])
+      }
     );
   });
 
@@ -87,7 +91,12 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
         console.error('Ошибка answerCbQuery:', error.message);
       }
     }
-    await ctx.reply('🎬 Видео-инструкция по созданию музыки \nСмотрите короткое видео, чтобы легко и быстро понять, как написать песню, выбрать стиль и получить готовый трек 🎵✨');
+    await ctx.reply('🎬 <b>Видео-инструкция по созданию музыки</b>\n\nСмотрите короткое видео, чтобы легко и быстро понять, как написать песню, выбрать стиль и получить готовый трек 🎵✨', { 
+      parse_mode: 'HTML',
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback('Назад', 'music_creation')]
+      ])
+    });
   });
 
   bot.action('music_style_rock', async (ctx) => {
@@ -128,7 +137,7 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
     await ctx.editMessageText(
       paymentMessage,
       Markup.inlineKeyboard([
-        [Markup.button.callback('Оплата картой', 'refill_balance')],
+        [Markup.button.callback('Оплата картой', 'refill_balance_from_music')],
         [Markup.button.callback('Главное меню', 'main_menu')]
       ])
     );
@@ -192,7 +201,7 @@ bot.action('music_style_pop', async (ctx) => {
     await ctx.editMessageText(
       paymentMessage,
       Markup.inlineKeyboard([
-        [Markup.button.callback('Оплата картой', 'refill_balance')],
+        [Markup.button.callback('Оплата картой', 'refill_balance_from_music')],
         [Markup.button.callback('Главное меню', 'main_menu')]
       ])
     );
@@ -256,7 +265,7 @@ bot.action('music_style_gop', async (ctx) => {
     await ctx.editMessageText(
       paymentMessage,
       Markup.inlineKeyboard([
-        [Markup.button.callback('Оплата картой', 'refill_balance')],
+        [Markup.button.callback('Оплата картой', 'refill_balance_from_music')],
         [Markup.button.callback('Главное меню', 'main_menu')]
       ])
     );
@@ -291,18 +300,21 @@ bot.action('music_style_gop', async (ctx) => {
       }
     }
     
-    const styleMessage = `— Выберите музыкальный стиль из предложенных вариантов`;
+    const styleMessage = `— Выберите <b><i>музыкальный стиль</i></b> из предложенных вариантов`;
     
     await ctx.editMessageText(
       styleMessage,
-      Markup.inlineKeyboard([
-        [
-          Markup.button.callback('Рок', 'music_style_rock'),
-          Markup.button.callback('Поп', 'music_style_pop'),
-          Markup.button.callback('Гоп', 'music_style_gop')
-        ],
-        [Markup.button.callback('Назад', 'start_music_creation')]
-      ])
+      {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
+          [
+            Markup.button.callback('Рок', 'music_style_rock'),
+            Markup.button.callback('Поп', 'music_style_pop'),
+            Markup.button.callback('Гоп', 'music_style_gop')
+          ],
+          [Markup.button.callback('Назад', 'start_music_creation')]
+        ])
+      }
     );
   });
 }

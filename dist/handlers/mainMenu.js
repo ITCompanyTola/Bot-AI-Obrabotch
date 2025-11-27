@@ -13,27 +13,37 @@ function registerMainMenuHandlers(bot, userStates) {
             const policyAccepted = await database_1.Database.hasPolicyAccepted(userId);
             if (policyAccepted) {
                 const mainMenuMessage = `
-Наш бот умеет оживлять фото и создавать крутые треки! Вы можете это делать самостоятельно или обратиться к нам для реализации. В каждом разделе будет инструкция по правильному созданию контента!
+Наш бот умеет <b><i>оживлять фото</i></b> 📸✨ и создавать <b><i>крутые треки</i></b> 🎵🔥
+Вы можете творить сами или доверить работу нам 🤝
+В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
         `.trim();
-                await ctx.reply(mainMenuMessage, telegraf_1.Markup.inlineKeyboard([
-                    [telegraf_1.Markup.button.callback('Написать в поддержку', 'support')],
-                    [
-                        telegraf_1.Markup.button.callback('📸 Оживить фото', 'photo_animation'),
-                        telegraf_1.Markup.button.callback('🎶 Создать музыку', 'music_creation')
-                    ],
-                    [telegraf_1.Markup.button.callback('Личный кабинет', 'profile')]
-                ]));
+                await ctx.reply(mainMenuMessage, {
+                    parse_mode: 'HTML',
+                    ...telegraf_1.Markup.inlineKeyboard([
+                        [telegraf_1.Markup.button.callback('Написать в поддержку', 'support')],
+                        [
+                            telegraf_1.Markup.button.callback('📸 Оживить фото', 'photo_animation'),
+                            telegraf_1.Markup.button.callback('🎶 Создать музыку', 'music_creation')
+                        ],
+                        [telegraf_1.Markup.button.callback('Личный кабинет', 'profile')]
+                    ])
+                });
             }
             else {
                 const welcomeMessage = `
 Чтобы мы могли дальше работать, закон требует подтверждения с вашей стороны следующего ⤵️
 
-📌 Политика конфиденциальности
-📌 Согласие на обработку персональных данных
+📌 <a href="https://docs.google.com/document/d/1xhYtLwGktBxqbVTGalJ0PnlKdRWxafZn/edit?usp=sharing&ouid=100123280935677219338&rtpof=true&sd=true">Политика конфиденциальности</a>
+
+📌 <a href="https://docs.google.com/document/d/1T9YFGmVCMaOUYKhWBu7V8hjL-OV-WpFL/edit?usp=sharing&ouid=100123280935677219338&rtpof=true&sd=true">Согласие на обработку персональных данных</a>
         `.trim();
-                await ctx.reply(welcomeMessage, telegraf_1.Markup.inlineKeyboard([
-                    [telegraf_1.Markup.button.callback('✅ Принимаю', 'accept_policy')]
-                ]));
+                await ctx.reply(welcomeMessage, {
+                    parse_mode: 'HTML',
+                    link_preview_options: { is_disabled: true },
+                    ...telegraf_1.Markup.inlineKeyboard([
+                        [telegraf_1.Markup.button.callback('✅ Принимаю', 'accept_policy')]
+                    ])
+                });
             }
         }
         catch (error) {
@@ -55,16 +65,21 @@ function registerMainMenuHandlers(bot, userStates) {
             return;
         await database_1.Database.setPolicyAccepted(userId);
         const mainMenuMessage = `
-Наш бот умеет оживлять фото и создавать крутые треки! Вы можете это делать самостоятельно или обратиться к нам для реализации. В каждом разделе будет инструкция по правильному созданию контента!
+Наш бот умеет <b><i>оживлять фото</i></b> 📸✨ и создавать <b><i>крутые треки</i></b> 🎵🔥
+Вы можете творить сами или доверить работу нам 🤝
+В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
     `.trim();
-        await ctx.editMessageText(mainMenuMessage, telegraf_1.Markup.inlineKeyboard([
-            [telegraf_1.Markup.button.callback('Написать в поддержку', 'support')],
-            [
-                telegraf_1.Markup.button.callback('📸 Оживить фото', 'photo_animation'),
-                telegraf_1.Markup.button.callback('🎶 Создать музыку', 'music_creation')
-            ],
-            [telegraf_1.Markup.button.callback('Личный кабинет', 'profile')]
-        ]));
+        await ctx.editMessageText(mainMenuMessage, {
+            parse_mode: 'HTML',
+            ...telegraf_1.Markup.inlineKeyboard([
+                [telegraf_1.Markup.button.callback('Написать в поддержку', 'support')],
+                [
+                    telegraf_1.Markup.button.callback('📸 Оживить фото', 'photo_animation'),
+                    telegraf_1.Markup.button.callback('🎶 Создать музыку', 'music_creation')
+                ],
+                [telegraf_1.Markup.button.callback('Личный кабинет', 'profile')]
+            ])
+        });
     });
     bot.action('decline_policy', async (ctx) => {
         try {
@@ -90,16 +105,30 @@ function registerMainMenuHandlers(bot, userStates) {
         if (!userId)
             return;
         const mainMenuMessage = `
-Наш бот умеет оживлять фото и создавать крутые треки! Вы можете это делать самостоятельно или обратиться к нам для реализации. В каждом разделе будет инструкция по правильному созданию контента!
+Наш бот умеет <b><i>оживлять фото</i></b> 📸✨ и создавать <b><i>крутые треки</i></b> 🎵🔥
+Вы можете творить сами или доверить работу нам 🤝
+В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
     `.trim();
-        await ctx.telegram.sendMessage(userId, mainMenuMessage, telegraf_1.Markup.inlineKeyboard([
+        const keyboard = telegraf_1.Markup.inlineKeyboard([
             [telegraf_1.Markup.button.callback('Написать в поддержку', 'support')],
             [
                 telegraf_1.Markup.button.callback('📸 Оживить фото', 'photo_animation'),
                 telegraf_1.Markup.button.callback('🎶 Создать музыку', 'music_creation')
             ],
             [telegraf_1.Markup.button.callback('Личный кабинет', 'profile')]
-        ]));
+        ]);
+        // Проверяем, является ли сообщение текстовым
+        if (ctx.callbackQuery && 'message' in ctx.callbackQuery && ctx.callbackQuery.message) {
+            const message = ctx.callbackQuery.message;
+            if ('text' in message) {
+                // Если это текстовое сообщение - редактируем
+                await ctx.editMessageText(mainMenuMessage, { parse_mode: 'HTML', ...keyboard });
+            }
+            else {
+                // Если это медиа (фото/видео) - отправляем новое
+                await ctx.telegram.sendMessage(userId, mainMenuMessage, { parse_mode: 'HTML', ...keyboard });
+            }
+        }
     });
     bot.action('support', async (ctx) => {
         try {
@@ -121,16 +150,26 @@ https://t.me/khodunow
         ]));
     });
     // Команды для меню
-    bot.command('help', async (ctx) => {
-        const supportMessage = `
-💬 Поддержка
-
-По всем вопросам обращайтесь:
-https://t.me/khodunow
+    bot.command('menu', async (ctx) => {
+        const userId = ctx.from?.id;
+        if (!userId)
+            return;
+        const mainMenuMessage = `
+Наш бот умеет <b><i>оживлять фото</i></b> 📸✨ и создавать <b><i>крутые треки</i></b> 🎵🔥
+Вы можете творить сами или доверить работу нам 🤝
+В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
     `.trim();
-        await ctx.reply(supportMessage, telegraf_1.Markup.inlineKeyboard([
-            [telegraf_1.Markup.button.callback('Главное меню', 'main_menu')]
-        ]));
+        await ctx.reply(mainMenuMessage, {
+            parse_mode: 'HTML',
+            ...telegraf_1.Markup.inlineKeyboard([
+                [telegraf_1.Markup.button.callback('Написать в поддержку', 'support')],
+                [
+                    telegraf_1.Markup.button.callback('📸 Оживить фото', 'photo_animation'),
+                    telegraf_1.Markup.button.callback('🎶 Создать музыку', 'music_creation')
+                ],
+                [telegraf_1.Markup.button.callback('Личный кабинет', 'profile')]
+            ])
+        });
     });
     bot.command('pay', async (ctx) => {
         const userId = ctx.from?.id;

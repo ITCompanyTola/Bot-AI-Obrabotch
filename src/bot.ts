@@ -3,6 +3,7 @@ import { config } from './config';
 import { BotContext, UserState } from './types';
 import { Database } from './database';
 import { registerAllHandlers } from './handlers';
+import webhookApp from './webhook';
 
 const bot = new Telegraf<BotContext>(config.botToken);
 
@@ -12,6 +13,14 @@ Database.initialize().catch(console.error);
 
 registerAllHandlers(bot, userStates);
 
+// Запуск webhook сервера для приёма платежей
+const PORT = process.env.PORT || 3000;
+webhookApp.listen(PORT, () => {
+  console.log(`🌐 Webhook сервер запущен на порту ${PORT}`);
+});
+
+// Экспортируем bot для использования в webhook
+export { bot };
 
 bot.launch()
   .then(() => console.log('✅ Бот запущен'))

@@ -3,7 +3,7 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { createPayment, checkPaymentStatus } from '../services/paymentService';
 
-async function showPaymentMessage(ctx: any, amount: number, userStates: Map<number, UserState>) {
+async function showPaymentMessage(ctx: any, amount: number, userStates: Map<number, UserState>, backAction: string) {
   const userId = ctx.from?.id;
   if (!userId) return;
 
@@ -29,15 +29,14 @@ async function showPaymentMessage(ctx: any, amount: number, userStates: Map<numb
 Ваша ссылка для оплаты:
 ${payment.confirmationUrl}
 
-После оплаты нажмите кнопку "Я оплатил" для проверки платежа.
+После успешной оплаты баланс будет автоматически начислен в течение нескольких секунд ⚡️
     `.trim();
 
     await ctx.editMessageText(
       paymentMessage,
       Markup.inlineKeyboard([
         [Markup.button.url(`💳 Оплатить ${amount}₽`, payment.confirmationUrl)],
-        [Markup.button.callback('Я оплатил', `confirm_payment_${payment.paymentId}`)],
-        [Markup.button.callback('Назад', 'refill_balance')]
+        [Markup.button.callback('Назад', backAction)]
       ])
     );
   } catch (error) {
@@ -45,7 +44,7 @@ ${payment.confirmationUrl}
     await ctx.editMessageText(
       '❌ Ошибка создания платежа. Попробуйте позже.',
       Markup.inlineKeyboard([
-        [Markup.button.callback('Назад', 'refill_balance')]
+        [Markup.button.callback('Назад', backAction)]
       ])
     );
   }
@@ -53,62 +52,101 @@ ${payment.confirmationUrl}
 
 export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('refill_balance', async (ctx) => {
-  try {
-    await ctx.answerCbQuery();
-  } catch (error: any) {
-    if (!error.description?.includes('query is too old')) {
-      console.error('Ошибка answerCbQuery:', error.message);
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
     }
-  }
-  
-  const userId = ctx.from?.id;
-  if (!userId) return;
-  
-  const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    // Сохраняем источник
+    const currentState = userStates.get(userId) || { step: null };
+    userStates.set(userId, { ...currentState, refillSource: 'photo' });
+    
+    const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
 
-  await ctx.telegram.sendMessage(
-    userId,
-    refillMessage,
-    Markup.inlineKeyboard([
-      [
-        Markup.button.callback('150₽', 'refill_150'),
-        Markup.button.callback('300₽', 'refill_300'),
-        Markup.button.callback('800₽', 'refill_800'),
-        Markup.button.callback('1600₽', 'refill_1600')
-      ],
-      [Markup.button.callback('Назад', 'photo_animation')]
-    ])
-  );
-});
+    await ctx.telegram.sendMessage(
+      userId,
+      refillMessage,
+      Markup.inlineKeyboard([
+        [
+          Markup.button.callback('150₽', 'refill_150'),
+          Markup.button.callback('300₽', 'refill_300'),
+          Markup.button.callback('800₽', 'refill_800'),
+          Markup.button.callback('1600₽', 'refill_1600')
+        ],
+        [Markup.button.callback('Назад', 'photo_animation')]
+      ])
+    );
+  });
 
   bot.action('refill_balance_from_profile', async (ctx) => {
-  try {
-    await ctx.answerCbQuery();
-  } catch (error: any) {
-    if (!error.description?.includes('query is too old')) {
-      console.error('Ошибка answerCbQuery:', error.message);
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
     }
-  }
-  
-  const userId = ctx.from?.id;
-  if (!userId) return;
-  
-  const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    // Сохраняем источник
+    const currentState = userStates.get(userId) || { step: null };
+    userStates.set(userId, { ...currentState, refillSource: 'profile' });
+    
+    const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
 
-  await ctx.telegram.sendMessage(
-    userId,
-    refillMessage,
-    Markup.inlineKeyboard([
-      [
-        Markup.button.callback('150₽', 'refill_150'),
-        Markup.button.callback('300₽', 'refill_300'),
-        Markup.button.callback('800₽', 'refill_800'),
-        Markup.button.callback('1600₽', 'refill_1600')
-      ],
-      [Markup.button.callback('Назад', 'profile')]
-    ])
-  );
-});
+    await ctx.editMessageText(
+      refillMessage,
+      Markup.inlineKeyboard([
+        [
+          Markup.button.callback('150₽', 'refill_150'),
+          Markup.button.callback('300₽', 'refill_300'),
+          Markup.button.callback('800₽', 'refill_800'),
+          Markup.button.callback('1600₽', 'refill_1600')
+        ],
+        [Markup.button.callback('Назад', 'profile')]
+      ])
+    );
+  });
+
+  bot.action('refill_balance_from_music', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    // Сохраняем источник
+    const currentState = userStates.get(userId) || { step: null };
+    userStates.set(userId, { ...currentState, refillSource: 'music' });
+    
+    const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
+
+    await ctx.editMessageText(
+      refillMessage,
+      Markup.inlineKeyboard([
+        [
+          Markup.button.callback('150₽', 'refill_150'),
+          Markup.button.callback('300₽', 'refill_300'),
+          Markup.button.callback('800₽', 'refill_800'),
+          Markup.button.callback('1600₽', 'refill_1600')
+        ],
+        [Markup.button.callback('Назад', 'music_creation')]
+      ])
+    );
+  });
 
   bot.action('refill_150', async (ctx) => {
     try {
@@ -118,7 +156,20 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
         console.error('Ошибка answerCbQuery:', error.message);
       }
     }
-    await showPaymentMessage(ctx, 150, userStates);
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    const userState = userStates.get(userId);
+    let backAction = 'refill_balance';
+    
+    if (userState?.refillSource === 'profile') {
+      backAction = 'refill_balance_from_profile';
+    } else if (userState?.refillSource === 'music') {
+      backAction = 'refill_balance_from_music';
+    }
+    
+    await showPaymentMessage(ctx, 150, userStates, backAction);
   });
 
   bot.action('refill_300', async (ctx) => {
@@ -129,7 +180,20 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
         console.error('Ошибка answerCbQuery:', error.message);
       }
     }
-    await showPaymentMessage(ctx, 300, userStates);
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    const userState = userStates.get(userId);
+    let backAction = 'refill_balance';
+    
+    if (userState?.refillSource === 'profile') {
+      backAction = 'refill_balance_from_profile';
+    } else if (userState?.refillSource === 'music') {
+      backAction = 'refill_balance_from_music';
+    }
+    
+    await showPaymentMessage(ctx, 300, userStates, backAction);
   });
 
   bot.action('refill_800', async (ctx) => {
@@ -140,7 +204,20 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
         console.error('Ошибка answerCbQuery:', error.message);
       }
     }
-    await showPaymentMessage(ctx, 800, userStates);
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    const userState = userStates.get(userId);
+    let backAction = 'refill_balance';
+    
+    if (userState?.refillSource === 'profile') {
+      backAction = 'refill_balance_from_profile';
+    } else if (userState?.refillSource === 'music') {
+      backAction = 'refill_balance_from_music';
+    }
+    
+    await showPaymentMessage(ctx, 800, userStates, backAction);
   });
 
   bot.action('refill_1600', async (ctx) => {
@@ -151,121 +228,20 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
         console.error('Ошибка answerCbQuery:', error.message);
       }
     }
-    await showPaymentMessage(ctx, 1600, userStates);
-  });
-
-  bot.action(/^confirm_payment_(.+)$/, async (ctx) => {
-    const paymentId = ctx.match[1];
-    const userId = ctx.from?.id;
     
+    const userId = ctx.from?.id;
     if (!userId) return;
-
-    try {
-      await ctx.answerCbQuery('⏳ Проверяю платеж...');
-    } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
-      }
+    
+    const userState = userStates.get(userId);
+    let backAction = 'refill_balance';
+    
+    if (userState?.refillSource === 'profile') {
+      backAction = 'refill_balance_from_profile';
+    } else if (userState?.refillSource === 'music') {
+      backAction = 'refill_balance_from_music';
     }
-
-    try {
-      const alreadyProcessed = await Database.isPaymentProcessed(paymentId);
-      
-      if (alreadyProcessed) {
-        await ctx.editMessageText(
-          '✅ Этот платеж уже был обработан ранее.',
-          Markup.inlineKeyboard([
-            [Markup.button.callback('Главное меню', 'main_menu')]
-          ])
-        );
-        return;
-      }
-
-      console.log(`🔍 Проверяю статус платежа ${paymentId}...`);
-      const status = await checkPaymentStatus(paymentId);
-      console.log(`📊 Статус: ${status}`);
-
-      if (status === 'succeeded') {
-        const userState = userStates.get(userId);
-        const amount = userState?.paymentAmount || 0;
-
-        if (amount === 0) {
-          await ctx.editMessageText(
-            '❌ Ошибка: не найдена сумма платежа.',
-            Markup.inlineKeyboard([
-              [Markup.button.callback('Главное меню', 'main_menu')]
-            ])
-          );
-          return;
-        }
-
-        await Database.addBalance(
-          userId,
-          amount,
-          `Пополнение баланса (${paymentId})`,
-          'refill'
-        );
-        
-        const newBalance = await Database.getUserBalance(userId);
-        console.log(`✅ Платеж ${paymentId} подтвержден! Начислено ${amount}₽ пользователю ${userId}. Баланс: ${newBalance}₽`);
-        
-        if (userState) {
-          delete userState.paymentId;
-          delete userState.paymentAmount;
-          userStates.set(userId, userState);
-        }
-
-        if (userState?.photoFileId && userState?.prompt) {
-          await ctx.editMessageText(
-            'Мы готовы начинать генерацию, стартуем?',
-            Markup.inlineKeyboard([
-              [Markup.button.callback('Да', 'start_generation')],
-              [Markup.button.callback('Главное меню', 'main_menu')]
-            ])
-          );
-        } else {
-          await ctx.editMessageText(
-            'Благодарим вас за оплату, скорее бегите творить!',
-            Markup.inlineKeyboard([
-              [Markup.button.callback('Главное меню', 'main_menu')]
-            ])
-          );
-        }
-
-      } else if (status === 'pending' || status === 'waiting_for_capture') {
-        console.log(`⏳ Платеж ${paymentId} еще обрабатывается`);
-        await ctx.answerCbQuery(
-          '⏳ Платеж еще обрабатывается. Подождите 1-2 минуты и попробуйте снова.',
-          { show_alert: true }
-        );
-
-      } else if (status === 'canceled') {
-        
-        console.log(`❌ Платеж ${paymentId} был отменен`);
-        await ctx.editMessageText(
-          '❌ Платеж был отменен.\n\nСоздайте новый платеж для пополнения баланса.',
-          Markup.inlineKeyboard([
-            [Markup.button.callback('Пополнить баланс', 'refill_balance')],
-            [Markup.button.callback('Главное меню', 'main_menu')]
-          ])
-        );
-
-      } else {
-        
-        console.log(`❓ Неизвестный статус платежа ${paymentId}: ${status}`);
-        await ctx.answerCbQuery(
-          `❓ Неизвестный статус платежа: ${status}. Обратитесь в поддержку.`,
-          { show_alert: true }
-        );
-      }
-
-    } catch (error: any) {
-      console.error('❌ Ошибка проверки платежа:', error);
-      await ctx.answerCbQuery(
-        '❌ Ошибка проверки платежа. Попробуйте позже или обратитесь в поддержку.',
-        { show_alert: true }
-      );
-    }
+    
+    await showPaymentMessage(ctx, 1600, userStates, backAction);
   });
 }
 

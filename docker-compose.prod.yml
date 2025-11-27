@@ -12,9 +12,6 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgresql://user:S3T9B9o541C-A2NE1@212.233.79.197:5432/PostgreSQL-1348
-    depends_on:
-      postgres:
-        condition: service_healthy
     ports:
       - "3000:3000"
     volumes:

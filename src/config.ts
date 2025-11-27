@@ -13,5 +13,6 @@ export const config = {
   callbackUrlPay: process.env.CALLBACK_URL_PAY || 'https://mybotai.ru/webhook/yookassa',
   videoFileId: process.env.VIDEO_FILE_ID || '',
   photoFileId: process.env.PHOTO_FILE_ID || '',
-  orderVideoFileId: process.env.ORDER_VIDEO_FILE_ID || ''
+  orderVideoFileId: process.env.ORDER_VIDEO_FILE_ID || '',
+  tgtrackApiKey: process.env.TGTRACK_API_KEY || ''
 };

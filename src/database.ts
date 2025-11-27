@@ -43,7 +43,7 @@ export class Database {
     username?: string,
     firstName?: string,
     lastName?: string
-  ): Promise<User> {
+  ): Promise<{ user: User; isNew: boolean }> {
     const client = await pool.connect();
     try {
       let result = await client.query(
@@ -52,7 +52,7 @@ export class Database {
       );
 
       if (result.rows.length > 0) {
-        return result.rows[0];
+        return { user: result.rows[0], isNew: false };
       }
 
       result = await client.query(
@@ -63,7 +63,7 @@ export class Database {
       );
 
       console.log(`✅ Создан новый пользователь: ${userId}`);
-      return result.rows[0];
+      return { user: result.rows[0], isNew: true };
     } finally {
       client.release();
     }

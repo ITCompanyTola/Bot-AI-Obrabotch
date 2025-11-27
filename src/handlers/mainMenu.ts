@@ -1,6 +1,7 @@
 import { Telegraf, Markup } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
+import { sendTGTrackUserStart } from './index';
 
 export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.command('start', async (ctx) => {
@@ -8,12 +9,24 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
     if (!userId) return;
 
     try {
-      await Database.getOrCreateUser(
+      const startPayload = ctx.message?.text?.split(' ')[1];
+      
+      const { user, isNew } = await Database.getOrCreateUser(
         userId,
         ctx.from?.username,
         ctx.from?.first_name,
         ctx.from?.last_name
       );
+
+      if (isNew) {
+        await sendTGTrackUserStart(
+          userId,
+          ctx.from?.first_name,
+          ctx.from?.last_name,
+          ctx.from?.username,
+          startPayload
+        );
+      }
 
       const policyAccepted = await Database.hasPolicyAccepted(userId);
 

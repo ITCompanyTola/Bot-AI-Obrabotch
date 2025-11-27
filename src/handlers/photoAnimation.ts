@@ -39,19 +39,53 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
 📹 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION}₽</blockquote>
     `.trim();
     
-    await ctx.telegram.sendVideo(userId, VIDEO_FILE_ID, {
-      caption: photoAnimationMessage,
-      parse_mode: 'HTML',
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: '📸 Оживить фото', callback_data: 'animate_photo' }],
-          [{ text: 'Видео-инструкция', callback_data: 'video_instruction' }],
-          [{ text: 'Пополнить баланс', callback_data: 'refill_balance' }],
-          [{ text: 'Заказать видео под ключ', callback_data: 'order_video' }],
-          [{ text: 'Главное меню', callback_data: 'main_menu' }]
-        ]
+    // Проверяем, есть ли VIDEO_FILE_ID
+    if (VIDEO_FILE_ID && VIDEO_FILE_ID.trim() !== '') {
+      try {
+        await ctx.telegram.sendVideo(userId, VIDEO_FILE_ID, {
+          caption: photoAnimationMessage,
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '📸 Оживить фото', callback_data: 'animate_photo' }],
+              [{ text: 'Видео-инструкция', callback_data: 'video_instruction' }],
+              [{ text: 'Пополнить баланс', callback_data: 'refill_balance' }],
+              [{ text: 'Заказать видео под ключ', callback_data: 'order_video' }],
+              [{ text: 'Главное меню', callback_data: 'main_menu' }]
+            ]
+          }
+        });
+      } catch (error) {
+        console.error('Ошибка отправки видео:', error);
+        // Если не удалось отправить видео, отправляем просто текст
+        await ctx.telegram.sendMessage(userId, photoAnimationMessage, {
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '📸 Оживить фото', callback_data: 'animate_photo' }],
+              [{ text: 'Видео-инструкция', callback_data: 'video_instruction' }],
+              [{ text: 'Пополнить баланс', callback_data: 'refill_balance' }],
+              [{ text: 'Заказать видео под ключ', callback_data: 'order_video' }],
+              [{ text: 'Главное меню', callback_data: 'main_menu' }]
+            ]
+          }
+        });
       }
-    });
+    } else {
+      // Если VIDEO_FILE_ID не указан, просто отправляем текст
+      await ctx.telegram.sendMessage(userId, photoAnimationMessage, {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '📸 Оживить фото', callback_data: 'animate_photo' }],
+            [{ text: 'Видео-инструкция', callback_data: 'video_instruction' }],
+            [{ text: 'Пополнить баланс', callback_data: 'refill_balance' }],
+            [{ text: 'Заказать видео под ключ', callback_data: 'order_video' }],
+            [{ text: 'Главное меню', callback_data: 'main_menu' }]
+          ]
+        }
+      });
+    }
   });
 
   bot.action('animate_photo', async (ctx) => {
@@ -68,14 +102,38 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
       userStates.set(userId, { step: 'waiting_photo' });
     }
     
-    await ctx.telegram.sendPhoto(userId, PHOTO_FILE_ID, {
-      caption: '📸 Пример ⤴️\n\nОтправьте фотографию, которую хотите оживить, и бот превратит её в волшебное видео ✨🎬',
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: 'Назад', callback_data: 'photo_animation' }]
-        ]
+    // Проверяем, есть ли PHOTO_FILE_ID
+    if (PHOTO_FILE_ID && PHOTO_FILE_ID.trim() !== '') {
+      try {
+        await ctx.telegram.sendPhoto(userId, PHOTO_FILE_ID, {
+          caption: '📸 Пример ⤴️\n\nОтправьте фотографию, которую хотите оживить, и бот превратит её в волшебное видео ✨🎬',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: 'Назад', callback_data: 'photo_animation' }]
+            ]
+          }
+        });
+      } catch (error) {
+        console.error('Ошибка отправки фото:', error);
+        // Если не удалось отправить фото, отправляем просто текст
+        await ctx.telegram.sendMessage(userId, '📸 Отправьте фотографию, которую хотите оживить, и бот превратит её в волшебное видео ✨🎬', {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: 'Назад', callback_data: 'photo_animation' }]
+            ]
+          }
+        });
       }
-    });
+    } else {
+      // Если PHOTO_FILE_ID не указан, просто отправляем текст
+      await ctx.telegram.sendMessage(userId, '📸 Отправьте фотографию, которую хотите оживить, и бот превратит её в волшебное видео ✨🎬', {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Назад', callback_data: 'photo_animation' }]
+          ]
+        }
+      });
+    }
   });
 
   bot.action('video_instruction', async (ctx) => {

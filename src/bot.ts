@@ -1,4 +1,4 @@
-import { Telegraf } from 'telegraf';
+typescriptimport { Telegraf } from 'telegraf';
 import { config } from './config';
 import { BotContext, UserState } from './types';
 import { Database } from './database';
@@ -10,6 +10,26 @@ const bot = new Telegraf<BotContext>(config.botToken);
 const userStates = new Map<number, UserState>();
 
 Database.initialize().catch(console.error);
+
+// 🔧 ВРЕМЕННЫЙ ОБРАБОТЧИК ДЛЯ ПОЛУЧЕНИЯ FILE_ID ВИДЕО
+bot.on('video', async (ctx) => {
+  const video = ctx.message.video;
+  await ctx.reply(
+    `📹 <b>File ID получен:</b>\n\n<code>${video.file_id}</code>\n\n✅ Скопируйте этот ID и добавьте в .env файл`,
+    { parse_mode: 'HTML' }
+  );
+  console.log('📹 Video File ID:', video.file_id);
+});
+
+// 🔧 ВРЕМЕННЫЙ ОБРАБОТЧИК ДЛЯ ПОЛУЧЕНИЯ FILE_ID ФОТО
+bot.on('photo', async (ctx) => {
+  const photo = ctx.message.photo[ctx.message.photo.length - 1];
+  await ctx.reply(
+    `📸 <b>File ID получен:</b>\n\n<code>${photo.file_id}</code>\n\n✅ Скопируйте этот ID и добавьте в .env файл`,
+    { parse_mode: 'HTML' }
+  );
+  console.log('📸 Photo File ID:', photo.file_id);
+});
 
 registerAllHandlers(bot, userStates);
 

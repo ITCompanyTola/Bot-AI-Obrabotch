@@ -43,7 +43,7 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgresql://user:S3T9B9o541C-A2NE1@212.233.79.197:5432/PostgreSQL-1348
+      - DATABASE_URL=postgresql://user:S3T9B9o541C-A2NE1@212.111.85.55:5432/PostgreSQL-1348
     ports:
       - "3000:3000"
     labels:

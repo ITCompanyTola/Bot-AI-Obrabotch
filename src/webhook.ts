@@ -37,7 +37,6 @@ app.post('/webhook/yookassa', async (req, res) => {
 
       console.log(`💳 Успешная оплата: ${paymentId}, сумма: ${amount}₽, пользователь: ${userId}`);
 
-      // ✅ Проверка: уже обработан этот платёж?
       const isProcessed = await Database.isPaymentProcessed(paymentId);
       
       if (isProcessed) {
@@ -46,7 +45,6 @@ app.post('/webhook/yookassa', async (req, res) => {
         return;
       }
 
-      // Пополняем баланс
       await Database.addBalance(
         userId,
         amount,
@@ -56,10 +54,8 @@ app.post('/webhook/yookassa', async (req, res) => {
 
       console.log(`✅ Баланс пополнен: +${amount}₽ для пользователя ${userId}`);
 
-      // Получаем новый баланс
       const newBalance = await Database.getUserBalance(userId);
 
-      // Отправляем уведомление пользователю
       try {
         await bot.telegram.sendMessage(
           userId,
@@ -78,35 +74,16 @@ app.post('/webhook/yookassa', async (req, res) => {
       }
 
     } else if (notification.event === 'payment.canceled') {
-      const paymentId = notification.object.id;
-      const userId = parseInt(notification.object.metadata.user_id);
-
-      console.log(`❌ Платёж ${paymentId} отменён для пользователя ${userId}`);
-
-      // ✅ Проверка: уже обработана эта отмена?
-      const isProcessed = await Database.isPaymentProcessed(paymentId);
+      console.log(`❌ Платёж ${notification.object.id} отменён`);
       
-      if (isProcessed) {
-        console.log(`⚠️ Отмена платежа ${paymentId} уже была обработана ранее`);
-        res.status(200).send('OK');
-        return;
-      }
-
-      // Записываем отмену в БД (чтобы не дублировать сообщения)
-      await Database.addBalance(
-        userId,
-        0,
-        `Платеж отменён (${paymentId})`,
-        'canceled'
-      );
-
-      // Отправляем уведомление об отмене
+      const userId = parseInt(notification.object.metadata.user_id);
+      
       try {
         await bot.telegram.sendMessage(
           userId,
           '❌ Платёж был отменён или не прошёл.\n\nПопробуйте снова или обратитесь в поддержку.',
           Markup.inlineKeyboard([
-            [Markup.button.callback('💳 Попробовать снова', 'refill_balance_from_profile')],
+            [Markup.button.callback('💳 Попробовать снова', 'refill_balance')],
             [Markup.button.callback('Поддержка', 'support')]
           ])
         );
@@ -116,14 +93,12 @@ app.post('/webhook/yookassa', async (req, res) => {
     }
 
     res.status(200).send('OK');
-    
   } catch (error) {
     console.error('❌ Ошибка обработки webhook:', error);
     res.status(500).send('Internal Server Error');
   }
 });
 
-// Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });

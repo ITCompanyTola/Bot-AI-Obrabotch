@@ -66,9 +66,13 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
           parse_mode: 'HTML',
           ...Markup.inlineKeyboard([
             [
-              Markup.button.callback('Рок', 'music_style_rock'),
               Markup.button.callback('Поп', 'music_style_pop'),
-              Markup.button.callback('Гоп', 'music_style_gop')
+              Markup.button.callback('К-поп', 'music_style_kpop'),
+              Markup.button.callback('R&B', 'music_style_rnb')
+            ],
+            [
+              Markup.button.callback('Хип-хоп', 'music_style_hiphop'),
+              Markup.button.callback('Дэнс', 'music_style_dance')
             ],
             [Markup.button.callback('Назад', 'start_music_creation')]
           ])
@@ -78,14 +82,7 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     }
     
     if (userState?.step === 'waiting_music_style') {
-      const customStyle = ctx.message.text;
-      
-      userState.musicStyle = customStyle;
-      userStates.set(userId, userState);
-      
-      console.log(`🎵 Выбран пользовательский стиль: "${customStyle}"`);
-      
-      await showMusicAdvancedParams(ctx);
+      // Игнорируем текст от пользователя, ждем нажатия кнопки
       return;
     }
     

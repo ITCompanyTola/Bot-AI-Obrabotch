@@ -63,7 +63,6 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     const userId = ctx.from?.id;
     if (!userId) return;
     
-    // Сохраняем источник
     const currentState = userStates.get(userId) || { step: null };
     userStates.set(userId, { ...currentState, refillSource: 'photo' });
     
@@ -75,9 +74,7 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       Markup.inlineKeyboard([
         [
           Markup.button.callback('150₽', 'refill_150'),
-          Markup.button.callback('300₽', 'refill_300')
-        ],
-        [
+          Markup.button.callback('300₽', 'refill_300'),
           Markup.button.callback('800₽', 'refill_800'),
           Markup.button.callback('1600₽', 'refill_1600')
         ],
@@ -98,7 +95,6 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     const userId = ctx.from?.id;
     if (!userId) return;
     
-    // Сохраняем источник
     const currentState = userStates.get(userId) || { step: null };
     userStates.set(userId, { ...currentState, refillSource: 'profile' });
     
@@ -109,9 +105,7 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       Markup.inlineKeyboard([
         [
           Markup.button.callback('150₽', 'refill_150'),
-          Markup.button.callback('300₽', 'refill_300')
-        ],
-        [
+          Markup.button.callback('300₽', 'refill_300'),
           Markup.button.callback('800₽', 'refill_800'),
           Markup.button.callback('1600₽', 'refill_1600')
         ],
@@ -132,7 +126,6 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     const userId = ctx.from?.id;
     if (!userId) return;
     
-    // Сохраняем источник
     const currentState = userStates.get(userId) || { step: null };
     userStates.set(userId, { ...currentState, refillSource: 'music' });
     
@@ -143,9 +136,7 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       Markup.inlineKeyboard([
         [
           Markup.button.callback('150₽', 'refill_150'),
-          Markup.button.callback('300₽', 'refill_300')
-        ],
-        [
+          Markup.button.callback('300₽', 'refill_300'),
           Markup.button.callback('800₽', 'refill_800'),
           Markup.button.callback('1600₽', 'refill_1600')
         ],

@@ -1,39 +1,37 @@
 import { Telegraf } from 'telegraf';
 import { config } from './config';
+import { BotContext, UserState } from './types';
+import { Database } from './database';
+import { registerAllHandlers } from './handlers';
+import webhookApp from './webhook';
 
-const bot = new Telegraf(config.botToken);
+const bot = new Telegraf<BotContext>(config.botToken);
 
-// ВРЕМЕННЫЕ ОБРАБОТЧИКИ ДЛЯ ПОЛУЧЕНИЯ FILE_ID
-bot.on('video', (ctx) => {
-  const fileId = ctx.message.video.file_id;
-  console.log('📹 VIDEO FILE_ID:', fileId);
-  
-  ctx.reply(`📹 <b>VIDEO FILE_ID:</b>\n\n<code>${fileId}</code>\n\nСкопируйте этот ID`, {
-    parse_mode: 'HTML'
-  });
+const userStates = new Map<number, UserState>();
+
+Database.initialize().catch(console.error);
+
+registerAllHandlers(bot, userStates);
+
+// Запуск webhook сервера для приёма платежей
+const PORT = process.env.PORT || 3000;
+webhookApp.listen(PORT, () => {
+  console.log(`🌐 Webhook сервер запущен на порту ${PORT}`);
 });
 
-bot.on('photo', (ctx) => {
-  const fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
-  console.log('📸 PHOTO FILE_ID:', fileId);
-  
-  ctx.reply(`📸 <b>PHOTO FILE_ID:</b>\n\n<code>${fileId}</code>\n\nСкопируйте этот ID`, {
-    parse_mode: 'HTML'
-  });
-});
-
-bot.on('audio', (ctx) => {
-  const fileId = ctx.message.audio.file_id;
-  console.log('🎵 AUDIO FILE_ID:', fileId);
-  
-  ctx.reply(`🎵 <b>AUDIO FILE_ID:</b>\n\n<code>${fileId}</code>\n\nСкопируйте этот ID`, {
-    parse_mode: 'HTML'
-  });
-});
+// Экспортируем bot для использования в webhook
+export { bot };
 
 bot.launch()
-  .then(() => console.log('✅ Временный бот запущен для получения FILE_ID'))
+  .then(() => console.log('✅ Бот запущен'))
   .catch((err) => console.error('❌ Ошибка:', err));
 
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+process.once('SIGINT', async () => {
+  await Database.close();
+  bot.stop('SIGINT');
+});
+
+process.once('SIGTERM', async () => {
+  await Database.close();
+  bot.stop('SIGTERM');
+});

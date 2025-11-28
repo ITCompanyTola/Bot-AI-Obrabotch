@@ -74,7 +74,6 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       refillMessage,
       Markup.inlineKeyboard([
         [
-          Markup.button.callback('5₽', 'refill_5'),
           Markup.button.callback('150₽', 'refill_150'),
           Markup.button.callback('300₽', 'refill_300')
         ],
@@ -109,7 +108,6 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       refillMessage,
       Markup.inlineKeyboard([
         [
-          Markup.button.callback('5₽', 'refill_5'),
           Markup.button.callback('150₽', 'refill_150'),
           Markup.button.callback('300₽', 'refill_300')
         ],
@@ -144,7 +142,6 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       refillMessage,
       Markup.inlineKeyboard([
         [
-          Markup.button.callback('5₽', 'refill_5'),
           Markup.button.callback('150₽', 'refill_150'),
           Markup.button.callback('300₽', 'refill_300')
         ],
@@ -155,30 +152,6 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
         [Markup.button.callback('Назад', 'music_creation')]
       ])
     );
-  });
-
-  bot.action('refill_5', async (ctx) => {
-    try {
-      await ctx.answerCbQuery();
-    } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
-      }
-    }
-    
-    const userId = ctx.from?.id;
-    if (!userId) return;
-    
-    const userState = userStates.get(userId);
-    let backAction = 'refill_balance';
-    
-    if (userState?.refillSource === 'profile') {
-      backAction = 'refill_balance_from_profile';
-    } else if (userState?.refillSource === 'music') {
-      backAction = 'refill_balance_from_music';
-    }
-    
-    await showPaymentMessage(ctx, 5, userStates, backAction);
   });
 
   bot.action('refill_150', async (ctx) => {

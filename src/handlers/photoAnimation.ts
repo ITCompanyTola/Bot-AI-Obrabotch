@@ -144,15 +144,26 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
       await ctx.answerCbQuery();
     } catch (error: any) {
       if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
+        console.error('Oshibka answerCbQuery:', error.message);
       }
     }
-    await ctx.reply('🎬 <b>Видео-инструкция по генерации фото</b>\n\nСмотрите короткое видео, чтобы легко и быстро понять, как оживлять свои фотографии и получать потрясающие результаты ✨📸', { 
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        [Markup.button.callback('Назад', 'photo_animation')]
-      ])
-    });
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    await ctx.telegram.sendVideo(
+      userId,
+      config.videoInstructionFileId,
+      {
+        caption: '🎬 <b>Видео-инструкция по генерации фото</b>\n\nСмотрите короткое видео, чтобы легко и быстро понять, как оживлять свои фотографии и получать потрясающие результаты ✨📸',
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Назад', callback_data: 'photo_animation' }]
+          ]
+        }
+      }
+    );
   });
 
   bot.action('order_video', async (ctx) => {

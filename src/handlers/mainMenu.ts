@@ -1,231 +1,79 @@
 import { Telegraf, Markup } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
-import { sendTGTrackUserStart } from './index';
+import { createPayment, checkPaymentStatus } from '../services/paymentService';
 
-export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
-  bot.command('start', async (ctx) => {
-    const userId = ctx.from?.id;
-    if (!userId) return;
+async function showPaymentMessage(ctx: any, amount: number, userStates: Map<number, UserState>, backAction: string) {
+  const userId = ctx.from?.id;
+  if (!userId) return;
 
-    try {
-      const startPayload = ctx.message?.text?.split(' ')[1];
-      
-      const { user, isNew } = await Database.getOrCreateUser(
-        userId,
-        ctx.from?.username,
-        ctx.from?.first_name,
-        ctx.from?.last_name
-      );
-
-      if (isNew) {
-        await sendTGTrackUserStart(
-          userId,
-          ctx.from?.first_name,
-          ctx.from?.last_name,
-          ctx.from?.username,
-          startPayload
-        );
-      }
-
-      const policyAccepted = await Database.hasPolicyAccepted(userId);
-
-      if (policyAccepted) {
-        const mainMenuMessage = `
-Наш бот умеет <b><i>оживлять фото</i></b> 📸✨ и создавать <b><i>крутые треки</i></b> 🎵🔥
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-        `.trim();
-
-        await ctx.reply(
-          mainMenuMessage,
-          {
-            parse_mode: 'HTML',
-            ...Markup.inlineKeyboard([
-              [Markup.button.callback('Написать в поддержку', 'support')],
-              [
-                Markup.button.callback('📸 Оживить фото', 'photo_animation'),
-                Markup.button.callback('🎶 Создать музыку', 'music_creation')
-              ],
-              [Markup.button.callback('Личный кабинет', 'profile')]
-            ])
-          }
-        );
-      } else {
-        const welcomeMessage = `
-Чтобы мы могли дальше работать, закон требует подтверждения с вашей стороны следующего ⤵️
-
-📌 <a href="https://docs.google.com/document/d/1xhYtLwGktBxqbVTGalJ0PnlKdRWxafZn/edit?usp=sharing&ouid=100123280935677219338&rtpof=true&sd=true">Политика конфиденциальности</a>
-
-📌 <a href="https://docs.google.com/document/d/1T9YFGmVCMaOUYKhWBu7V8hjL-OV-WpFL/edit?usp=sharing&ouid=100123280935677219338&rtpof=true&sd=true">Согласие на обработку персональных данных</a>
-        `.trim();
-
-        await ctx.reply(
-          welcomeMessage,
-          {
-            parse_mode: 'HTML',
-            link_preview_options: { is_disabled: true },
-            ...Markup.inlineKeyboard([
-              [Markup.button.callback('✅ Принимаю', 'accept_policy')]
-            ])
-          }
-        );
-      }
-    } catch (error) {
-      console.error('Ошибка в /start:', error);
-      await ctx.reply('❌ Произошла ошибка. Попробуйте позже.');
-    }
-  });
-
-  bot.action('accept_policy', async (ctx) => {
-    try {
-      await ctx.answerCbQuery();
-    } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
-      }
-    }
-    
-    const userId = ctx.from?.id;
-    if (!userId) return;
-
-    await Database.setPolicyAccepted(userId);
-    
-    const mainMenuMessage = `
-Наш бот умеет <b><i>оживлять фото</i></b> 📸✨ и создавать <b><i>крутые треки</i></b> 🎵🔥
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-    `.trim();
-
-    await ctx.editMessageText(
-      mainMenuMessage,
-      {
-        parse_mode: 'HTML',
-        ...Markup.inlineKeyboard([
-          [Markup.button.callback('Написать в поддержку', 'support')],
-          [
-            Markup.button.callback('📸 Оживить фото', 'photo_animation'),
-            Markup.button.callback('🎶 Создать музыку', 'music_creation')
-          ],
-          [Markup.button.callback('Личный кабинет', 'profile')]
-        ])
-      }
+  try {
+    const payment = await createPayment(
+      amount,
+      `Пополнение баланса на ${amount}₽`,
+      userId
     );
-  });
 
-  bot.action('decline_policy', async (ctx) => {
-    try {
-      await ctx.answerCbQuery();
-    } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
-      }
-    }
-    await ctx.editMessageText('❌ Вы отклонили согласие на обработку данных.\n\nБез этого бот не может работать.\n\nДля повторной попытки используйте /start');
-  });
+    const currentState = userStates.get(userId) || { step: null };
+    userStates.set(userId, {
+      ...currentState,
+      paymentId: payment.paymentId,
+      paymentAmount: amount
+    });
 
-  bot.action('main_menu', async (ctx) => {
-    try {
-      await ctx.answerCbQuery();
-    } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
-      }
-    }
-    
-    const userId = ctx.from?.id;
-    if (!userId) return;
-    
-    const mainMenuMessage = `
-Наш бот умеет <b><i>оживлять фото</i></b> 📸✨ и создавать <b><i>крутые треки</i></b> 🎵🔥
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
+    await Database.savePendingPayment(userId, payment.paymentId, amount);
+
+    const paymentMessage = `
+💳 Сумма к оплате: ${amount}₽
+
+Ваша ссылка для оплаты:
+${payment.confirmationUrl}
+
+После успешной оплаты баланс будет автоматически начислен в течение нескольких секунд ⚡️
     `.trim();
 
-    const keyboard = Markup.inlineKeyboard([
-      [Markup.button.callback('Написать в поддержку', 'support')],
-      [
-        Markup.button.callback('📸 Оживить фото', 'photo_animation'),
-        Markup.button.callback('🎶 Создать музыку', 'music_creation')
-      ],
-      [Markup.button.callback('Личный кабинет', 'profile')]
-    ]);
-
-    // Проверяем, является ли сообщение текстовым
-    if (ctx.callbackQuery && 'message' in ctx.callbackQuery && ctx.callbackQuery.message) {
-      const message = ctx.callbackQuery.message;
-      if ('text' in message) {
-        // Если это текстовое сообщение - редактируем
-        await ctx.editMessageText(mainMenuMessage, { parse_mode: 'HTML', ...keyboard });
-      } else {
-        // Если это медиа (фото/видео) - отправляем новое
-        await ctx.telegram.sendMessage(userId, mainMenuMessage, { parse_mode: 'HTML', ...keyboard });
-      }
-    }
-  });
-
-  bot.action('support', async (ctx) => {
-    try {
-      await ctx.answerCbQuery();
-    } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
-      }
-    }
-    
-    const supportMessage = `
-💬 Поддержка
-
-По всем вопросам обращайтесь:
-https://t.me/obrabotych_support
-    `.trim();
-    
     await ctx.editMessageText(
-      supportMessage,
+      paymentMessage,
       Markup.inlineKeyboard([
-        [Markup.button.callback('Главное меню', 'main_menu')]
+        [Markup.button.url(`💳 Оплатить ${amount}₽`, payment.confirmationUrl)],
+        [Markup.button.callback('Назад', backAction)]
       ])
     );
-  });
+  } catch (error) {
+    console.error('Ошибка создания платежа:', error);
+    await ctx.editMessageText(
+      '❌ Ошибка создания платежа. Попробуйте позже.',
+      Markup.inlineKeyboard([
+        [Markup.button.callback('Назад', backAction)]
+      ])
+    );
+  }
+}
 
-  // Команды для меню
-  bot.command('menu', async (ctx) => {
+export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
+  bot.action('refill_balance', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
     const userId = ctx.from?.id;
     if (!userId) return;
     
-    const mainMenuMessage = `
-Наш бот умеет <b><i>оживлять фото</i></b> 📸✨ и создавать <b><i>крутые треки</i></b> 🎵🔥
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-    `.trim();
-
-    await ctx.reply(
-      mainMenuMessage,
-      {
-        parse_mode: 'HTML',
-        ...Markup.inlineKeyboard([
-          [Markup.button.callback('Написать в поддержку', 'support')],
-          [
-            Markup.button.callback('📸 Оживить фото', 'photo_animation'),
-            Markup.button.callback('🎶 Создать музыку', 'music_creation')
-          ],
-          [Markup.button.callback('Личный кабинет', 'profile')]
-        ])
-      }
-    );
-  });
-
-  bot.command('pay', async (ctx) => {
-    const userId = ctx.from?.id;
-    if (!userId) return;
-
+    // Сохраняем источник
+    const currentState = userStates.get(userId) || { step: null };
+    userStates.set(userId, { ...currentState, refillSource: 'photo' });
+    
     const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
 
-    await ctx.reply(
+    await ctx.telegram.sendMessage(
+      userId,
       refillMessage,
       Markup.inlineKeyboard([
         [
-          Markup.button.callback('5₽', 'refill_5'),
           Markup.button.callback('150₽', 'refill_150'),
           Markup.button.callback('300₽', 'refill_300')
         ],
@@ -233,20 +81,174 @@ https://t.me/obrabotych_support
           Markup.button.callback('800₽', 'refill_800'),
           Markup.button.callback('1600₽', 'refill_1600')
         ],
-        [Markup.button.callback('Главное меню', 'main_menu')]
+        [Markup.button.callback('Назад', 'photo_animation')]
       ])
     );
   });
 
-  bot.command('privacy', async (ctx) => {
-    await ctx.reply(
-      '📌 Политика конфиденциальности:\nhttps://docs.google.com/document/d/1xhYtLwGktBxqbVTGalJ0PnlKdRWxafZn/edit?usp=sharing&ouid=100123280935677219338&rtpof=true&sd=true'
+  bot.action('refill_balance_from_profile', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    // Сохраняем источник
+    const currentState = userStates.get(userId) || { step: null };
+    userStates.set(userId, { ...currentState, refillSource: 'profile' });
+    
+    const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
+
+    await ctx.editMessageText(
+      refillMessage,
+      Markup.inlineKeyboard([
+        [
+          Markup.button.callback('150₽', 'refill_150'),
+          Markup.button.callback('300₽', 'refill_300')
+        ],
+        [
+          Markup.button.callback('800₽', 'refill_800'),
+          Markup.button.callback('1600₽', 'refill_1600')
+        ],
+        [Markup.button.callback('Назад', 'profile')]
+      ])
     );
   });
 
-  bot.command('agreement', async (ctx) => {
-    await ctx.reply(
-      '📌 Пользовательское соглашение:\nhttps://docs.google.com/document/d/1T9YFGmVCMaOUYKhWBu7V8hjL-OV-WpFL/edit?usp=sharing&ouid=100123280935677219338&rtpof=true&sd=true'
+  bot.action('refill_balance_from_music', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    // Сохраняем источник
+    const currentState = userStates.get(userId) || { step: null };
+    userStates.set(userId, { ...currentState, refillSource: 'music' });
+    
+    const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
+
+    await ctx.editMessageText(
+      refillMessage,
+      Markup.inlineKeyboard([
+        [
+          Markup.button.callback('150₽', 'refill_150'),
+          Markup.button.callback('300₽', 'refill_300')
+        ],
+        [
+          Markup.button.callback('800₽', 'refill_800'),
+          Markup.button.callback('1600₽', 'refill_1600')
+        ],
+        [Markup.button.callback('Назад', 'music_creation')]
+      ])
     );
   });
+
+  bot.action('refill_150', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    const userState = userStates.get(userId);
+    let backAction = 'refill_balance';
+    
+    if (userState?.refillSource === 'profile') {
+      backAction = 'refill_balance_from_profile';
+    } else if (userState?.refillSource === 'music') {
+      backAction = 'refill_balance_from_music';
+    }
+    
+    await showPaymentMessage(ctx, 150, userStates, backAction);
+  });
+
+  bot.action('refill_300', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    const userState = userStates.get(userId);
+    let backAction = 'refill_balance';
+    
+    if (userState?.refillSource === 'profile') {
+      backAction = 'refill_balance_from_profile';
+    } else if (userState?.refillSource === 'music') {
+      backAction = 'refill_balance_from_music';
+    }
+    
+    await showPaymentMessage(ctx, 300, userStates, backAction);
+  });
+
+  bot.action('refill_800', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    const userState = userStates.get(userId);
+    let backAction = 'refill_balance';
+    
+    if (userState?.refillSource === 'profile') {
+      backAction = 'refill_balance_from_profile';
+    } else if (userState?.refillSource === 'music') {
+      backAction = 'refill_balance_from_music';
+    }
+    
+    await showPaymentMessage(ctx, 800, userStates, backAction);
+  });
+
+  bot.action('refill_1600', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    const userState = userStates.get(userId);
+    let backAction = 'refill_balance';
+    
+    if (userState?.refillSource === 'profile') {
+      backAction = 'refill_balance_from_profile';
+    } else if (userState?.refillSource === 'music') {
+      backAction = 'refill_balance_from_music';
+    }
+    
+    await showPaymentMessage(ctx, 1600, userStates, backAction);
+  });
 }
+
+export { showPaymentMessage };

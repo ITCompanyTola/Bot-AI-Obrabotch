@@ -21,7 +21,7 @@ export async function createPayment(amount: number, description: string, userId:
       },
       confirmation: {
         type: 'redirect',
-        return_url: `https://t.me/your_bot_username` // Замените на имя вашего бота
+        return_url: `https://t.me/Obrabotych_bot` // Замените на имя вашего бота
       },
       capture: true,
       description: description,

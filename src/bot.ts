@@ -1,4 +1,4 @@
-typescriptimport { Telegraf } from 'telegraf';
+import { Telegraf } from 'telegraf';
 import { config } from './config';
 import { BotContext, UserState } from './types';
 import { Database } from './database';
@@ -11,40 +11,40 @@ const userStates = new Map<number, UserState>();
 
 Database.initialize().catch(console.error);
 
-// 🔧 ВРЕМЕННЫЙ ОБРАБОТЧИК ДЛЯ ПОЛУЧЕНИЯ FILE_ID ВИДЕО
+// TEMPORARY HANDLER FOR GETTING VIDEO FILE_ID
 bot.on('video', async (ctx) => {
   const video = ctx.message.video;
   await ctx.reply(
-    `📹 <b>File ID получен:</b>\n\n<code>${video.file_id}</code>\n\n✅ Скопируйте этот ID и добавьте в .env файл`,
+    `Video File ID:\n\n${video.file_id}\n\nCopy this ID and add to .env file`,
     { parse_mode: 'HTML' }
   );
-  console.log('📹 Video File ID:', video.file_id);
+  console.log('Video File ID:', video.file_id);
 });
 
-// 🔧 ВРЕМЕННЫЙ ОБРАБОТЧИК ДЛЯ ПОЛУЧЕНИЯ FILE_ID ФОТО
+// TEMPORARY HANDLER FOR GETTING PHOTO FILE_ID
 bot.on('photo', async (ctx) => {
   const photo = ctx.message.photo[ctx.message.photo.length - 1];
   await ctx.reply(
-    `📸 <b>File ID получен:</b>\n\n<code>${photo.file_id}</code>\n\n✅ Скопируйте этот ID и добавьте в .env файл`,
+    `Photo File ID:\n\n${photo.file_id}\n\nCopy this ID and add to .env file`,
     { parse_mode: 'HTML' }
   );
-  console.log('📸 Photo File ID:', photo.file_id);
+  console.log('Photo File ID:', photo.file_id);
 });
 
 registerAllHandlers(bot, userStates);
 
-// Запуск webhook сервера для приёма платежей
+// Zapusk webhook servera dlya priema platezhey
 const PORT = process.env.PORT || 3000;
 webhookApp.listen(PORT, () => {
-  console.log(`🌐 Webhook сервер запущен на порту ${PORT}`);
+  console.log(`Webhook server zapushen na portu ${PORT}`);
 });
 
-// Экспортируем bot для использования в webhook
+// Eksportiruem bot dlya ispolzovaniya v webhook
 export { bot };
 
 bot.launch()
-  .then(() => console.log('✅ Бот запущен'))
-  .catch((err) => console.error('❌ Ошибка:', err));
+  .then(() => console.log('Bot zapushen'))
+  .catch((err) => console.error('Oshibka:', err));
 
 process.once('SIGINT', async () => {
   await Database.close();

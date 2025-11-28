@@ -75,21 +75,7 @@ app.post('/webhook/yookassa', async (req, res) => {
 
     } else if (notification.event === 'payment.canceled') {
       console.log(`❌ Платёж ${notification.object.id} отменён`);
-      
-      const userId = parseInt(notification.object.metadata.user_id);
-      
-      try {
-        await bot.telegram.sendMessage(
-          userId,
-          '❌ Платёж был отменён или не прошёл.\n\nПопробуйте снова или обратитесь в поддержку.',
-          Markup.inlineKeyboard([
-            [Markup.button.callback('💳 Попробовать снова', 'refill_balance')],
-            [Markup.button.callback('Поддержка', 'support')]
-          ])
-        );
-      } catch (error) {
-        console.error('Ошибка отправки уведомления об отмене:', error);
-      }
+      // НЕ ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ ПОЛЬЗОВАТЕЛЮ
     }
 
     res.status(200).send('OK');

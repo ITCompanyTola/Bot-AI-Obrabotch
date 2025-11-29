@@ -14,7 +14,5 @@ export const config = {
   videoFileId: process.env.VIDEO_FILE_ID || '',
   photoFileId: process.env.PHOTO_FILE_ID || '',
   orderVideoFileId: process.env.ORDER_VIDEO_FILE_ID || '',
-  videoInstructionFileId: process.env.VIDEO_INSTRUCTION_FILE_ID || '',
-  musicInstructionFileId: process.env.MUSIC_INSTRUCTION_FILE_ID || '',
   tgtrackApiKey: process.env.TGTRACK_API_KEY || ''
 };

@@ -19,13 +19,13 @@ export async function createPayment(amount: number, description: string, userId:
     const idempotenceKey = generateIdempotenceKey();
     logToFile(`💳 idempotenceKey=${idempotenceKey}`);
     
-    const paymentData = {
+    const payment = await checkout.createPayment({
       amount: {
         value: amount.toFixed(2),
         currency: 'RUB'
       },
       confirmation: {
-        type: 'redirect',
+        type: 'redirect' as const,
         return_url: `https://t.me/Obrabotych_bot`
       },
       capture: true,
@@ -33,11 +33,7 @@ export async function createPayment(amount: number, description: string, userId:
       metadata: {
         user_id: userId.toString()
       }
-    };
-    
-    logToFile(`💳 paymentData=${JSON.stringify(paymentData)}`);
-    
-    const payment = await checkout.createPayment(paymentData, idempotenceKey);
+    }, idempotenceKey);
 
     logToFile(`💳 Платеж создан: ${payment.id}`);
 

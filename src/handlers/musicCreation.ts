@@ -90,11 +90,9 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
       {
         caption: '🎬 <b>Видео-инструкция по созданию музыки</b>\n\nСмотрите короткое видео, чтобы легко и быстро понять, как написать песню, выбрать стиль и получить готовый трек 🎵✨',
         parse_mode: 'HTML',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: 'Назад', callback_data: 'music_creation' }]
-          ]
-        }
+        ...Markup.inlineKeyboard([
+          [Markup.button.callback('Назад', 'music_creation')]
+        ])
       }
     );
   });

@@ -79,17 +79,14 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
         backAction = 'refill_balance_from_music';
       }
       
-      await ctx.reply('✅ Email сохранен! Создаю платеж...');
+      userStates.set(userId, {
+        ...userState,
+        step: null,
+        pendingPaymentAmount: undefined
+      });
       
       const { showPaymentMessage } = await import('./payment');
-      const mockCtx = {
-        ...ctx,
-        editMessageText: async (text: string, extra: any) => {
-          return await ctx.reply(text, extra);
-        }
-      };
-      
-      await showPaymentMessage(mockCtx, amount, userStates, backAction);
+      await showPaymentMessage(ctx, amount, userStates, backAction, true);
       return;
     }
     

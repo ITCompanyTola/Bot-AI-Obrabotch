@@ -4,7 +4,7 @@ import { Database } from '../database';
 import { createPayment, checkPaymentStatus } from '../services/paymentService';
 import { logToFile } from '../bot';
 
-async function showPaymentMessage(ctx: any, amount: number, userStates: Map<number, UserState>, backAction: string) {
+async function showPaymentMessage(ctx: any, amount: number, userStates: Map<number, UserState>, backAction: string, useReply: boolean = false) {
   const userId = ctx.from?.id;
   if (!userId) return;
 
@@ -27,7 +27,8 @@ async function showPaymentMessage(ctx: any, amount: number, userStates: Map<numb
       ...currentState,
       paymentId: payment.paymentId,
       paymentAmount: amount,
-      step: null
+      step: null,
+      pendingPaymentAmount: undefined
     });
 
     await Database.savePendingPayment(userId, payment.paymentId, amount);
@@ -41,25 +42,31 @@ ${payment.confirmationUrl}
 После успешной оплаты баланс будет автоматически начислен в течение нескольких секунд ⚡️
     `.trim();
 
-    await ctx.editMessageText(
-      paymentMessage,
-      Markup.inlineKeyboard([
-        [Markup.button.url(`💳 Оплатить ${amount}₽`, payment.confirmationUrl)],
-        [Markup.button.callback('Назад', backAction)]
-      ])
-    );
+    const keyboard = Markup.inlineKeyboard([
+      [Markup.button.url(`💳 Оплатить ${amount}₽`, payment.confirmationUrl)],
+      [Markup.button.callback('Назад', backAction)]
+    ]);
+
+    if (useReply) {
+      await ctx.reply(paymentMessage, keyboard);
+    } else {
+      await ctx.editMessageText(paymentMessage, keyboard);
+    }
     
     logToFile(`✅ Сообщение с платежом отправлено userId=${userId}`);
   } catch (error: any) {
     logToFile(`❌ ОШИБКА создания платежа: userId=${userId}, error=${error.message}, stack=${error.stack}`);
     console.error('Ошибка создания платежа:', error);
     
-    await ctx.editMessageText(
-      '❌ Ошибка создания платежа. Попробуйте позже.',
-      Markup.inlineKeyboard([
-        [Markup.button.callback('Назад', backAction)]
-      ])
-    );
+    const keyboard = Markup.inlineKeyboard([
+      [Markup.button.callback('Назад', backAction)]
+    ]);
+
+    if (useReply) {
+      await ctx.reply('❌ Ошибка создания платежа. Попробуйте позже.', keyboard);
+    } else {
+      await ctx.editMessageText('❌ Ошибка создания платежа. Попробуйте позже.', keyboard);
+    }
   }
 }
 

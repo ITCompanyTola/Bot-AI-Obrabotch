@@ -2,6 +2,7 @@ import { Telegraf, Markup } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { PRICES } from '../constants';
+import { config } from '../config';
 import { processMusicGeneration } from '../services/sunoService';
 
 export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {

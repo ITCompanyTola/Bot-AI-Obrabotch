@@ -11,40 +11,20 @@ const userStates = new Map<number, UserState>();
 
 Database.initialize().catch(console.error);
 
-// TEMPORARY HANDLER FOR GETTING VIDEO FILE_ID
-bot.on('video', async (ctx) => {
-  const video = ctx.message.video;
-  await ctx.reply(
-    `Video File ID:\n\n${video.file_id}\n\nCopy this ID and add to .env file`,
-    { parse_mode: 'HTML' }
-  );
-  console.log('Video File ID:', video.file_id);
-});
-
-// TEMPORARY HANDLER FOR GETTING PHOTO FILE_ID
-bot.on('photo', async (ctx) => {
-  const photo = ctx.message.photo[ctx.message.photo.length - 1];
-  await ctx.reply(
-    `Photo File ID:\n\n${photo.file_id}\n\nCopy this ID and add to .env file`,
-    { parse_mode: 'HTML' }
-  );
-  console.log('Photo File ID:', photo.file_id);
-});
-
 registerAllHandlers(bot, userStates);
 
-// Zapusk webhook servera dlya priema platezhey
+// Запуск webhook сервера для приёма платежей
 const PORT = process.env.PORT || 3000;
 webhookApp.listen(PORT, () => {
-  console.log(`Webhook server zapushen na portu ${PORT}`);
+  console.log(`🌐 Webhook сервер запущен на порту ${PORT}`);
 });
 
-// Eksportiruem bot dlya ispolzovaniya v webhook
+// Экспортируем bot для использования в webhook
 export { bot };
 
 bot.launch()
-  .then(() => console.log('Bot zapushen'))
-  .catch((err) => console.error('Oshibka:', err));
+  .then(() => console.log('✅ Бот запущен'))
+  .catch((err) => console.error('❌ Ошибка:', err));
 
 process.once('SIGINT', async () => {
   await Database.close();
@@ -54,4 +34,4 @@ process.once('SIGINT', async () => {
 process.once('SIGTERM', async () => {
   await Database.close();
   bot.stop('SIGTERM');
-});
+});   

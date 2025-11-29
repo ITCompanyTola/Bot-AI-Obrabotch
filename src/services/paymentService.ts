@@ -21,7 +21,7 @@ export async function createPayment(amount: number, description: string, userId:
       },
       confirmation: {
         type: 'redirect',
-        return_url: `https://t.me/Obrabotych_bot` // Замените на имя вашего бота
+        return_url: `https://t.me/Obrabotych_bot`
       },
       capture: true,
       description: description,
@@ -29,9 +29,9 @@ export async function createPayment(amount: number, description: string, userId:
         user_id: userId.toString()
       }
     }, idempotenceKey);
-
+    
     console.log('💳 Платеж создан:', payment.id);
-
+    
     return {
       paymentId: payment.id,
       confirmationUrl: (payment.confirmation as any).confirmation_url
@@ -46,7 +46,7 @@ export async function checkPaymentStatus(paymentId: string): Promise<string> {
   try {
     const payment = await checkout.getPayment(paymentId);
     console.log(`📊 Статус платежа ${paymentId}: ${payment.status}`);
-    return payment.status; // 'pending', 'succeeded', 'canceled'
+    return payment.status;
   } catch (error) {
     console.error('❌ Ошибка проверки платежа:', error);
     throw error;

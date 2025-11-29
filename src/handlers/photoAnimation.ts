@@ -14,7 +14,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
       await ctx.answerCbQuery();
     } catch (error: any) {
       if (!error.description?.includes('query is too old')) {
-        console.error('Oshibka answerCbQuery:', error.message);
+        console.error('Ошибка answerCbQuery:', error.message);
       }
     }
     
@@ -41,6 +41,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
 📹 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION}₽</blockquote>
     `.trim();
     
+    // Проверяем, есть ли VIDEO_FILE_ID
     if (VIDEO_FILE_ID && VIDEO_FILE_ID.trim() !== '') {
       try {
         await ctx.telegram.sendVideo(userId, VIDEO_FILE_ID, {
@@ -57,7 +58,8 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
           }
         });
       } catch (error) {
-        console.error('Oshibka otpravki video:', error);
+        console.error('Ошибка отправки видео:', error);
+        // Если не удалось отправить видео, отправляем просто текст
         await ctx.telegram.sendMessage(userId, photoAnimationMessage, {
           parse_mode: 'HTML',
           reply_markup: {
@@ -72,6 +74,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
         });
       }
     } else {
+      // Если VIDEO_FILE_ID не указан, просто отправляем текст
       await ctx.telegram.sendMessage(userId, photoAnimationMessage, {
         parse_mode: 'HTML',
         reply_markup: {
@@ -92,7 +95,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
       await ctx.answerCbQuery();
     } catch (error: any) {
       if (!error.description?.includes('query is too old')) {
-        console.error('Oshibka answerCbQuery:', error.message);
+        console.error('Ошибка answerCbQuery:', error.message);
       }
     }
     
@@ -101,6 +104,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
       userStates.set(userId, { step: 'waiting_photo' });
     }
     
+    // Проверяем, есть ли PHOTO_FILE_ID
     if (PHOTO_FILE_ID && PHOTO_FILE_ID.trim() !== '') {
       try {
         await ctx.telegram.sendPhoto(userId, PHOTO_FILE_ID, {
@@ -113,7 +117,8 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
           }
         });
       } catch (error) {
-        console.error('Oshibka otpravki foto:', error);
+        console.error('Ошибка отправки фото:', error);
+        // Если не удалось отправить фото, отправляем просто текст
         await ctx.telegram.sendMessage(userId, '📸 Отправьте фотографию, которую хотите оживить, и бот превратит её в волшебное видео ✨🎬', {
           reply_markup: {
             inline_keyboard: [
@@ -123,6 +128,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
         });
       }
     } else {
+      // Если PHOTO_FILE_ID не указан, просто отправляем текст
       await ctx.telegram.sendMessage(userId, '📸 Отправьте фотографию, которую хотите оживить, и бот превратит её в волшебное видео ✨🎬', {
         reply_markup: {
           inline_keyboard: [
@@ -138,65 +144,59 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
       await ctx.answerCbQuery();
     } catch (error: any) {
       if (!error.description?.includes('query is too old')) {
-        console.error('Oshibka answerCbQuery:', error.message);
+        console.error('Ошибка answerCbQuery:', error.message);
       }
     }
-    
-    await ctx.telegram.sendVideo(
-      ctx.from.id,
-      config.videoInstructionFileId,
-      {
-        caption: '🎬 <b>Видео-инструкция по генерации фото</b>\n\nСмотрите короткое видео, чтобы легко и быстро понять, как оживлять свои фотографии и получать потрясающие результаты ✨📸',
-        parse_mode: 'HTML',
-        ...Markup.inlineKeyboard([
-          [Markup.button.callback('Назад', 'photo_animation')]
-        ])
-      }
-    );
+    await ctx.reply('🎬 <b>Видео-инструкция по генерации фото</b>\n\nСмотрите короткое видео, чтобы легко и быстро понять, как оживлять свои фотографии и получать потрясающие результаты ✨📸', { 
+      parse_mode: 'HTML',
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback('Назад', 'photo_animation')]
+      ])
+    });
   });
 
   bot.action('order_video', async (ctx) => {
-    try {
-      await ctx.answerCbQuery();
-    } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Oshibka answerCbQuery:', error.message);
-      }
+  try {
+    await ctx.answerCbQuery();
+  } catch (error: any) {
+    if (!error.description?.includes('query is too old')) {
+      console.error('Ошибка answerCbQuery:', error.message);
     }
-    
-    const userId = ctx.from?.id;
-    if (!userId) return;
-    
-    const orderVideoMessage = `
-😊 Каждая семья — это история, которую стоит сохранить
+  }
+  
+  const userId = ctx.from?.id;
+  if (!userId) return;
+  
+  const orderVideoMessage = `
+😍 Каждая семья — это история, которую стоит сохранить
 
 Выполнили заказ для Светланы,  сделали настоящее чудо — вдохнули жизнь в старые фото и записали песню о семье 💞
 
 Теперь это не просто кадры, а целая история в музыке и образах.
 
 💌 Хочешь сохранить свои воспоминания так же красиво? Пиши @obrabotych_support
-    `.trim();
+  `.trim();
 
-    await ctx.telegram.sendVideo(
-      userId,
-      config.orderVideoFileId,
-      {
-        caption: orderVideoMessage,
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: 'Главное меню', callback_data: 'main_menu' }]
-          ]
-        }
+  await ctx.telegram.sendVideo(
+    userId,
+    config.orderVideoFileId,
+    {
+      caption: orderVideoMessage,
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: 'Главное меню', callback_data: 'main_menu' }]
+        ]
       }
-    );
-  });
+    }
+  );
+});
 
   bot.action('order_video_gift', async (ctx) => {
     try {
       await ctx.answerCbQuery();
     } catch (error: any) {
       if (!error.description?.includes('query is too old')) {
-        console.error('Oshibka answerCbQuery:', error.message);
+        console.error('Ошибка answerCbQuery:', error.message);
       }
     }
     
@@ -218,7 +218,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
       await ctx.answerCbQuery();
     } catch (error: any) {
       if (!error.description?.includes('query is too old')) {
-        console.error('Oshibka answerCbQuery:', error.message);
+        console.error('Ошибка answerCbQuery:', error.message);
       }
     }
     

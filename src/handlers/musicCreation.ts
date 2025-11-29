@@ -33,18 +33,36 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
 🎵 Создать 1 трек = ${PRICES.MUSIC_CREATION}₽</blockquote>
     `.trim();
 
-    await ctx.editMessageText(
-      musicCreationMessage,
-      {
-        parse_mode: 'HTML',
-        ...Markup.inlineKeyboard([
-          [Markup.button.callback('🎶 Начать творить', 'start_music_creation')],
-          [Markup.button.callback('Видео-инструкция', 'music_video_instruction')],
-          [Markup.button.callback('💳 Пополнить баланс', 'refill_balance_from_music')],
-          [Markup.button.callback('Главное меню', 'main_menu')]
-        ])
+    // Проверяем, является ли сообщение текстовым
+    if (ctx.callbackQuery && 'message' in ctx.callbackQuery && ctx.callbackQuery.message) {
+      const message = ctx.callbackQuery.message;
+      if ('text' in message) {
+        // Если это текстовое сообщение - редактируем
+        await ctx.editMessageText(
+          musicCreationMessage,
+          {
+            parse_mode: 'HTML',
+            ...Markup.inlineKeyboard([
+              [Markup.button.callback('🎶 Начать творить', 'start_music_creation')],
+              [Markup.button.callback('Видео-инструкция', 'music_video_instruction')],
+              [Markup.button.callback('💳 Пополнить баланс', 'refill_balance_from_music')],
+              [Markup.button.callback('Главное меню', 'main_menu')]
+            ])
+          }
+        );
+      } else {
+        // Если это медиа (фото/видео) - отправляем новое
+        await ctx.telegram.sendMessage(userId, musicCreationMessage, {
+          parse_mode: 'HTML',
+          ...Markup.inlineKeyboard([
+            [Markup.button.callback('🎶 Начать творить', 'start_music_creation')],
+            [Markup.button.callback('Видео-инструкция', 'music_video_instruction')],
+            [Markup.button.callback('💳 Пополнить баланс', 'refill_balance_from_music')],
+            [Markup.button.callback('Главное меню', 'main_menu')]
+          ])
+        });
       }
-    );
+    }
   });
 
   bot.action('start_music_creation', async (ctx) => {

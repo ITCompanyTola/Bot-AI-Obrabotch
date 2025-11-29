@@ -362,6 +362,50 @@ export class Database {
     }
   }
 
+  static async getGlobalStats() {
+    const client = await pool.connect();
+    try {
+      // Количество пользователей
+      const usersCount = await client.query(
+        'SELECT COUNT(*) as count FROM users'
+      );
+
+      // Количество успешных оплат
+      const successfulPayments = await client.query(
+        `SELECT COUNT(*) as count FROM transactions 
+         WHERE type = 'refill'`
+      );
+
+      // Сумма успешных оплат
+      const totalPaymentsAmount = await client.query(
+        `SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+         WHERE type = 'refill'`
+      );
+
+      // Количество генераций фото
+      const photoGenerations = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files 
+         WHERE file_type = 'photo'`
+      );
+
+      // Количество генераций музыки
+      const musicGenerations = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files 
+         WHERE file_type = 'music'`
+      );
+
+      return {
+        usersCount: parseInt(usersCount.rows[0].count),
+        successfulPayments: parseInt(successfulPayments.rows[0].count),
+        totalPaymentsAmount: parseFloat(totalPaymentsAmount.rows[0].total),
+        photoGenerations: parseInt(photoGenerations.rows[0].count),
+        musicGenerations: parseInt(musicGenerations.rows[0].count)
+      };
+    } finally {
+      client.release();
+    }
+  }
+
   static async close() {
     await pool.end();
     console.log('🔌 Соединение с PostgreSQL закрыто');

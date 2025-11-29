@@ -240,4 +240,25 @@ https://t.me/obrabotych_support
       '📌 Пользовательское соглашение:\nhttps://docs.google.com/document/d/1T9YFGmVCMaOUYKhWBu7V8hjL-OV-WpFL/edit?usp=sharing&ouid=100123280935677219338&rtpof=true&sd=true'
     );
   });
+
+  bot.command('stats_kfa930', async (ctx) => {
+    try {
+      const stats = await Database.getGlobalStats();
+      
+      const statsMessage = `
+📊 <b>Статистика бота</b>
+
+👥 Количество пользователей: <b>${stats.usersCount}</b>
+💳 Количество успешных пополнений: <b>${stats.successfulPayments}</b>
+💰 Сумма успешных пополнений: <b>${stats.totalPaymentsAmount.toFixed(2)}₽</b>
+📸 Количество генераций фото: <b>${stats.photoGenerations}</b>
+🎵 Количество генераций музыки: <b>${stats.musicGenerations}</b>
+      `.trim();
+      
+      await ctx.reply(statsMessage, { parse_mode: 'HTML' });
+    } catch (error) {
+      console.error('Ошибка получения статистики:', error);
+      await ctx.reply('❌ Ошибка при получении статистики');
+    }
+  });
 }

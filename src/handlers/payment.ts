@@ -32,89 +32,16 @@ ${payment.confirmationUrl}
 После успешной оплаты баланс будет автоматически начислен в течение нескольких секунд ⚡️
     `.trim();
 
-    // Пытаемся редактировать, если не получается - отправляем новое
-    try {
-      await ctx.editMessageText(
-        paymentMessage,
-        Markup.inlineKeyboard([
-          [Markup.button.url(`💳 Оплатить ${amount}₽`, payment.confirmationUrl)],
-          [Markup.button.callback('Назад', backAction)]
-        ])
-      );
-    } catch (editError) {
-      // Если не удалось отредактировать (например, это видео), отправляем новое сообщение
-      await ctx.telegram.sendMessage(
-        userId,
-        paymentMessage,
-        Markup.inlineKeyboard([
-          [Markup.button.url(`💳 Оплатить ${amount}₽`, payment.confirmationUrl)],
-          [Markup.button.callback('Назад', backAction)]
-        ])
-      );
-    }
-  } catch (error) {
-    console.error('Ошибка создания платежа:', error);
-    await ctx.telegram.sendMessage(
-      userId,
-      '❌ Ошибка создания платежа. Попробуйте позже.',
+    await ctx.editMessageText(
+      paymentMessage,
       Markup.inlineKeyboard([
+        [Markup.button.url(`💳 Оплатить ${amount}₽`, payment.confirmationUrl)],
         [Markup.button.callback('Назад', backAction)]
       ])
     );
-  }
-}async function showPaymentMessage(ctx: any, amount: number, userStates: Map<number, UserState>, backAction: string) {
-  const userId = ctx.from?.id;
-  if (!userId) return;
-
-  try {
-    const payment = await createPayment(
-      amount,
-      `Пополнение баланса на ${amount}₽`,
-      userId
-    );
-
-    const currentState = userStates.get(userId) || { step: null };
-    userStates.set(userId, {
-      ...currentState,
-      paymentId: payment.paymentId,
-      paymentAmount: amount
-    });
-
-    await Database.savePendingPayment(userId, payment.paymentId, amount);
-
-    const paymentMessage = `
-💳 Сумма к оплате: ${amount}₽
-
-Ваша ссылка для оплаты:
-${payment.confirmationUrl}
-
-После успешной оплаты баланс будет автоматически начислен в течение нескольких секунд ⚡️
-    `.trim();
-
-    // Пытаемся редактировать, если не получается - отправляем новое
-    try {
-      await ctx.editMessageText(
-        paymentMessage,
-        Markup.inlineKeyboard([
-          [Markup.button.url(`💳 Оплатить ${amount}₽`, payment.confirmationUrl)],
-          [Markup.button.callback('Назад', backAction)]
-        ])
-      );
-    } catch (editError) {
-      // Если не удалось отредактировать (например, это видео), отправляем новое сообщение
-      await ctx.telegram.sendMessage(
-        userId,
-        paymentMessage,
-        Markup.inlineKeyboard([
-          [Markup.button.url(`💳 Оплатить ${amount}₽`, payment.confirmationUrl)],
-          [Markup.button.callback('Назад', backAction)]
-        ])
-      );
-    }
   } catch (error) {
     console.error('Ошибка создания платежа:', error);
-    await ctx.telegram.sendMessage(
-      userId,
+    await ctx.editMessageText(
       '❌ Ошибка создания платежа. Попробуйте позже.',
       Markup.inlineKeyboard([
         [Markup.button.callback('Назад', backAction)]

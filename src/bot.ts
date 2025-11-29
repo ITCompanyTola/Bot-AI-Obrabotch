@@ -34,4 +34,4 @@ process.once('SIGINT', async () => {
 process.once('SIGTERM', async () => {
   await Database.close();
   bot.stop('SIGTERM');
-});   
+});

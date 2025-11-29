@@ -11,10 +11,13 @@ async function showPaymentMessage(ctx: any, amount: number, userStates: Map<numb
   try {
     logToFile(`💳 Попытка создания платежа: userId=${userId}, amount=${amount}`);
     
+    const email = await Database.getUserEmail(userId);
+
     const payment = await createPayment(
       amount,
       `Пополнение баланса на ${amount}₽`,
-      userId
+      userId,
+      email || ''
     );
 
     logToFile(`✅ Платеж создан успешно: paymentId=${payment.paymentId}, url=${payment.confirmationUrl}`);
@@ -23,7 +26,8 @@ async function showPaymentMessage(ctx: any, amount: number, userStates: Map<numb
     userStates.set(userId, {
       ...currentState,
       paymentId: payment.paymentId,
-      paymentAmount: amount
+      paymentAmount: amount,
+      step: null
     });
 
     await Database.savePendingPayment(userId, payment.paymentId, amount);
@@ -59,6 +63,65 @@ ${payment.confirmationUrl}
   }
 }
 
+async function showRefillAmountSelection(ctx: any, userStates: Map<number, UserState>, refillSource: 'photo' | 'profile' | 'music', useEdit: boolean = false) {
+  const userId = ctx.from?.id;
+  if (!userId) return;
+
+  const currentState = userStates.get(userId) || { step: null };
+  userStates.set(userId, { ...currentState, refillSource, step: null, pendingPaymentAmount: undefined });
+
+  const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
+
+  const backActions = {
+    photo: 'photo_animation',
+    profile: 'profile',
+    music: 'music_creation'
+  };
+
+  const keyboard = Markup.inlineKeyboard([
+    [
+      Markup.button.callback('150₽', 'refill_150'),
+      Markup.button.callback('300₽', 'refill_300'),
+      Markup.button.callback('800₽', 'refill_800'),
+      Markup.button.callback('1600₽', 'refill_1600')
+    ],
+    [Markup.button.callback('Назад', backActions[refillSource])]
+  ]);
+
+  if (useEdit) {
+    await ctx.editMessageText(refillMessage, keyboard);
+  } else {
+    await ctx.telegram.sendMessage(userId, refillMessage, keyboard);
+  }
+}
+
+async function requestEmailOrProceed(ctx: any, amount: number, userStates: Map<number, UserState>, backAction: string) {
+  const userId = ctx.from?.id;
+  if (!userId) return;
+
+  const email = await Database.getUserEmail(userId);
+  
+  if (!email) {
+    const currentState = userStates.get(userId) || { step: null };
+    userStates.set(userId, {
+      ...currentState,
+      step: 'waiting_email',
+      pendingPaymentAmount: amount
+    });
+
+    await ctx.editMessageText(
+      '📧 Для создания платежа необходимо указать ваш email.\n\nПожалуйста, отправьте ваш email:',
+      Markup.inlineKeyboard([
+        [Markup.button.callback('Назад', backAction)]
+      ])
+    );
+    
+    logToFile(`📧 Запрошен email у пользователя ${userId}`);
+  } else {
+    await showPaymentMessage(ctx, amount, userStates, backAction);
+  }
+}
+
 export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('refill_balance', async (ctx) => {
     try {
@@ -74,24 +137,10 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     
     logToFile(`📝 refill_balance вызван: userId=${userId}`);
     
-    const currentState = userStates.get(userId) || { step: null };
-    userStates.set(userId, { ...currentState, refillSource: 'photo' });
+    const userState = userStates.get(userId);
+    const useEdit = userState?.step === 'waiting_email';
     
-    const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
-
-    await ctx.telegram.sendMessage(
-      userId,
-      refillMessage,
-      Markup.inlineKeyboard([
-        [
-          Markup.button.callback('150₽', 'refill_150'),
-          Markup.button.callback('300₽', 'refill_300'),
-          Markup.button.callback('800₽', 'refill_800'),
-          Markup.button.callback('1600₽', 'refill_1600')
-        ],
-        [Markup.button.callback('Назад', 'photo_animation')]
-      ])
-    );
+    await showRefillAmountSelection(ctx, userStates, 'photo', useEdit);
   });
 
   bot.action('refill_balance_from_profile', async (ctx) => {
@@ -108,23 +157,7 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     
     logToFile(`📝 refill_balance_from_profile вызван: userId=${userId}`);
     
-    const currentState = userStates.get(userId) || { step: null };
-    userStates.set(userId, { ...currentState, refillSource: 'profile' });
-    
-    const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
-
-    await ctx.editMessageText(
-      refillMessage,
-      Markup.inlineKeyboard([
-        [
-          Markup.button.callback('150₽', 'refill_150'),
-          Markup.button.callback('300₽', 'refill_300'),
-          Markup.button.callback('800₽', 'refill_800'),
-          Markup.button.callback('1600₽', 'refill_1600')
-        ],
-        [Markup.button.callback('Назад', 'profile')]
-      ])
-    );
+    await showRefillAmountSelection(ctx, userStates, 'profile', true);
   });
 
   bot.action('refill_balance_from_music', async (ctx) => {
@@ -141,23 +174,7 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     
     logToFile(`📝 refill_balance_from_music вызван: userId=${userId}`);
     
-    const currentState = userStates.get(userId) || { step: null };
-    userStates.set(userId, { ...currentState, refillSource: 'music' });
-    
-    const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
-
-    await ctx.editMessageText(
-      refillMessage,
-      Markup.inlineKeyboard([
-        [
-          Markup.button.callback('150₽', 'refill_150'),
-          Markup.button.callback('300₽', 'refill_300'),
-          Markup.button.callback('800₽', 'refill_800'),
-          Markup.button.callback('1600₽', 'refill_1600')
-        ],
-        [Markup.button.callback('Назад', 'music_creation')]
-      ])
-    );
+    await showRefillAmountSelection(ctx, userStates, 'music', true);
   });
 
   bot.action('refill_150', async (ctx) => {
@@ -183,7 +200,7 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       backAction = 'refill_balance_from_music';
     }
     
-    await showPaymentMessage(ctx, 150, userStates, backAction);
+    await requestEmailOrProceed(ctx, 150, userStates, backAction);
   });
 
   bot.action('refill_300', async (ctx) => {
@@ -209,7 +226,7 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       backAction = 'refill_balance_from_music';
     }
     
-    await showPaymentMessage(ctx, 300, userStates, backAction);
+    await requestEmailOrProceed(ctx, 300, userStates, backAction);
   });
 
   bot.action('refill_800', async (ctx) => {
@@ -235,7 +252,7 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       backAction = 'refill_balance_from_music';
     }
     
-    await showPaymentMessage(ctx, 800, userStates, backAction);
+    await requestEmailOrProceed(ctx, 800, userStates, backAction);
   });
 
   bot.action('refill_1600', async (ctx) => {
@@ -261,7 +278,7 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       backAction = 'refill_balance_from_music';
     }
     
-    await showPaymentMessage(ctx, 1600, userStates, backAction);
+    await requestEmailOrProceed(ctx, 1600, userStates, backAction);
   });
 }
 

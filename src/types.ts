@@ -3,7 +3,7 @@ import { Context } from 'telegraf';
 export interface BotContext extends Context {}
 
 export interface UserState {
-  step: 'waiting_photo' | 'waiting_description' | 'waiting_payment' | 'waiting_music_text' | 'waiting_music_style' | 'waiting_music_params' | null;
+  step: 'waiting_photo' | 'waiting_description' | 'waiting_payment' | 'waiting_music_text' | 'waiting_music_style' | 'waiting_music_params' | 'waiting_email' | null;
   photoFileId?: string;
   prompt?: string;
   paymentAmount?: number;
@@ -11,4 +11,5 @@ export interface UserState {
   musicText?: string;
   musicStyle?: string;
   refillSource?: 'photo' | 'profile' | 'music';
+  pendingPaymentAmount?: number;
 }

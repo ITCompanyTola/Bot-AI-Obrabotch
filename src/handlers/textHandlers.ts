@@ -3,6 +3,12 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
+import { logToFile } from '../bot';
+
+function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
 
 export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.on('photo', async (ctx) => {
@@ -47,6 +53,45 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     if (!userId) return;
     
     const userState = userStates.get(userId);
+    
+    if (userState?.step === 'waiting_email') {
+      const email = ctx.message.text.trim();
+      
+      if (!validateEmail(email)) {
+        await ctx.reply('❌ Неверный формат email. Пожалуйста, введите корректный email адрес:');
+        return;
+      }
+      
+      await Database.saveUserEmail(userId, email);
+      logToFile(`✅ Email сохранен для пользователя ${userId}: ${email}`);
+      
+      const amount = userState.pendingPaymentAmount;
+      if (!amount) {
+        await ctx.reply('❌ Произошла ошибка. Попробуйте снова.');
+        userStates.delete(userId);
+        return;
+      }
+      
+      let backAction = 'refill_balance';
+      if (userState.refillSource === 'profile') {
+        backAction = 'refill_balance_from_profile';
+      } else if (userState.refillSource === 'music') {
+        backAction = 'refill_balance_from_music';
+      }
+      
+      await ctx.reply('✅ Email сохранен! Создаю платеж...');
+      
+      const { showPaymentMessage } = await import('./payment');
+      const mockCtx = {
+        ...ctx,
+        editMessageText: async (text: string, extra: any) => {
+          return await ctx.reply(text, extra);
+        }
+      };
+      
+      await showPaymentMessage(mockCtx, amount, userStates, backAction);
+      return;
+    }
     
     if (userState?.step === 'waiting_music_text') {
       const musicText = ctx.message.text;

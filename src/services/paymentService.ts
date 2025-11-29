@@ -1,5 +1,6 @@
 import { YooCheckout } from '@a2seven/yoo-checkout';
 import { config } from '../config';
+import { logToFile } from '../bot';
 
 const checkout = new YooCheckout({
   shopId: config.shopId,
@@ -12,32 +13,43 @@ function generateIdempotenceKey(): string {
 
 export async function createPayment(amount: number, description: string, userId: number) {
   try {
-    const idempotenceKey = generateIdempotenceKey();
+    logToFile(`💳 createPayment started: amount=${amount}, userId=${userId}`);
+    logToFile(`💳 shopId=${config.shopId}, hasSecretKey=${!!config.paymentApiKey}`);
     
-    const payment = await checkout.createPayment({
+    const idempotenceKey = generateIdempotenceKey();
+    logToFile(`💳 idempotenceKey=${idempotenceKey}`);
+    
+    const paymentData = {
       amount: {
         value: amount.toFixed(2),
         currency: 'RUB'
       },
       confirmation: {
         type: 'redirect',
-        return_url: `https://t.me/Obrabotych_bot` // Замените на имя вашего бота
+        return_url: `https://t.me/Obrabotych_bot`
       },
       capture: true,
       description: description,
       metadata: {
         user_id: userId.toString()
       }
-    }, idempotenceKey);
+    };
+    
+    logToFile(`💳 paymentData=${JSON.stringify(paymentData)}`);
+    
+    const payment = await checkout.createPayment(paymentData, idempotenceKey);
 
-    console.log('💳 Платеж создан:', payment.id);
+    logToFile(`💳 Платеж создан: ${payment.id}`);
 
     return {
       paymentId: payment.id,
       confirmationUrl: (payment.confirmation as any).confirmation_url
     };
-  } catch (error) {
-    console.error('❌ Ошибка создания платежа:', error);
+  } catch (error: any) {
+    logToFile(`❌ createPayment ERROR: ${JSON.stringify(error)}`);
+    logToFile(`❌ error.message: ${error?.message}`);
+    logToFile(`❌ error.stack: ${error?.stack}`);
+    logToFile(`❌ error full: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
     throw error;
   }
 }
@@ -45,10 +57,10 @@ export async function createPayment(amount: number, description: string, userId:
 export async function checkPaymentStatus(paymentId: string): Promise<string> {
   try {
     const payment = await checkout.getPayment(paymentId);
-    console.log(`📊 Статус платежа ${paymentId}: ${payment.status}`);
-    return payment.status; // 'pending', 'succeeded', 'canceled'
-  } catch (error) {
-    console.error('❌ Ошибка проверки платежа:', error);
+    logToFile(`📊 Статус платежа ${paymentId}: ${payment.status}`);
+    return payment.status;
+  } catch (error: any) {
+    logToFile(`❌ checkPaymentStatus ERROR: ${JSON.stringify(error)}`);
     throw error;
   }
 }

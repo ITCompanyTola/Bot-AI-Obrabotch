@@ -76,15 +76,26 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
       await ctx.answerCbQuery();
     } catch (error: any) {
       if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
+        console.error('Oshibka answerCbQuery:', error.message);
       }
     }
-    await ctx.reply('🎬 <b>Видео-инструкция по созданию музыки</b>\n\nСмотрите короткое видео, чтобы легко и быстро понять, как написать песню, выбрать стиль и получить готовый трек 🎵✨', { 
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        [Markup.button.callback('Назад', 'music_creation')]
-      ])
-    });
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    await ctx.telegram.sendVideo(
+      userId,
+      config.musicInstructionFileId,
+      {
+        caption: '🎬 <b>Видео-инструкция по созданию музыки</b>\n\nСмотрите короткое видео, чтобы легко и быстро понять, как написать песню, выбрать стиль и получить готовый трек 🎵✨',
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Назад', callback_data: 'music_creation' }]
+          ]
+        }
+      }
+    );
   });
 
   bot.action('music_style_pop', async (ctx) => {

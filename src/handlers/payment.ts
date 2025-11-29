@@ -2,17 +2,22 @@ import { Telegraf, Markup } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { createPayment, checkPaymentStatus } from '../services/paymentService';
+import { logToFile } from '../bot';
 
 async function showPaymentMessage(ctx: any, amount: number, userStates: Map<number, UserState>, backAction: string) {
   const userId = ctx.from?.id;
   if (!userId) return;
 
   try {
+    logToFile(`💳 Попытка создания платежа: userId=${userId}, amount=${amount}`);
+    
     const payment = await createPayment(
       amount,
       `Пополнение баланса на ${amount}₽`,
       userId
     );
+
+    logToFile(`✅ Платеж создан успешно: paymentId=${payment.paymentId}, url=${payment.confirmationUrl}`);
 
     const currentState = userStates.get(userId) || { step: null };
     userStates.set(userId, {
@@ -39,8 +44,12 @@ ${payment.confirmationUrl}
         [Markup.button.callback('Назад', backAction)]
       ])
     );
-  } catch (error) {
+    
+    logToFile(`✅ Сообщение с платежом отправлено userId=${userId}`);
+  } catch (error: any) {
+    logToFile(`❌ ОШИБКА создания платежа: userId=${userId}, error=${error.message}, stack=${error.stack}`);
     console.error('Ошибка создания платежа:', error);
+    
     await ctx.editMessageText(
       '❌ Ошибка создания платежа. Попробуйте позже.',
       Markup.inlineKeyboard([
@@ -62,6 +71,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     
     const userId = ctx.from?.id;
     if (!userId) return;
+    
+    logToFile(`📝 refill_balance вызван: userId=${userId}`);
     
     const currentState = userStates.get(userId) || { step: null };
     userStates.set(userId, { ...currentState, refillSource: 'photo' });
@@ -95,6 +106,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     const userId = ctx.from?.id;
     if (!userId) return;
     
+    logToFile(`📝 refill_balance_from_profile вызван: userId=${userId}`);
+    
     const currentState = userStates.get(userId) || { step: null };
     userStates.set(userId, { ...currentState, refillSource: 'profile' });
     
@@ -125,6 +138,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     
     const userId = ctx.from?.id;
     if (!userId) return;
+    
+    logToFile(`📝 refill_balance_from_music вызван: userId=${userId}`);
     
     const currentState = userStates.get(userId) || { step: null };
     userStates.set(userId, { ...currentState, refillSource: 'music' });
@@ -157,6 +172,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     const userId = ctx.from?.id;
     if (!userId) return;
     
+    logToFile(`📝 refill_150 вызван: userId=${userId}`);
+    
     const userState = userStates.get(userId);
     let backAction = 'refill_balance';
     
@@ -180,6 +197,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     
     const userId = ctx.from?.id;
     if (!userId) return;
+    
+    logToFile(`📝 refill_300 вызван: userId=${userId}`);
     
     const userState = userStates.get(userId);
     let backAction = 'refill_balance';
@@ -205,6 +224,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     const userId = ctx.from?.id;
     if (!userId) return;
     
+    logToFile(`📝 refill_800 вызван: userId=${userId}`);
+    
     const userState = userStates.get(userId);
     let backAction = 'refill_balance';
     
@@ -228,6 +249,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     
     const userId = ctx.from?.id;
     if (!userId) return;
+    
+    logToFile(`📝 refill_1600 вызван: userId=${userId}`);
     
     const userState = userStates.get(userId);
     let backAction = 'refill_balance';

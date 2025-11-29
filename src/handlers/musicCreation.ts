@@ -80,12 +80,18 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
         console.error('Ошибка answerCbQuery:', error.message);
       }
     }
-    await ctx.reply('🎬 <b>Видео-инструкция по созданию музыки</b>\n\nСмотрите короткое видео, чтобы легко и быстро понять, как написать песню, выбрать стиль и получить готовый трек 🎵✨', { 
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        [Markup.button.callback('Назад', 'music_creation')]
-      ])
-    });
+    
+    await ctx.telegram.sendVideo(
+      ctx.from.id,
+      config.musicInstructionFileId,
+      {
+        caption: '🎬 <b>Видео-инструкция по созданию музыки</b>\n\nСмотрите короткое видео, чтобы легко и быстро понять, как написать песню, выбрать стиль и получить готовый трек 🎵✨',
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
+          [Markup.button.callback('Назад', 'music_creation')]
+        ])
+      }
+    );
   });
 
   bot.action('music_style_pop', async (ctx) => {

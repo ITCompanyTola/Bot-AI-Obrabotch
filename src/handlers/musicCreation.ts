@@ -3,6 +3,7 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { PRICES } from '../constants';
 import { processMusicGeneration } from '../services/sunoService';
+import { config } from '../config';
 
 export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('music_creation', async (ctx) => {

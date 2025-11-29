@@ -26,7 +26,7 @@ export async function createPayment(amount: number, description: string, userId:
                 },
                 items: [
                     {
-                        description: "Наименование товара 1",
+                        description: "Услуга по генерации видео/музыки",
                         quantity: '1.000',
                         amount: {
                             value: amount.toFixed(2),
@@ -34,7 +34,7 @@ export async function createPayment(amount: number, description: string, userId:
                         },
                         vat_code: 1,
                         payment_mode: "full_prepayment",
-                        payment_subject: "commodity"
+                        payment_subject: "service"
                     },
                 ],
             },

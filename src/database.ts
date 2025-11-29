@@ -9,6 +9,8 @@ const pool = new Pool({
 export interface User {
   id: number;
   username?: string;
+  email?: string;
+  phone?: string;
   first_name?: string;
   last_name?: string;
   balance: number;
@@ -216,6 +218,37 @@ export class Database {
         total_generations: userResult.rows[0].total_generations,
         total_spent: parseFloat(totalSpent.rows[0].total)
       };
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getUserEmail(userId: number): Promise<string | null> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT email FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (result.rows.length === 0 || !result.rows[0].email) {
+        return null;
+      }
+
+      return result.rows[0].email;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async saveUserEmail(userId: number, email: string): Promise<void> {
+    const client = await pool.connect();
+    try {
+      await client.query(
+        'UPDATE users SET email = $1 WHERE id = $2',
+        [email, userId]
+      );
+      console.log(`✅ Email сохранен для пользователя ${userId}`);
     } finally {
       client.release();
     }

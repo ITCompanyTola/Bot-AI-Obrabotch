@@ -244,15 +244,31 @@ https://t.me/obrabotych_support
   bot.command('stats_kfa930', async (ctx) => {
     try {
       const stats = await Database.getGlobalStats();
+      const today = new Date();
+      const todayStr = today.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
       
       const statsMessage = `
-📊 <b>Статистика бота</b>
+📊 <b>Статистика бота за все время</b>
 
-👥 Количество пользователей: <b>${stats.usersCount}</b>
-💳 Количество успешных пополнений: <b>${stats.successfulPayments}</b>
-💰 Сумма успешных пополнений: <b>${stats.totalPaymentsAmount.toFixed(2)}₽</b>
-📸 Количество генераций фото: <b>${stats.photoGenerations}</b>
-🎵 Количество генераций музыки: <b>${stats.musicGenerations}</b>
+👥 Количество пользователей: <b>${stats.all.usersCount}</b>
+💳 Количество успешных пополнений: <b>${stats.all.successfulPayments}</b>
+💰 Сумма успешных пополнений: <b>${stats.all.totalPaymentsAmount.toFixed(2)}₽</b>
+📸 Количество генераций фото: <b>${stats.all.photoGenerations}</b>
+🎵 Количество генераций музыки: <b>${stats.all.musicGenerations}</b>
+
+<b>За последние 7 дней</b>
+👥 Количество пользователей: <b>${stats.last7Days.usersCount}</b>
+💳 Количество успешных пополнений: <b>${stats.last7Days.successfulPayments}</b>
+💰 Сумма успешных пополнений: <b>${stats.last7Days.totalPaymentsAmount.toFixed(2)}₽</b>
+📸 Количество генераций фото: <b>${stats.last7Days.photoGenerations}</b>
+🎵 Количество генераций музыки: <b>${stats.last7Days.musicGenerations}</b>
+
+<b>За сегодня ${todayStr}</b>
+👥 Количество пользователей: <b>${stats.today.usersCount}</b>
+💳 Количество успешных пополнений: <b>${stats.today.successfulPayments}</b>
+💰 Сумма успешных пополнений: <b>${stats.today.totalPaymentsAmount.toFixed(2)}₽</b>
+📸 Количество генераций фото: <b>${stats.today.photoGenerations}</b>
+🎵 Количество генераций музыки: <b>${stats.today.musicGenerations}</b>
       `.trim();
       
       await ctx.reply(statsMessage, { parse_mode: 'HTML' });

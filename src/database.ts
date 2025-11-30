@@ -365,41 +365,54 @@ export class Database {
   static async getGlobalStats() {
     const client = await pool.connect();
     try {
-      // Количество пользователей
-      const usersCount = await client.query(
-        'SELECT COUNT(*) as count FROM users'
-      );
+      // Определяем временные границы
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-      // Количество успешных оплат
-      const successfulPayments = await client.query(
-        `SELECT COUNT(*) as count FROM transactions 
-         WHERE type = 'refill'`
-      );
+      // За все время
+      const usersCountAll = await client.query('SELECT COUNT(*) as count FROM users');
+      const paymentsCountAll = await client.query(`SELECT COUNT(*) as count FROM transactions WHERE type = 'refill'`);
+      const paymentsSumAll = await client.query(`SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'refill'`);
+      const photoGenAll = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'photo'`);
+      const musicGenAll = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'music'`);
 
-      // Сумма успешных оплат
-      const totalPaymentsAmount = await client.query(
-        `SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-         WHERE type = 'refill'`
-      );
+      // За последние 7 дней
+      const usersCount7d = await client.query('SELECT COUNT(*) as count FROM users WHERE created_at >= $1', [sevenDaysAgo]);
+      const paymentsCount7d = await client.query(`SELECT COUNT(*) as count FROM transactions WHERE type = 'refill' AND created_at >= $1`, [sevenDaysAgo]);
+      const paymentsSum7d = await client.query(`SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'refill' AND created_at >= $1`, [sevenDaysAgo]);
+      const photoGen7d = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'photo' AND created_at >= $1`, [sevenDaysAgo]);
+      const musicGen7d = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'music' AND created_at >= $1`, [sevenDaysAgo]);
 
-      // Количество генераций фото
-      const photoGenerations = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files 
-         WHERE file_type = 'photo'`
-      );
-
-      // Количество генераций музыки
-      const musicGenerations = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files 
-         WHERE file_type = 'music'`
-      );
+      // За сегодня
+      const usersCountToday = await client.query('SELECT COUNT(*) as count FROM users WHERE created_at >= $1', [startOfToday]);
+      const paymentsCountToday = await client.query(`SELECT COUNT(*) as count FROM transactions WHERE type = 'refill' AND created_at >= $1`, [startOfToday]);
+      const paymentsSumToday = await client.query(`SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'refill' AND created_at >= $1`, [startOfToday]);
+      const photoGenToday = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'photo' AND created_at >= $1`, [startOfToday]);
+      const musicGenToday = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'music' AND created_at >= $1`, [startOfToday]);
 
       return {
-        usersCount: parseInt(usersCount.rows[0].count),
-        successfulPayments: parseInt(successfulPayments.rows[0].count),
-        totalPaymentsAmount: parseFloat(totalPaymentsAmount.rows[0].total),
-        photoGenerations: parseInt(photoGenerations.rows[0].count),
-        musicGenerations: parseInt(musicGenerations.rows[0].count)
+        all: {
+          usersCount: parseInt(usersCountAll.rows[0].count),
+          successfulPayments: parseInt(paymentsCountAll.rows[0].count),
+          totalPaymentsAmount: parseFloat(paymentsSumAll.rows[0].total),
+          photoGenerations: parseInt(photoGenAll.rows[0].count),
+          musicGenerations: parseInt(musicGenAll.rows[0].count)
+        },
+        last7Days: {
+          usersCount: parseInt(usersCount7d.rows[0].count),
+          successfulPayments: parseInt(paymentsCount7d.rows[0].count),
+          totalPaymentsAmount: parseFloat(paymentsSum7d.rows[0].total),
+          photoGenerations: parseInt(photoGen7d.rows[0].count),
+          musicGenerations: parseInt(musicGen7d.rows[0].count)
+        },
+        today: {
+          usersCount: parseInt(usersCountToday.rows[0].count),
+          successfulPayments: parseInt(paymentsCountToday.rows[0].count),
+          totalPaymentsAmount: parseFloat(paymentsSumToday.rows[0].total),
+          photoGenerations: parseInt(photoGenToday.rows[0].count),
+          musicGenerations: parseInt(musicGenToday.rows[0].count)
+        }
       };
     } finally {
       client.release();

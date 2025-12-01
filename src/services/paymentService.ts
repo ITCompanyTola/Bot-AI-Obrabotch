@@ -26,7 +26,7 @@ export async function createPayment(amount: number, description: string, userId:
                 },
                 items: [
                     {
-                        description: "Услуга по генерации видео/музыки",
+                        description: "Автоматизированное создание мультимедийных рекламных материалов",
                         quantity: '1.000',
                         amount: {
                             value: amount.toFixed(2),

@@ -15,7 +15,8 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
         userId,
         ctx.from?.username,
         ctx.from?.first_name,
-        ctx.from?.last_name
+        ctx.from?.last_name,
+        startPayload
       );
 
       if (isNew) {
@@ -241,8 +242,17 @@ https://t.me/obrabotych_support
     );
   });
 
-  bot.command('stats_kfa930', async (ctx) => {
+  bot.command('stats_all', async (ctx) => {
     try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+
+      const isAdmin = await Database.isAdmin(userId);
+      if (!isAdmin) {
+        await ctx.reply('❌ У вас нет прав для выполнения этой команды');
+        return;
+      }
+
       const stats = await Database.getGlobalStats();
       const today = new Date();
       const todayStr = today.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -274,6 +284,189 @@ https://t.me/obrabotych_support
       await ctx.reply(statsMessage, { parse_mode: 'HTML' });
     } catch (error) {
       console.error('Ошибка получения статистики:', error);
+      await ctx.reply('❌ Ошибка при получении статистики');
+    }
+  });
+
+  bot.command('add_source', async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+
+      const isAdmin = await Database.isAdmin(userId);
+      if (!isAdmin) {
+        await ctx.reply('❌ У вас нет прав для выполнения этой команды');
+        return;
+      }
+
+      const args = ctx.message?.text?.split(' ').slice(1);
+      if (!args || args.length < 2) {
+        await ctx.reply(
+          '❌ Неверный формат команды\n\n' +
+          'Используйте:\n' +
+          '/add_source <название> <ключевая_подстрока>\n\n' +
+          'Пример:\n' +
+          '/add_source telegramAds tgTrack-PJ43a51379bd0a7a9'
+        );
+        return;
+      }
+
+      const [sourceName, keySubstring] = args;
+
+      try {
+        await Database.createReferralSource(sourceName, keySubstring);
+        await ctx.reply(
+          `✅ Источник успешно создан!\n\n` +
+          `📊 Название: <b>${sourceName}</b>\n` +
+          `🔑 Ключ: ${keySubstring}\n\n` +
+          `Для просмотра статистики используйте: /stats_${sourceName}`,
+          { parse_mode: 'HTML' }
+        );
+      } catch (error: any) {
+        await ctx.reply(`❌ Ошибка создания источника: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('Ошибка добавления источника:', error);
+      await ctx.reply('❌ Произошла ошибка при добавлении источника');
+    }
+  });
+
+  bot.command('list_sources', async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+
+      const isAdmin = await Database.isAdmin(userId);
+      if (!isAdmin) {
+        await ctx.reply('❌ У вас нет прав для выполнения этой команды');
+        return;
+      }
+
+      const sources = await Database.getAllReferralSources();
+      
+      if (sources.length === 0) {
+        await ctx.reply('📋 Источников пока нет');
+        return;
+      }
+
+      let message = '📋 <b>Список всех источников:</b>\n\n';
+      for (const source of sources) {
+        message += `📌 <b>${source.source_name}</b>\n`;
+        message += `🔑 ${source.key_substring}\n`;
+        message += `📊 Статистика: /stats_${source.source_name}\n\n`;
+      }
+
+      await ctx.reply(message, { parse_mode: 'HTML' });
+    } catch (error) {
+      console.error('Ошибка получения списка источников:', error);
+      await ctx.reply('❌ Ошибка при получении списка источников');
+    }
+  });
+
+  bot.command('rename_source', async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+
+      const isAdmin = await Database.isAdmin(userId);
+      if (!isAdmin) {
+        await ctx.reply('❌ У вас нет прав для выполнения этой команды');
+        return;
+      }
+
+      const args = ctx.message?.text?.split(' ').slice(1);
+      if (!args || args.length < 2) {
+        await ctx.reply(
+          '❌ Неверный формат команды\n\n' +
+          'Используйте:\n' +
+          '/rename_source <старое_название> <новое_название>\n\n' +
+          'Пример:\n' +
+          '/rename_source неизвестный_источник_1 telegramAds'
+        );
+        return;
+      }
+
+      const [oldName, newName] = args;
+
+      try {
+        await Database.renameReferralSource(oldName, newName);
+        await ctx.reply(
+          `✅ Источник успешно переименован!\n\n` +
+          `Старое название: <b>${oldName}</b>\n` +
+          `Новое название: <b>${newName}</b>\n\n` +
+          `Статистика теперь доступна по команде: /stats_${newName}`,
+          { parse_mode: 'HTML' }
+        );
+      } catch (error: any) {
+        await ctx.reply(`❌ Ошибка переименования источника: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('Ошибка переименования источника:', error);
+      await ctx.reply('❌ Произошла ошибка при переименовании источника');
+    }
+  });
+
+  bot.on('text', async (ctx, next) => {
+    const text = ctx.message?.text;
+    if (!text || !text.startsWith('/stats_')) {
+      return next();
+    }
+
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+
+      const isAdmin = await Database.isAdmin(userId);
+      if (!isAdmin) {
+        return next();
+      }
+
+      const sourceName = text.substring(7);
+      
+      if (sourceName === 'all') {
+        return next();
+      }
+
+      const source = await Database.getReferralSource(sourceName);
+      if (!source) {
+        await ctx.reply(`❌ Источник "${sourceName}" не найден`);
+        return;
+      }
+
+      const stats = await Database.getSourceStats(source.key_substring);
+      const today = new Date();
+      const todayStr = today.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      
+      const statsMessage = `
+📊 <b>Статистика источника "${source.source_name}"</b>
+
+🔑 Ключ: ${source.key_substring}
+
+<b>За все время</b>
+👥 Количество пользователей: <b>${stats.all.usersCount}</b>
+💳 Количество успешных пополнений: <b>${stats.all.successfulPayments}</b>
+💰 Сумма успешных пополнений: <b>${stats.all.totalPaymentsAmount.toFixed(2)}₽</b>
+📸 Количество генераций фото: <b>${stats.all.photoGenerations}</b>
+🎵 Количество генераций музыки: <b>${stats.all.musicGenerations}</b>
+
+<b>За последние 7 дней</b>
+👥 Количество пользователей: <b>${stats.last7Days.usersCount}</b>
+💳 Количество успешных пополнений: <b>${stats.last7Days.successfulPayments}</b>
+💰 Сумма успешных пополнений: <b>${stats.last7Days.totalPaymentsAmount.toFixed(2)}₽</b>
+📸 Количество генераций фото: <b>${stats.last7Days.photoGenerations}</b>
+🎵 Количество генераций музыки: <b>${stats.last7Days.musicGenerations}</b>
+
+<b>За сегодня ${todayStr}</b>
+👥 Количество пользователей: <b>${stats.today.usersCount}</b>
+💳 Количество успешных пополнений: <b>${stats.today.successfulPayments}</b>
+💰 Сумма успешных пополнений: <b>${stats.today.totalPaymentsAmount.toFixed(2)}₽</b>
+📸 Количество генераций фото: <b>${stats.today.photoGenerations}</b>
+🎵 Количество генераций музыки: <b>${stats.today.musicGenerations}</b>
+      `.trim();
+      
+      await ctx.reply(statsMessage, { parse_mode: 'HTML' });
+    } catch (error) {
+      console.error('Ошибка получения статистики источника:', error);
       await ctx.reply('❌ Ошибка при получении статистики');
     }
   });

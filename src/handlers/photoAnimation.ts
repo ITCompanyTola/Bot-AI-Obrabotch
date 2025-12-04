@@ -225,6 +225,8 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
     );
   });
 
+  // Потенциально неиспользуемая функция обработки inline-кнопки.
+  // Схожая логика наблюдается в файле textHandlers.ts
   bot.action('start_generation', async (ctx) => {
     try {
       await ctx.answerCbQuery();

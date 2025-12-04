@@ -151,8 +151,14 @@ export async function processVideoGeneration(ctx: any, userId: number, photoFile
     const videoResponse = await axios.get(videoUrl, { responseType: 'arraybuffer' });
     const videoBuffer = Buffer.from(videoResponse.data);
 
+    const caption = (`
+          ✅ Ваше видео готово!\n\nОписание: ${prompt}\n\n` +
+          'Если вам нужна помощь в создании полноценного видео из оживленных фотографий с музыкой, ' +
+          'вы можете обратиться в нашу службу технической поддержки — ' +
+          '<a href="https://t.me/obrabotych_support">@obrabotych_support</a>').trim()
     const sentMessage = await ctx.telegram.sendVideo(userId, { source: videoBuffer }, {
-      caption: `✅ Ваше видео готово!\n\nОписание: ${prompt}`
+      caption: caption,
+      parse_mode: 'HTML',
     });
 
     await Database.saveGeneratedFile(userId, 'photo', sentMessage.video.file_id, prompt);

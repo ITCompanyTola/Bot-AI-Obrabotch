@@ -654,6 +654,188 @@ export class Database {
     }
   }
 
+  static async getUserEngagementStats() {
+    const client = await pool.connect();
+    try {
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      // За все время
+      const repeatPaymentsAll = await client.query(
+        `SELECT COUNT(DISTINCT user_id) as count 
+         FROM transactions 
+         WHERE type = 'refill' 
+         AND user_id IN (
+           SELECT user_id 
+           FROM transactions 
+           WHERE type = 'refill' 
+           GROUP BY user_id 
+           HAVING COUNT(*) >= 2
+         )`
+      );
+      
+      const twoGenAll = await client.query(
+        `SELECT COUNT(*) as count 
+         FROM users 
+         WHERE total_generations = 2`
+      );
+      
+      const threeGenAll = await client.query(
+        `SELECT COUNT(*) as count 
+         FROM users 
+         WHERE total_generations = 3`
+      );
+      
+      const fourPlusGenAll = await client.query(
+        `SELECT COUNT(*) as count 
+         FROM users 
+         WHERE total_generations >= 4`
+      );
+
+      // За последние 7 дней
+      const repeatPayments7d = await client.query(
+        `SELECT COUNT(DISTINCT user_id) as count 
+         FROM transactions 
+         WHERE type = 'refill' 
+         AND created_at >= $1
+         AND user_id IN (
+           SELECT user_id 
+           FROM transactions 
+           WHERE type = 'refill' 
+           AND created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) >= 2
+         )`,
+        [sevenDaysAgo]
+      );
+      
+      const twoGen7d = await client.query(
+        `SELECT COUNT(DISTINCT g.user_id) as count 
+         FROM generated_files g
+         WHERE g.created_at >= $1
+         AND g.user_id IN (
+           SELECT user_id 
+           FROM generated_files 
+           WHERE created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) = 2
+         )`,
+        [sevenDaysAgo]
+      );
+      
+      const threeGen7d = await client.query(
+        `SELECT COUNT(DISTINCT g.user_id) as count 
+         FROM generated_files g
+         WHERE g.created_at >= $1
+         AND g.user_id IN (
+           SELECT user_id 
+           FROM generated_files 
+           WHERE created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) = 3
+         )`,
+        [sevenDaysAgo]
+      );
+      
+      const fourPlusGen7d = await client.query(
+        `SELECT COUNT(DISTINCT g.user_id) as count 
+         FROM generated_files g
+         WHERE g.created_at >= $1
+         AND g.user_id IN (
+           SELECT user_id 
+           FROM generated_files 
+           WHERE created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) >= 4
+         )`,
+        [sevenDaysAgo]
+      );
+
+      // За сегодня
+      const repeatPaymentsToday = await client.query(
+        `SELECT COUNT(DISTINCT user_id) as count 
+         FROM transactions 
+         WHERE type = 'refill' 
+         AND created_at >= $1
+         AND user_id IN (
+           SELECT user_id 
+           FROM transactions 
+           WHERE type = 'refill' 
+           AND created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) >= 2
+         )`,
+        [startOfToday]
+      );
+      
+      const twoGenToday = await client.query(
+        `SELECT COUNT(DISTINCT g.user_id) as count 
+         FROM generated_files g
+         WHERE g.created_at >= $1
+         AND g.user_id IN (
+           SELECT user_id 
+           FROM generated_files 
+           WHERE created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) = 2
+         )`,
+        [startOfToday]
+      );
+      
+      const threeGenToday = await client.query(
+        `SELECT COUNT(DISTINCT g.user_id) as count 
+         FROM generated_files g
+         WHERE g.created_at >= $1
+         AND g.user_id IN (
+           SELECT user_id 
+           FROM generated_files 
+           WHERE created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) = 3
+         )`,
+        [startOfToday]
+      );
+      
+      const fourPlusGenToday = await client.query(
+        `SELECT COUNT(DISTINCT g.user_id) as count 
+         FROM generated_files g
+         WHERE g.created_at >= $1
+         AND g.user_id IN (
+           SELECT user_id 
+           FROM generated_files 
+           WHERE created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) >= 4
+         )`,
+        [startOfToday]
+      );
+
+      return {
+        all: {
+          repeatPayments: parseInt(repeatPaymentsAll.rows[0].count),
+          twoGenerations: parseInt(twoGenAll.rows[0].count),
+          threeGenerations: parseInt(threeGenAll.rows[0].count),
+          fourPlusGenerations: parseInt(fourPlusGenAll.rows[0].count)
+        },
+        last7Days: {
+          repeatPayments: parseInt(repeatPayments7d.rows[0].count),
+          twoGenerations: parseInt(twoGen7d.rows[0].count),
+          threeGenerations: parseInt(threeGen7d.rows[0].count),
+          fourPlusGenerations: parseInt(fourPlusGen7d.rows[0].count)
+        },
+        today: {
+          repeatPayments: parseInt(repeatPaymentsToday.rows[0].count),
+          twoGenerations: parseInt(twoGenToday.rows[0].count),
+          threeGenerations: parseInt(threeGenToday.rows[0].count),
+          fourPlusGenerations: parseInt(fourPlusGenToday.rows[0].count)
+        }
+      };
+    } finally {
+      client.release();
+    }
+  }
+
   static async renameReferralSource(oldName: string, newName: string): Promise<void> {
     const client = await pool.connect();
     try {

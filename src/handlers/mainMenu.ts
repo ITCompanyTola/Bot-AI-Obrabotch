@@ -406,6 +406,50 @@ https://t.me/obrabotych_support
     }
   });
 
+  bot.command('stats_pw', async (ctx) => {
+    try {
+      const userId = ctx.from?.id;
+      if (!userId) return;
+
+      const isAdmin = await Database.isAdmin(userId);
+      if (!isAdmin) {
+        await ctx.reply('❌ У вас нет прав для выполнения этой команды');
+        return;
+      }
+
+      const stats = await Database.getUserEngagementStats();
+      const today = new Date();
+      const todayStr = today.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      
+      const statsMessage = `
+📊 <b>Статистика вовлеченности пользователей</b>
+
+<b>За все время</b>
+👥 Количество повторных пополнений: <b>${stats.all.repeatPayments}</b>
+💳 Количество 2-х генераций: <b>${stats.all.twoGenerations}</b>
+🎨 Количество 3-х генераций: <b>${stats.all.threeGenerations}</b>
+🔥 Количество 4-х генераций и более: <b>${stats.all.fourPlusGenerations}</b>
+
+<b>За последние 7 дней</b>
+👥 Количество повторных пополнений: <b>${stats.last7Days.repeatPayments}</b>
+💳 Количество 2-х генераций: <b>${stats.last7Days.twoGenerations}</b>
+🎨 Количество 3-х генераций: <b>${stats.last7Days.threeGenerations}</b>
+🔥 Количество 4-х генераций и более: <b>${stats.last7Days.fourPlusGenerations}</b>
+
+<b>За сегодня ${todayStr}</b>
+👥 Количество повторных пополнений: <b>${stats.today.repeatPayments}</b>
+💳 Количество 2-х генераций: <b>${stats.today.twoGenerations}</b>
+🎨 Количество 3-х генераций: <b>${stats.today.threeGenerations}</b>
+🔥 Количество 4-х генераций и более: <b>${stats.today.fourPlusGenerations}</b>
+      `.trim();
+      
+      await ctx.reply(statsMessage, { parse_mode: 'HTML' });
+    } catch (error) {
+      console.error('Ошибка получения статистики вовлеченности:', error);
+      await ctx.reply('❌ Ошибка при получении статистики');
+    }
+  });
+
   bot.on('text', async (ctx, next) => {
     const text = ctx.message?.text;
     if (!text || !text.startsWith('/stats_')) {

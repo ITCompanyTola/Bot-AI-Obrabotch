@@ -15,6 +15,16 @@ export interface User {
   last_name?: string;
   balance: number;
   total_generations: number;
+  is_admin: boolean;
+  source_key?: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface ReferralSource {
+  id: number;
+  source_name: string;
+  key_substring: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -44,7 +54,8 @@ export class Database {
     userId: number,
     username?: string,
     firstName?: string,
-    lastName?: string
+    lastName?: string,
+    startPayload?: string
   ): Promise<{ user: User; isNew: boolean }> {
     const client = await pool.connect();
     try {
@@ -57,14 +68,42 @@ export class Database {
         return { user: result.rows[0], isNew: false };
       }
 
+      // Сохраняем ключевую подстроку напрямую
+      const sourceKey = startPayload || null;
+
+      // Если есть startPayload, проверяем, есть ли источник в базе
+      if (startPayload) {
+        const sourceResult = await client.query(
+          'SELECT id FROM referral_sources WHERE key_substring = $1',
+          [startPayload]
+        );
+        
+        // Если источник не найден, создаем новый "неизвестный источник"
+        if (sourceResult.rows.length === 0) {
+          const unknownSourceCount = await client.query(
+            `SELECT COUNT(*) as count FROM referral_sources WHERE source_name LIKE 'неизвестный_источник_%'`
+          );
+          const nextNumber = parseInt(unknownSourceCount.rows[0].count) + 1;
+          const unknownSourceName = `неизвестный_источник_${nextNumber}`;
+          
+          await client.query(
+            `INSERT INTO referral_sources (source_name, key_substring)
+             VALUES ($1, $2)`,
+            [unknownSourceName, startPayload]
+          );
+          
+          console.log(`⚠️ Создан неизвестный источник: ${unknownSourceName} (${startPayload})`);
+        }
+      }
+
       result = await client.query(
-        `INSERT INTO users (id, username, first_name, last_name, balance, total_generations)
-         VALUES ($1, $2, $3, $4, 0.00, 0)
+        `INSERT INTO users (id, username, first_name, last_name, balance, total_generations, source_key)
+         VALUES ($1, $2, $3, $4, 0.00, 0, $5)
          RETURNING *`,
-        [userId, username, firstName, lastName]
+        [userId, username, firstName, lastName, sourceKey]
       );
 
-      console.log(`✅ Создан новый пользователь: ${userId}`);
+      console.log(`✅ Создан новый пользователь: ${userId}${sourceKey ? ` из источника ${sourceKey}` : ''}`);
       return { user: result.rows[0], isNew: true };
     } finally {
       client.release();
@@ -414,6 +453,407 @@ export class Database {
           musicGenerations: parseInt(musicGenToday.rows[0].count)
         }
       };
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getSourceStats(keySubstring: string) {
+    const client = await pool.connect();
+    try {
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      // За все время
+      const usersCountAll = await client.query('SELECT COUNT(*) as count FROM users WHERE source_key = $1', [keySubstring]);
+      const paymentsCountAll = await client.query(
+        `SELECT COUNT(*) as count FROM transactions t 
+         JOIN users u ON t.user_id = u.id 
+         WHERE u.source_key = $1 AND t.type = 'refill'`,
+        [keySubstring]
+      );
+      const paymentsSumAll = await client.query(
+        `SELECT COALESCE(SUM(t.amount), 0) as total FROM transactions t 
+         JOIN users u ON t.user_id = u.id 
+         WHERE u.source_key = $1 AND t.type = 'refill'`,
+        [keySubstring]
+      );
+      const photoGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'photo'`,
+        [keySubstring]
+      );
+      const musicGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'music'`,
+        [keySubstring]
+      );
+
+      // За последние 7 дней
+      const usersCount7d = await client.query(
+        'SELECT COUNT(*) as count FROM users WHERE source_key = $1 AND created_at >= $2',
+        [keySubstring, sevenDaysAgo]
+      );
+      const paymentsCount7d = await client.query(
+        `SELECT COUNT(*) as count FROM transactions t 
+         JOIN users u ON t.user_id = u.id 
+         WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const paymentsSum7d = await client.query(
+        `SELECT COALESCE(SUM(t.amount), 0) as total FROM transactions t 
+         JOIN users u ON t.user_id = u.id 
+         WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const photoGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'photo' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const musicGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'music' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+
+      // За сегодня
+      const usersCountToday = await client.query(
+        'SELECT COUNT(*) as count FROM users WHERE source_key = $1 AND created_at >= $2',
+        [keySubstring, startOfToday]
+      );
+      const paymentsCountToday = await client.query(
+        `SELECT COUNT(*) as count FROM transactions t 
+         JOIN users u ON t.user_id = u.id 
+         WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
+        [keySubstring, startOfToday]
+      );
+      const paymentsSumToday = await client.query(
+        `SELECT COALESCE(SUM(t.amount), 0) as total FROM transactions t 
+         JOIN users u ON t.user_id = u.id 
+         WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
+        [keySubstring, startOfToday]
+      );
+      const photoGenToday = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'photo' AND g.created_at >= $2`,
+        [keySubstring, startOfToday]
+      );
+      const musicGenToday = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'music' AND g.created_at >= $2`,
+        [keySubstring, startOfToday]
+      );
+
+      return {
+        all: {
+          usersCount: parseInt(usersCountAll.rows[0].count),
+          successfulPayments: parseInt(paymentsCountAll.rows[0].count),
+          totalPaymentsAmount: parseFloat(paymentsSumAll.rows[0].total),
+          photoGenerations: parseInt(photoGenAll.rows[0].count),
+          musicGenerations: parseInt(musicGenAll.rows[0].count)
+        },
+        last7Days: {
+          usersCount: parseInt(usersCount7d.rows[0].count),
+          successfulPayments: parseInt(paymentsCount7d.rows[0].count),
+          totalPaymentsAmount: parseFloat(paymentsSum7d.rows[0].total),
+          photoGenerations: parseInt(photoGen7d.rows[0].count),
+          musicGenerations: parseInt(musicGen7d.rows[0].count)
+        },
+        today: {
+          usersCount: parseInt(usersCountToday.rows[0].count),
+          successfulPayments: parseInt(paymentsCountToday.rows[0].count),
+          totalPaymentsAmount: parseFloat(paymentsSumToday.rows[0].total),
+          photoGenerations: parseInt(photoGenToday.rows[0].count),
+          musicGenerations: parseInt(musicGenToday.rows[0].count)
+        }
+      };
+    } finally {
+      client.release();
+    }
+  }
+
+  static async isAdmin(userId: number): Promise<boolean> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT is_admin FROM users WHERE id = $1',
+        [userId]
+      );
+      
+      if (result.rows.length === 0) {
+        return false;
+      }
+      
+      return result.rows[0].is_admin === true;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async createReferralSource(
+    sourceName: string,
+    keySubstring: string
+  ): Promise<ReferralSource> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `INSERT INTO referral_sources (source_name, key_substring)
+         VALUES ($1, $2)
+         RETURNING *`,
+        [sourceName, keySubstring]
+      );
+
+      console.log(`✅ Создан новый источник: ${sourceName}`);
+      return result.rows[0];
+    } catch (error: any) {
+      if (error.code === '23505') {
+        throw new Error('Источник с таким именем или ключевой подстрокой уже существует');
+      }
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getReferralSource(sourceName: string): Promise<ReferralSource | null> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT * FROM referral_sources WHERE source_name = $1',
+        [sourceName]
+      );
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getAllReferralSources(): Promise<ReferralSource[]> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT * FROM referral_sources ORDER BY created_at DESC'
+      );
+
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getUserEngagementStats() {
+    const client = await pool.connect();
+    try {
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      // За все время
+      const repeatPaymentsAll = await client.query(
+        `SELECT COUNT(DISTINCT user_id) as count 
+         FROM transactions 
+         WHERE type = 'refill' 
+         AND user_id IN (
+           SELECT user_id 
+           FROM transactions 
+           WHERE type = 'refill' 
+           GROUP BY user_id 
+           HAVING COUNT(*) >= 2
+         )`
+      );
+      
+      const twoGenAll = await client.query(
+        `SELECT COUNT(*) as count 
+         FROM users 
+         WHERE total_generations = 2`
+      );
+      
+      const threeGenAll = await client.query(
+        `SELECT COUNT(*) as count 
+         FROM users 
+         WHERE total_generations = 3`
+      );
+      
+      const fourPlusGenAll = await client.query(
+        `SELECT COUNT(*) as count 
+         FROM users 
+         WHERE total_generations >= 4`
+      );
+
+      // За последние 7 дней
+      const repeatPayments7d = await client.query(
+        `SELECT COUNT(DISTINCT user_id) as count 
+         FROM transactions 
+         WHERE type = 'refill' 
+         AND created_at >= $1
+         AND user_id IN (
+           SELECT user_id 
+           FROM transactions 
+           WHERE type = 'refill' 
+           AND created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) >= 2
+         )`,
+        [sevenDaysAgo]
+      );
+      
+      const twoGen7d = await client.query(
+        `SELECT COUNT(DISTINCT g.user_id) as count 
+         FROM generated_files g
+         WHERE g.created_at >= $1
+         AND g.user_id IN (
+           SELECT user_id 
+           FROM generated_files 
+           WHERE created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) = 2
+         )`,
+        [sevenDaysAgo]
+      );
+      
+      const threeGen7d = await client.query(
+        `SELECT COUNT(DISTINCT g.user_id) as count 
+         FROM generated_files g
+         WHERE g.created_at >= $1
+         AND g.user_id IN (
+           SELECT user_id 
+           FROM generated_files 
+           WHERE created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) = 3
+         )`,
+        [sevenDaysAgo]
+      );
+      
+      const fourPlusGen7d = await client.query(
+        `SELECT COUNT(DISTINCT g.user_id) as count 
+         FROM generated_files g
+         WHERE g.created_at >= $1
+         AND g.user_id IN (
+           SELECT user_id 
+           FROM generated_files 
+           WHERE created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) >= 4
+         )`,
+        [sevenDaysAgo]
+      );
+
+      // За сегодня
+      const repeatPaymentsToday = await client.query(
+        `SELECT COUNT(DISTINCT user_id) as count 
+         FROM transactions 
+         WHERE type = 'refill' 
+         AND created_at >= $1
+         AND user_id IN (
+           SELECT user_id 
+           FROM transactions 
+           WHERE type = 'refill' 
+           AND created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) >= 2
+         )`,
+        [startOfToday]
+      );
+      
+      const twoGenToday = await client.query(
+        `SELECT COUNT(DISTINCT g.user_id) as count 
+         FROM generated_files g
+         WHERE g.created_at >= $1
+         AND g.user_id IN (
+           SELECT user_id 
+           FROM generated_files 
+           WHERE created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) = 2
+         )`,
+        [startOfToday]
+      );
+      
+      const threeGenToday = await client.query(
+        `SELECT COUNT(DISTINCT g.user_id) as count 
+         FROM generated_files g
+         WHERE g.created_at >= $1
+         AND g.user_id IN (
+           SELECT user_id 
+           FROM generated_files 
+           WHERE created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) = 3
+         )`,
+        [startOfToday]
+      );
+      
+      const fourPlusGenToday = await client.query(
+        `SELECT COUNT(DISTINCT g.user_id) as count 
+         FROM generated_files g
+         WHERE g.created_at >= $1
+         AND g.user_id IN (
+           SELECT user_id 
+           FROM generated_files 
+           WHERE created_at >= $1
+           GROUP BY user_id 
+           HAVING COUNT(*) >= 4
+         )`,
+        [startOfToday]
+      );
+
+      return {
+        all: {
+          repeatPayments: parseInt(repeatPaymentsAll.rows[0].count),
+          twoGenerations: parseInt(twoGenAll.rows[0].count),
+          threeGenerations: parseInt(threeGenAll.rows[0].count),
+          fourPlusGenerations: parseInt(fourPlusGenAll.rows[0].count)
+        },
+        last7Days: {
+          repeatPayments: parseInt(repeatPayments7d.rows[0].count),
+          twoGenerations: parseInt(twoGen7d.rows[0].count),
+          threeGenerations: parseInt(threeGen7d.rows[0].count),
+          fourPlusGenerations: parseInt(fourPlusGen7d.rows[0].count)
+        },
+        today: {
+          repeatPayments: parseInt(repeatPaymentsToday.rows[0].count),
+          twoGenerations: parseInt(twoGenToday.rows[0].count),
+          threeGenerations: parseInt(threeGenToday.rows[0].count),
+          fourPlusGenerations: parseInt(fourPlusGenToday.rows[0].count)
+        }
+      };
+    } finally {
+      client.release();
+    }
+  }
+
+  static async renameReferralSource(oldName: string, newName: string): Promise<void> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'UPDATE referral_sources SET source_name = $1 WHERE source_name = $2',
+        [newName, oldName]
+      );
+
+      if (result.rowCount === 0) {
+        throw new Error(`Источник "${oldName}" не найден`);
+      }
+
+      console.log(`✅ Источник переименован: ${oldName} -> ${newName}`);
+    } catch (error: any) {
+      if (error.code === '23505') {
+        throw new Error(`Источник с именем "${newName}" уже существует`);
+      }
+      throw error;
     } finally {
       client.release();
     }

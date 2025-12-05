@@ -71,31 +71,6 @@ export class Database {
       // Сохраняем ключевую подстроку напрямую
       const sourceKey = startPayload || null;
 
-      // Если есть startPayload, проверяем, есть ли источник в базе
-      if (startPayload) {
-        const sourceResult = await client.query(
-          'SELECT id FROM referral_sources WHERE key_substring = $1',
-          [startPayload]
-        );
-        
-        // Если источник не найден, создаем новый "неизвестный источник"
-        if (sourceResult.rows.length === 0) {
-          const unknownSourceCount = await client.query(
-            `SELECT COUNT(*) as count FROM referral_sources WHERE source_name LIKE 'неизвестный_источник_%'`
-          );
-          const nextNumber = parseInt(unknownSourceCount.rows[0].count) + 1;
-          const unknownSourceName = `неизвестный_источник_${nextNumber}`;
-          
-          await client.query(
-            `INSERT INTO referral_sources (source_name, key_substring)
-             VALUES ($1, $2)`,
-            [unknownSourceName, startPayload]
-          );
-          
-          console.log(`⚠️ Создан неизвестный источник: ${unknownSourceName} (${startPayload})`);
-        }
-      }
-
       result = await client.query(
         `INSERT INTO users (id, username, first_name, last_name, balance, total_generations, source_key)
          VALUES ($1, $2, $3, $4, 0.00, 0, $5)

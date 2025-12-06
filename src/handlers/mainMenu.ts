@@ -44,6 +44,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
             parse_mode: 'HTML',
             ...Markup.inlineKeyboard([
               [Markup.button.callback('Написать в поддержку', 'support')],
+              [Markup.button.callback('Реставрация фото', 'photo_restoration')],
               [
                 Markup.button.callback('📸 Оживить фото', 'photo_animation'),
                 Markup.button.callback('🎶 Создать музыку', 'music_creation')
@@ -104,6 +105,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
           [Markup.button.callback('Написать в поддержку', 'support')],
+          [Markup.button.callback('Реставрация фото', 'photo_restoration')],
           [
             Markup.button.callback('📸 Оживить фото', 'photo_animation'),
             Markup.button.callback('🎶 Создать музыку', 'music_creation')
@@ -145,6 +147,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
 
     const keyboard = Markup.inlineKeyboard([
       [Markup.button.callback('Написать в поддержку', 'support')],
+      [Markup.button.callback('Реставрация фото', 'photo_restoration')],
       [
         Markup.button.callback('📸 Оживить фото', 'photo_animation'),
         Markup.button.callback('🎶 Создать музыку', 'music_creation')
@@ -206,6 +209,7 @@ https://t.me/obrabotych_support
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
           [Markup.button.callback('Написать в поддержку', 'support')],
+          [Markup.button.callback('Реставрация фото', 'photo_restoration')],
           [
             Markup.button.callback('📸 Оживить фото', 'photo_animation'),
             Markup.button.callback('🎶 Создать музыку', 'music_creation')

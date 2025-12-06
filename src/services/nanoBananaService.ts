@@ -147,6 +147,8 @@ export async function processPhotoRestoration(ctx: any, userId: number, photoFil
 
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
+
+    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
     
     const restoratedPhotoUrl = await generatePhotoWithBanana(photoUrl.href, prompt);
 
@@ -159,7 +161,8 @@ export async function processPhotoRestoration(ctx: any, userId: number, photoFil
       parse_mode: 'HTML',
     });
 
-    await Database.saveGeneratedFile(userId, 'restoration', sentMessage.photo.file_id, prompt);
+    const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
+    await Database.saveGeneratedFile(userId, 'restoration', fileId, prompt);
 
     console.log(`✅ Отреставрированная фотография сгенерирована и сохранена для пользователя ${userId}`);
     console.log(`📁 File ID: ${sentMessage.photo.file_id}`);

@@ -7,6 +7,7 @@ import { registerProfileHandlers } from './profile';
 import { registerPaymentHandlers } from './payment';
 import { registerTextHandlers } from './textHandlers';
 import { config } from '../config';
+import { registerPhotoRestorationHandlers } from './photoRestoration';
 
 async function sendTGTrackWebhook(update: any) {
   // if (!config.tgtrackApiKey) return;
@@ -87,6 +88,7 @@ export function registerAllHandlers(bot: Telegraf<BotContext>, userStates: Map<n
   registerMainMenuHandlers(bot, userStates);
   registerPhotoAnimationHandlers(bot, userStates);
   registerMusicCreationHandlers(bot, userStates);
+  registerPhotoRestorationHandlers(bot, userStates);
   registerProfileHandlers(bot, userStates);
   registerPaymentHandlers(bot, userStates);
   registerTextHandlers(bot, userStates);

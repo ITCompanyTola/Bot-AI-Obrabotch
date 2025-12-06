@@ -268,6 +268,7 @@ export class Database {
     }
   }
 
+  // Добавить новый тип для реставрации
   static async saveGeneratedFile(
     userId: number,
     fileType: 'photo' | 'music',
@@ -316,6 +317,8 @@ export class Database {
       client.release();
     }
   }
+
+  // Добавить ручку на получение отреставрированных фото
 
   static async setPolicyAccepted(userId: number): Promise<void> {
     const client = await pool.connect();

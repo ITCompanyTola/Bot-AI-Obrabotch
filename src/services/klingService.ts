@@ -175,6 +175,7 @@ export async function processVideoGeneration(ctx: any, userId: number, photoFile
       mainMenuMessage,
       Markup.inlineKeyboard([
         [Markup.button.callback('Написать в поддержку', 'support')],
+        [Markup.button.callback('Реставрация фото', 'photo_restoration')],
         [
           Markup.button.callback('📸 Оживить фото', 'photo_animation'),
           Markup.button.callback('🎶 Создать музыку', 'music_creation')

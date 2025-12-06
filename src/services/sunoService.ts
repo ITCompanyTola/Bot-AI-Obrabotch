@@ -201,6 +201,7 @@ export async function processMusicGeneration(
       reply_markup: {
         inline_keyboard: [
           [{ text: 'Написать в поддержку', callback_data: 'support' }],
+          [{text: 'Реставрация фото', callback_data: 'photo_restoration'}],
           [
             { text: '📸 Оживить фото', callback_data: 'photo_animation' },
             { text: '🎶 Создать музыку', callback_data: 'music_creation' }

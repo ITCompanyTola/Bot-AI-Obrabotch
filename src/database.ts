@@ -271,7 +271,7 @@ export class Database {
   // Добавить новый тип для реставрации
   static async saveGeneratedFile(
     userId: number,
-    fileType: 'photo' | 'music',
+    fileType: 'photo' | 'music' | 'restoration',
     fileId: string,
     prompt?: string
   ): Promise<void> {

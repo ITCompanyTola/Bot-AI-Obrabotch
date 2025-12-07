@@ -21,6 +21,6 @@ export interface UserState {
   paymentId?: string;
   musicText?: string;
   musicStyle?: string;
-  refillSource?: 'photo' | 'profile' | 'music';
+  refillSource?: 'photo' | 'profile' | 'music' | 'restoration';
   pendingPaymentAmount?: number;
 }

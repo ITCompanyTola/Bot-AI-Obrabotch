@@ -87,6 +87,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
         backAction = 'refill_balance_from_profile';
       } else if (userState.refillSource === 'music') {
         backAction = 'refill_balance_from_music';
+      } else if (userState?.refillSource === 'restoration') {
+        backAction = 'refill_balance_from_restoration';
       }
       
       userStates.set(userId, {

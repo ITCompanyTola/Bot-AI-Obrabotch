@@ -58,7 +58,11 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
 
     const userId = ctx.from?.id;
     if (!userId) return;
-    userState.set(userId, {step: 'waiting_for_restoration_photo'});
+
+    const hasEnoughBalance = await Database.hasEnoughBalance(userId, PRICES.PHOTO_RESTORATION);
+
+    if (hasEnoughBalance) {
+      userState.set(userId, {step: 'waiting_for_restoration_photo'});
 
     const photoRestorationWaitingMessage = `
 <b>📸 Пример ⤴️</b>
@@ -100,7 +104,27 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
             ] 
           }
       });
+      return;
     }
+    }
+
+    const balance = await Database.getUserBalance(userId);
+
+    const paymentMessage = `
+💰 Ваш баланс: ${balance.toFixed(2)} ₽
+📸 Создание 1 Реставрации = ${PRICES.PHOTO_RESTORATION}₽
+    
+Выберете способ оплаты ⤵️`.trim();
+    
+    await ctx.telegram.sendMessage(userId, paymentMessage, {
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [
+          [{text: 'Оплата картой', callback_data: 'refill_balance_from_restoration'}],
+          [{text: 'Главное меню', callback_data: 'main_menu'}]
+        ]
+      }
+    });
   });
 
   bot.action('photo_restoration_instruction', async (ctx) => {

@@ -70,7 +70,7 @@ ${payment.confirmationUrl}
   }
 }
 
-async function showRefillAmountSelection(ctx: any, userStates: Map<number, UserState>, refillSource: 'photo' | 'profile' | 'music', useEdit: boolean = false) {
+async function showRefillAmountSelection(ctx: any, userStates: Map<number, UserState>, refillSource: 'photo' | 'profile' | 'music' | 'restoration', useEdit: boolean = false) {
   const userId = ctx.from?.id;
   if (!userId) return;
 
@@ -82,7 +82,8 @@ async function showRefillAmountSelection(ctx: any, userStates: Map<number, UserS
   const backActions = {
     photo: 'photo_animation',
     profile: 'profile',
-    music: 'music_creation'
+    music: 'music_creation',
+    restoration: 'photo_restoration'
   };
 
   const keyboard = Markup.inlineKeyboard([
@@ -184,6 +185,23 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     await showRefillAmountSelection(ctx, userStates, 'music', true);
   });
 
+  bot.action('refill_balance_from_restoration', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    logToFile(`📝 refill_balance_from_restoration вызван: userId=${userId}`);
+    
+    await showRefillAmountSelection(ctx, userStates, 'restoration', true);
+  });
+
   bot.action('refill_150', async (ctx) => {
     try {
       await ctx.answerCbQuery();
@@ -205,6 +223,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       backAction = 'refill_balance_from_profile';
     } else if (userState?.refillSource === 'music') {
       backAction = 'refill_balance_from_music';
+    } else if (userState?.refillSource === 'restoration') {
+      backAction = 'refill_balance_from_restoration';
     }
     
     await requestEmailOrProceed(ctx, 150, userStates, backAction);
@@ -231,6 +251,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       backAction = 'refill_balance_from_profile';
     } else if (userState?.refillSource === 'music') {
       backAction = 'refill_balance_from_music';
+    } else if (userState?.refillSource === 'restoration') {
+      backAction = 'refill_balance_from_restoration';
     }
     
     await requestEmailOrProceed(ctx, 300, userStates, backAction);
@@ -257,6 +279,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       backAction = 'refill_balance_from_profile';
     } else if (userState?.refillSource === 'music') {
       backAction = 'refill_balance_from_music';
+    } else if (userState?.refillSource === 'restoration') {
+      backAction = 'refill_balance_from_restoration';
     }
     
     await requestEmailOrProceed(ctx, 800, userStates, backAction);
@@ -283,6 +307,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       backAction = 'refill_balance_from_profile';
     } else if (userState?.refillSource === 'music') {
       backAction = 'refill_balance_from_music';
+    } else if (userState?.refillSource === 'restoration') {
+      backAction = 'refill_balance_from_restoration';
     }
     
     await requestEmailOrProceed(ctx, 1600, userStates, backAction);

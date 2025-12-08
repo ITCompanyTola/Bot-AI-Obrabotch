@@ -145,6 +145,17 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
 Смотрите короткое видео, чтобы легко и быстро понять, как реставрировать свои фотографии и получать потрясающие результаты ✨📸
     `.trim();
 
+    const sendErrorMessage = async (): Promise<void> => {
+      const instructionErrorMessage = 'Ошибка загрузки видео. Пожалуйста вернитесь назад.'
+      await ctx.telegram.sendMessage(userId, instructionErrorMessage, {
+        reply_markup: {
+          inline_keyboard: [
+            [{text: 'Назад', callback_data: 'photo_restoration'}]
+          ]
+        }
+      });
+    }
+
     if (PHOTO_RESTORATION_INSTRUCTION && PHOTO_RESTORATION_INSTRUCTION.trim() !== '') {
       try {
         await ctx.telegram.sendVideo(userId, PHOTO_RESTORATION_INSTRUCTION, {
@@ -157,16 +168,11 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
           }
         });
       } catch (error) {
-        console.error('Ошибка отправки инструкции к реставрации фото', error);
-        const instructionErrorMessage = 'Ошибка загрузки видео. Пожалуйста вернитесь назад.'
-        await ctx.telegram.sendMessage(userId, instructionErrorMessage, {
-          reply_markup: {
-            inline_keyboard: [
-              [{text: 'Назад', callback_data: 'photo_restoration'}]
-            ]
-          }
-        });
-      }
+          console.error('Ошибка отправки инструкции к реставрации фото', error);
+          sendErrorMessage();
+        }
+    } else {
+      sendErrorMessage();
     }
-  })
+  });
 }

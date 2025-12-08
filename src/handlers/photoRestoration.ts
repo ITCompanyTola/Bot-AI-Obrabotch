@@ -67,10 +67,10 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
     const photoRestorationWaitingMessage = `
 <b>📸 Пример ⤴️</b>
 
-Отправьте фотографию, которую нужно восстановить — бот устранит шум, повреждения и повысит качество изображения ✨🏞
+Отправьте <b><i>фотографию</i></b> которую нужно восстановить — бот устранит шум, повреждения и повысит качество изображения ✨🏞
     `.trim();
-    const messageWithoutExample = `
-Отправьте фотографию, которую нужно восстановить — бот устранит шум, повреждения и повысит качество изображения ✨🏞
+    const restorationMessageWithoutExample = `
+Отправьте <b><i>фотографию</i></b>, которую нужно восстановить — бот устранит шум, повреждения и повысит качество изображения ✨🏞
     `.trim();
 
     if (EXAMPLE_PHOTO_RESTORATION && EXAMPLE_PHOTO_RESTORATION.trim() !== '') {
@@ -86,7 +86,7 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
         });
       } catch (error) {
         console.error('Ошибка отправки фото для реставрации: ', error);
-        await ctx.telegram.sendMessage(userId, messageWithoutExample, {
+        await ctx.telegram.sendMessage(userId, restorationMessageWithoutExample, {
           parse_mode: 'HTML',
           reply_markup: {
             inline_keyboard: [
@@ -96,7 +96,7 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
         });
       }
     } else {
-      await ctx.telegram.sendMessage(userId, messageWithoutExample, {
+      await ctx.telegram.sendMessage(userId, restorationMessageWithoutExample, {
           parse_mode: 'HTML',
           reply_markup: {
             inline_keyboard: [

@@ -4,6 +4,7 @@ import { Database } from '../database';
 import { PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
 import { logToFile } from '../bot';
+import { processPhotoRestoration } from '../services/nanoBananaService';
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -16,16 +17,15 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     if (!userId) return;
     
     const userState = userStates.get(userId);
-    if (userState?.step !== 'waiting_photo') return;
+    if (userState?.step === 'waiting_photo') {
+      const photo = ctx.message.photo[ctx.message.photo.length - 1];
     
-    const photo = ctx.message.photo[ctx.message.photo.length - 1];
+      userStates.set(userId, {
+        step: 'waiting_description',
+        photoFileId: photo.file_id
+      });
     
-    userStates.set(userId, {
-      step: 'waiting_description',
-      photoFileId: photo.file_id
-    });
-    
-    const descriptionMessage = `
+      const descriptionMessage = `
 🖼 <b>Опишите, как должна ожить фотография</b>
 
 Укажите, что именно должно происходить с каждым человеком на фото: отдельно или все вместе.
@@ -45,7 +45,17 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
 - <b><i>Допустимо</i></b> присылать фото в купальнике или белье с нейтральным описанием вроде "Позирует на камеру" — мы не звери 😅
     `.trim();
 
-    await ctx.reply(descriptionMessage, { parse_mode: 'HTML' });
+      await ctx.reply(descriptionMessage, { parse_mode: 'HTML' });
+    }
+
+    if (userState?.step === 'waiting_for_restoration_photo') {
+      const photo = ctx.message.photo[ctx.message.photo.length - 1];
+      const prompt = 'Restore the photo';
+
+      processPhotoRestoration(ctx, userId, photo.file_id, prompt);
+
+      userStates.delete(userId);
+    }
   });
 
   bot.on('text', async (ctx) => {
@@ -77,6 +87,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
         backAction = 'refill_balance_from_profile';
       } else if (userState.refillSource === 'music') {
         backAction = 'refill_balance_from_music';
+      } else if (userState?.refillSource === 'restoration') {
+        backAction = 'refill_balance_from_restoration';
       }
       
       userStates.set(userId, {

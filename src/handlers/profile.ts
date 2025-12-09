@@ -36,6 +36,7 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
       {
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
+          [Markup.button.callback('Мои реставрации', 'my_restorations')],
           [
             Markup.button.callback('Мои фото', 'my_photos'),
             Markup.button.callback('Мои треки', 'my_tracks')
@@ -130,6 +131,48 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
     await ctx.telegram.sendMessage(
       userId,
       `🎵 Ваши треки (${tracks.length}):`,
+      Markup.inlineKeyboard([
+        [Markup.button.callback('Назад', 'profile')]
+      ])
+    );
+  });
+
+  bot.action('my_restorations', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const restorations = await Database.getUserRestorations(userId);
+    
+    if (restorations.length === 0) {
+      await ctx.editMessageText(
+        '📸 У вас пока нет сгенерированных реставраций',
+        Markup.inlineKeyboard([
+          [Markup.button.callback('Назад', 'profile')]
+        ])
+      );
+      return;
+    }
+
+    for (const restoration of restorations) {
+      try {
+        await ctx.telegram.sendPhoto(userId, restoration.file_id);
+      } catch (error) {
+        console.error('Ошибка отправки реставрации:', error);
+        await ctx.telegram.sendMessage(userId, `❌ Реставрация недоступна (ID: ${restoration.id})`);
+      }
+    }
+
+    await ctx.telegram.sendMessage(
+      userId,
+      `📸 Ваши реставрации (${restorations.length}):`,
       Markup.inlineKeyboard([
         [Markup.button.callback('Назад', 'profile')]
       ])

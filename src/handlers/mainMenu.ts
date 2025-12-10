@@ -2,6 +2,7 @@ import { Telegraf, Markup } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { sendTGTrackUserStart } from './index';
+import { mainMenuKeyboard } from '../constants';
 
 export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.command('start', async (ctx) => {
@@ -37,7 +38,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
 - <b><i>оживлять фото</i></b> 📸✨
 - создавать <b><i>крутые треки</i></b> 🎵🔥
 - <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- <b><i>добавлять цвета</i></b> на <b><i>фотографии</i></b>
+- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
 
 Вы можете творить сами или доверить работу нам 🤝
 В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
@@ -47,18 +48,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
           mainMenuMessage,
           {
             parse_mode: 'HTML',
-            ...Markup.inlineKeyboard([
-              [Markup.button.callback('Написать в поддержку', 'support')],
-              [
-                Markup.button.callback('✨ Реставрация фото', 'photo_restoration'),
-                Markup.button.callback('🎨 ч/б в цветное фото', 'photo_colorize')
-              ],
-              [
-                Markup.button.callback('📸 Оживить фото', 'photo_animation'),
-                Markup.button.callback('🎶 Создать музыку', 'music_creation')
-              ],
-              [Markup.button.callback('Личный кабинет', 'profile')]
-            ])
+            ...Markup.inlineKeyboard(mainMenuKeyboard)
           }
         );
       } else {
@@ -106,7 +96,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
 - <b><i>оживлять фото</i></b> 📸✨
 - создавать <b><i>крутые треки</i></b> 🎵🔥
 - <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- <b><i>добавлять цвета</i></b> на <b><i>фотографии</i></b>
+- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
 
 Вы можете творить сами или доверить работу нам 🤝
 В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
@@ -116,18 +106,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
       mainMenuMessage,
       {
         parse_mode: 'HTML',
-        ...Markup.inlineKeyboard([
-          [Markup.button.callback('Написать в поддержку', 'support')],
-          [
-            Markup.button.callback('✨ Реставрация фото', 'photo_restoration'),
-            Markup.button.callback('🎨 ч/б в цветное фото', 'photo_colorize')
-          ],
-          [
-            Markup.button.callback('📸 Оживить фото', 'photo_animation'),
-            Markup.button.callback('🎶 Создать музыку', 'music_creation')
-          ],
-          [Markup.button.callback('Личный кабинет', 'profile')]
-        ])
+        ...Markup.inlineKeyboard(mainMenuKeyboard)
       }
     );
   });
@@ -160,24 +139,13 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
 - <b><i>оживлять фото</i></b> 📸✨
 - создавать <b><i>крутые треки</i></b> 🎵🔥
 - <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- <b><i>добавлять цвета</i></b> на <b><i>фотографии</i></b>
+- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
 
 Вы можете творить сами или доверить работу нам 🤝
 В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
     `.trim();
 
-    const keyboard = Markup.inlineKeyboard([
-      [Markup.button.callback('Написать в поддержку', 'support')],
-      [
-        Markup.button.callback('✨ Реставрация фото', 'photo_restoration'),
-        Markup.button.callback('🎨 ч/б в цветное фото', 'photo_colorize')
-      ],
-      [
-        Markup.button.callback('📸 Оживить фото', 'photo_animation'),
-        Markup.button.callback('🎶 Создать музыку', 'music_creation')
-      ],
-      [Markup.button.callback('Личный кабинет', 'profile')]
-    ]);
+    const keyboard = Markup.inlineKeyboard(mainMenuKeyboard);
 
     // Проверяем, является ли сообщение текстовым
     if (ctx.callbackQuery && 'message' in ctx.callbackQuery && ctx.callbackQuery.message) {
@@ -226,7 +194,7 @@ https://t.me/obrabotych_support
 - <b><i>оживлять фото</i></b> 📸✨
 - создавать <b><i>крутые треки</i></b> 🎵🔥
 - <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- <b><i>добавлять цвета</i></b> на <b><i>фотографии</i></b>
+- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
 
 Вы можете творить сами или доверить работу нам 🤝
 В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
@@ -236,18 +204,7 @@ https://t.me/obrabotych_support
       mainMenuMessage,
       {
         parse_mode: 'HTML',
-        ...Markup.inlineKeyboard([
-          [Markup.button.callback('Написать в поддержку', 'support')],
-          [
-            Markup.button.callback('✨ Реставрация фото', 'photo_restoration'),
-            Markup.button.callback('🎨 ч/б в цветное фото', 'photo_colorize')
-          ],
-          [
-            Markup.button.callback('📸 Оживить фото', 'photo_animation'),
-            Markup.button.callback('🎶 Создать музыку', 'music_creation')
-          ],
-          [Markup.button.callback('Личный кабинет', 'profile')]
-        ])
+        ...Markup.inlineKeyboard(mainMenuKeyboard)
       }
     );
   });

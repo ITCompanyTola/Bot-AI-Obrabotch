@@ -3,7 +3,7 @@ import { Buffer } from 'buffer';
 import { Markup } from 'telegraf';
 import { config } from '../config';
 import { Database } from '../database';
-import { PRICES } from '../constants';
+import { mainMenuKeyboard, PRICES } from '../constants';
 
 const API_URL = 'https://api.kie.ai/api/v1/jobs';
 const API_KEY = config.klingApiKey;
@@ -166,11 +166,12 @@ export async function processVideoGeneration(ctx: any, userId: number, photoFile
     console.log(`✅ Видео сгенерировано и сохранено для пользователя ${userId}`);
     console.log(`📁 File ID: ${sentMessage.video.file_id}`);
 
-    const mainMenuMessage = `Наш бот умеет:
+    const mainMenuMessage = `
+Наш бот умеет:
 - <b><i>оживлять фото</i></b> 📸✨
 - создавать <b><i>крутые треки</i></b> 🎵🔥
 - <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- <b><i>добавлять цвета</i></b> на <b><i>фотографии</i></b>
+- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
 
 Вы можете творить сами или доверить работу нам 🤝
 В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
@@ -181,18 +182,7 @@ export async function processVideoGeneration(ctx: any, userId: number, photoFile
   mainMenuMessage,
   {
     parse_mode: 'HTML',
-    ...Markup.inlineKeyboard([
-      [Markup.button.callback('Написать в поддержку', 'support')],
-      [
-        Markup.button.callback('✨ Реставрация фото', 'photo_restoration'),
-        Markup.button.callback('🎨 ч/б в цветное фото', 'photo_colorize')
-      ],
-      [
-        Markup.button.callback('📸 Оживить фото', 'photo_animation'),
-        Markup.button.callback('🎶 Создать музыку', 'music_creation')
-      ],
-        [Markup.button.callback('Личный кабинет', 'profile')]
-    ])
+    ...Markup.inlineKeyboard(mainMenuKeyboard)
   });
 
   } catch (error) {

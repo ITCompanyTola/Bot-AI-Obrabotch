@@ -5,6 +5,7 @@ import { PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
 import { logToFile } from '../bot';
 import { processPhotoRestoration } from '../services/nanoBananaService';
+import { processPhotoColorize } from '../services/nanoBananaProService';
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -56,6 +57,13 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
 
       userStates.delete(userId);
     }
+
+    if (userState?.step === 'waiting_for_colorize_photo') {
+      const photo = ctx.message.photo[ctx.message.photo.length - 1];
+      const prompt = 'Convert a black-and-white photo to color and improve the quality and clarity of the photo';
+
+      processPhotoColorize(ctx, userId, photo.file_id, prompt);
+    }
   });
 
   bot.on('text', async (ctx) => {
@@ -89,6 +97,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
         backAction = 'refill_balance_from_music';
       } else if (userState?.refillSource === 'restoration') {
         backAction = 'refill_balance_from_restoration';
+      } else if (userState?.refillSource === 'colorize') {
+        backAction = 'refill_balance_from_colorize';
       }
       
       userStates.set(userId, {

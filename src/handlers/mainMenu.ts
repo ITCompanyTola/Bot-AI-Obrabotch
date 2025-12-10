@@ -37,6 +37,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
 - <b><i>оживлять фото</i></b> 📸✨
 - создавать <b><i>крутые треки</i></b> 🎵🔥
 - <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
+- <b><i>добавлять цвета</i></b> на <b><i>фотографии</i></b>
 
 Вы можете творить сами или доверить работу нам 🤝
 В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
@@ -48,7 +49,10 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
             parse_mode: 'HTML',
             ...Markup.inlineKeyboard([
               [Markup.button.callback('Написать в поддержку', 'support')],
-              [Markup.button.callback('Реставрация фото', 'photo_restoration')],
+              [
+                Markup.button.callback('✨ Реставрация фото', 'photo_restoration'),
+                Markup.button.callback('🎨 ч/б в цветное фото', 'photo_colorize')
+              ],
               [
                 Markup.button.callback('📸 Оживить фото', 'photo_animation'),
                 Markup.button.callback('🎶 Создать музыку', 'music_creation')
@@ -102,6 +106,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
 - <b><i>оживлять фото</i></b> 📸✨
 - создавать <b><i>крутые треки</i></b> 🎵🔥
 - <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
+- <b><i>добавлять цвета</i></b> на <b><i>фотографии</i></b>
 
 Вы можете творить сами или доверить работу нам 🤝
 В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
@@ -113,7 +118,10 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
           [Markup.button.callback('Написать в поддержку', 'support')],
-          [Markup.button.callback('Реставрация фото', 'photo_restoration')],
+          [
+            Markup.button.callback('✨ Реставрация фото', 'photo_restoration'),
+            Markup.button.callback('🎨 ч/б в цветное фото', 'photo_colorize')
+          ],
           [
             Markup.button.callback('📸 Оживить фото', 'photo_animation'),
             Markup.button.callback('🎶 Создать музыку', 'music_creation')
@@ -152,6 +160,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
 - <b><i>оживлять фото</i></b> 📸✨
 - создавать <b><i>крутые треки</i></b> 🎵🔥
 - <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
+- <b><i>добавлять цвета</i></b> на <b><i>фотографии</i></b>
 
 Вы можете творить сами или доверить работу нам 🤝
 В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
@@ -159,7 +168,10 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
 
     const keyboard = Markup.inlineKeyboard([
       [Markup.button.callback('Написать в поддержку', 'support')],
-      [Markup.button.callback('Реставрация фото', 'photo_restoration')],
+      [
+        Markup.button.callback('✨ Реставрация фото', 'photo_restoration'),
+        Markup.button.callback('🎨 ч/б в цветное фото', 'photo_colorize')
+      ],
       [
         Markup.button.callback('📸 Оживить фото', 'photo_animation'),
         Markup.button.callback('🎶 Создать музыку', 'music_creation')
@@ -214,6 +226,7 @@ https://t.me/obrabotych_support
 - <b><i>оживлять фото</i></b> 📸✨
 - создавать <b><i>крутые треки</i></b> 🎵🔥
 - <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
+- <b><i>добавлять цвета</i></b> на <b><i>фотографии</i></b>
 
 Вы можете творить сами или доверить работу нам 🤝
 В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
@@ -225,7 +238,10 @@ https://t.me/obrabotych_support
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
           [Markup.button.callback('Написать в поддержку', 'support')],
-          [Markup.button.callback('Реставрация фото', 'photo_restoration')],
+          [
+            Markup.button.callback('✨ Реставрация фото', 'photo_restoration'),
+            Markup.button.callback('🎨 ч/б в цветное фото', 'photo_colorize')
+          ],
           [
             Markup.button.callback('📸 Оживить фото', 'photo_animation'),
             Markup.button.callback('🎶 Создать музыку', 'music_creation')

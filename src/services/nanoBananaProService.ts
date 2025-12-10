@@ -6,14 +6,16 @@ import { Database } from '../database';
 import { PRICES } from '../constants';
 
 const API_URL = 'https://api.kie.ai/api/v1/jobs';
-const API_KEY = config.klingApiKey;
+const API_KEY = config.nanoBananaApiKey;
+
+const MODEL = 'nano-banana-pro';
 
 interface TaskResponse {
   code: number;
-  message: string;
+  message: number;
   data: {
     taskId: string;
-  };
+  }
 }
 
 interface TaskStatusResponse {
@@ -21,25 +23,26 @@ interface TaskStatusResponse {
   message: string;
   data: {
     taskId: string;
+    model: string;
     state: 'waiting' | 'queuing' | 'generating' | 'success' | 'fail';
     resultJson?: string;
     failCode?: string;
     failMsg?: string;
-  };
+  }
 }
 
-async function createVideoTask(imageUrl: string, prompt: string): Promise<string> {
+async function createColorizeTask(image_url: string, prompt: string): Promise<string> {
+  const image_urls: string[] = [];
+  image_urls.push(image_url);
   try {
     const response = await axios.post<TaskResponse>(
       `${API_URL}/createTask`,
       {
-        model: 'kling/v2-5-turbo-image-to-video-pro', 
+        model: MODEL,
         input: {
           prompt: prompt,
-          image_url: imageUrl, 
-          duration: '5',
-          negative_prompt: 'blur, distort, and low quality',
-          cfg_scale: 0.5
+          image_input: image_urls,
+          aspect_ratio: 'auto'
         }
       },
       {
@@ -56,14 +59,14 @@ async function createVideoTask(imageUrl: string, prompt: string): Promise<string
 
     return response.data.data.taskId;
   } catch (error) {
-    console.error('Ошибка создания задачи:', error);
+    console.error('Ошибка создания задачи на окрашивание фото: ', error);
     throw error;
   }
 }
 
-async function checkTaskStatus(taskId: string): Promise<TaskStatusResponse['data']> {
+async function checkColorizeTaskStatus(taskId: string): Promise<TaskStatusResponse['data']> {
   try {
-    const response = await axios.get<TaskStatusResponse>(
+    const response = await axios.get(
       `${API_URL}/recordInfo?taskId=${taskId}`,
       {
         headers: {
@@ -78,14 +81,14 @@ async function checkTaskStatus(taskId: string): Promise<TaskStatusResponse['data
 
     return response.data.data;
   } catch (error) {
-    console.error('Ошибка проверки статуса:', error);
+    console.error('Ошибка проверки статуса окрашивания фото:', error);
     throw error;
   }
 }
 
-async function waitForTaskCompletion(taskId: string, maxAttempts: number = 60): Promise<string> {
+async function waitForColorizeTaskCompletion(taskId: string, maxAttempts: number = 50): Promise<string> {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const status = await checkTaskStatus(taskId);
+    const status = await checkColorizeTaskStatus(taskId);
 
     console.log(`📊 Статус задачи ${taskId}: ${status.state} (попытка ${attempt + 1}/${maxAttempts})`);
 
@@ -96,7 +99,7 @@ async function waitForTaskCompletion(taskId: string, maxAttempts: number = 60): 
 
       const result = JSON.parse(status.resultJson);
       if (!result.resultUrls || result.resultUrls.length === 0) {
-        throw new Error('URL видео не найден');
+        throw new Error('URL фото не найден');
       }
 
       return result.resultUrls[0];
@@ -112,25 +115,25 @@ async function waitForTaskCompletion(taskId: string, maxAttempts: number = 60): 
   throw new Error('Превышено время ожидания генерации');
 }
 
-export async function generateVideoWithKling(imageUrl: string, prompt: string): Promise<string> {
-  console.log(`📸 Оживляю фото: ${imageUrl}`);
+async function generatePhotoWithBanana(imageUrl: string, prompt: string): Promise<string> {
+  console.log(`📸 Окрашиваю фото: ${imageUrl}`);
   console.log(`💬 С описанием: ${prompt}`);
   
-  const taskId = await createVideoTask(imageUrl, prompt);
+  const taskId = await createColorizeTask(imageUrl, prompt);
   console.log(`✅ Задача создана: ${taskId}`);
   
-  const videoUrl = await waitForTaskCompletion(taskId);
-  console.log(`✅ Видео готово: ${videoUrl}`);
+  const photoUrl = await waitForColorizeTaskCompletion(taskId);
+  console.log(`✅ Фото готово: ${photoUrl}`);
   
-  return videoUrl;
+  return photoUrl;
 }
 
-export async function processVideoGeneration(ctx: any, userId: number, photoFileId: string, prompt: string) {
+export async function processPhotoColorize(ctx: any, userId: number, photoFileId: string, prompt: string) {
   try {
     const deducted = await Database.deductBalance(
       userId,
-      PRICES.PHOTO_ANIMATION,
-      'Оживление фото'
+      PRICES.PHOTO_COLORIZE,
+      'Окрашивание фото'
     );
 
     if (!deducted) {
@@ -141,32 +144,32 @@ export async function processVideoGeneration(ctx: any, userId: number, photoFile
       return;
     }
 
-    console.log(`⏳ Начинается генерация видео для пользователя ${userId}...`);
+    console.log(`⏳ Начинается окрашивание фото для пользователя ${userId}...`);
 
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
+
+    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
     
-    const videoUrl = await generateVideoWithKling(photoUrl.href, prompt);
+    const colorizedPhotoUrl = await generatePhotoWithBanana(photoUrl.href, prompt);
 
-    const videoResponse = await axios.get(videoUrl, { responseType: 'arraybuffer' });
-    const videoBuffer = Buffer.from(videoResponse.data);
+    const photoResponse = await axios.get(colorizedPhotoUrl, { responseType: 'arraybuffer' });
+    const photoBuffer = Buffer.from(photoResponse.data);
 
-    const caption = (`
-          ✅ Ваше видео готово!\n\nОписание: ${prompt}\n\n` +
-          'Если вам нужна помощь в создании полноценного видео из оживленных фотографий с музыкой, ' +
-          'вы можете обратиться в нашу службу технической поддержки — ' +
-          '<a href="https://t.me/obrabotych_support">@obrabotych_support</a>').trim()
-    const sentMessage = await ctx.telegram.sendVideo(userId, { source: videoBuffer }, {
+    const caption = `✅ Ваше фото готово!`.trim()
+    const sentMessage = await ctx.telegram.sendPhoto(userId, { source: photoBuffer }, {
       caption: caption,
       parse_mode: 'HTML',
     });
 
-    await Database.saveGeneratedFile(userId, 'photo', sentMessage.video.file_id, prompt);
+    const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
+    await Database.saveGeneratedFile(userId, 'colorize', fileId, prompt);
 
-    console.log(`✅ Видео сгенерировано и сохранено для пользователя ${userId}`);
-    console.log(`📁 File ID: ${sentMessage.video.file_id}`);
+    console.log(`✅ Окрашенная фотография сгенерирована и сохранена для пользователя ${userId}`);
+    console.log(`📁 File ID: ${fileId}`);
 
-    const mainMenuMessage = `Наш бот умеет:
+    const mainMenuMessage = `
+Наш бот умеет:
 - <b><i>оживлять фото</i></b> 📸✨
 - создавать <b><i>крутые треки</i></b> 🎵🔥
 - <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
@@ -174,7 +177,7 @@ export async function processVideoGeneration(ctx: any, userId: number, photoFile
 
 Вы можете творить сами или доверить работу нам 🤝
 В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-        `.trim();
+    `.trim();
 
   await ctx.telegram.sendMessage(
   userId,
@@ -196,16 +199,16 @@ export async function processVideoGeneration(ctx: any, userId: number, photoFile
   });
 
   } catch (error) {
-    console.error('❌ Ошибка генерации видео:', error);
+    console.error('❌ Ошибка генерации фотографии:', error);
     
     await Database.addBalance(
       userId,
-      PRICES.PHOTO_ANIMATION,
+      PRICES.PHOTO_COLORIZE,
       'Возврат средств за ошибку генерации',
       'bonus'
     );
 
-    console.log(`💰 Возвращено ${PRICES.PHOTO_ANIMATION}₽ пользователю ${userId}`);
+    console.log(`💰 Возвращено ${PRICES.PHOTO_COLORIZE}₽ пользователю ${userId}`);
     
     await ctx.telegram.sendMessage(
       userId,

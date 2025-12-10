@@ -36,7 +36,10 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
       {
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
-          [Markup.button.callback('Мои реставрации', 'my_restorations')],
+          [
+            Markup.button.callback('Мои реставрации', 'my_restorations'),
+            Markup.button.callback('Мои цветные фото', 'my_colorize')
+          ],
           [
             Markup.button.callback('Мои фото', 'my_photos'),
             Markup.button.callback('Мои треки', 'my_tracks')
@@ -173,6 +176,48 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
     await ctx.telegram.sendMessage(
       userId,
       `📸 Ваши реставрации (${restorations.length}):`,
+      Markup.inlineKeyboard([
+        [Markup.button.callback('Назад', 'profile')]
+      ])
+    );
+  });
+
+  bot.action('my_colorize', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const all_colorized = await Database.getUserColorize(userId);
+    
+    if (all_colorized.length === 0) {
+      await ctx.editMessageText(
+        '📸 У вас пока нет цветных фото',
+        Markup.inlineKeyboard([
+          [Markup.button.callback('Назад', 'profile')]
+        ])
+      );
+      return;
+    }
+
+    for (const colorized of all_colorized) {
+      try {
+        await ctx.telegram.sendPhoto(userId, colorized.file_id);
+      } catch (error) {
+        console.error('Ошибка отправки окрашенного фото:', error);
+        await ctx.telegram.sendMessage(userId, `❌ Фото с добавлением цвета недоступно (ID: ${colorized.id})`);
+      }
+    }
+
+    await ctx.telegram.sendMessage(
+      userId,
+      `📸 Ваши окрашивания (${all_colorized.length}):`,
       Markup.inlineKeyboard([
         [Markup.button.callback('Назад', 'profile')]
       ])

@@ -5,6 +5,7 @@ export interface BotContext extends Context {}
 export type UserStep = 
   | 'waiting_photo' 
   | 'waiting_for_restoration_photo' 
+  | 'waiting_for_colorize_photo'
   | 'waiting_description' 
   | 'waiting_payment' 
   | 'waiting_music_text' 
@@ -21,6 +22,6 @@ export interface UserState {
   paymentId?: string;
   musicText?: string;
   musicStyle?: string;
-  refillSource?: 'photo' | 'profile' | 'music' | 'restoration';
+  refillSource?: 'photo' | 'profile' | 'music' | 'restoration' | 'colorize';
   pendingPaymentAmount?: number;
 }

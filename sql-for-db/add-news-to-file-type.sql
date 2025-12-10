@@ -2,10 +2,10 @@
 ALTER TABLE generated_files 
 DROP CONSTRAINT generated_files_file_type_check;
 
--- Создаем новый constraint с добавленным значением 'restoration'
+-- Создаем новый constraint с добавленным значением 'restoration' и 'colorize'
 ALTER TABLE generated_files 
 ADD CONSTRAINT generated_files_file_type_check 
-CHECK (file_type IN ('photo', 'music', 'restoration'));
+CHECK (file_type IN ('photo', 'music', 'restoration', 'colorize'));
 
 -- Обновляем индекс
 DROP INDEX IF EXISTS idx_generated_files_type;

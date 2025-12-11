@@ -22,16 +22,16 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
     const balance = await Database.getUserBalance(userId);
 
     const photoRestorationMessage = `
-<b>📸 Наш Бот умеет реставрировать фото!</b>
+<b>✨ Наш Бот умеет реставрировать фото!</b>
 
 Вот как восстановить своё фото:
 
-1️⃣ Нажмите ниже кнопку - \n<b>«📸 Реставрировать фото»</b>
+1️⃣ Нажмите ниже кнопку - \n<b>«✨ Реставрировать фото»</b>
 2️⃣ <i><b>Отправьте одну фотографию* в бот</b></i>
 3️⃣ <i><b>Немного подождите</b></i> — примерно через 3 минуты бот отправит вам готовое фото 🏞⚡️
 
 <blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽
-📹 Реставрация 1 фото = ${PRICES.PHOTO_RESTORATION}₽</blockquote>
+✨ Реставрация 1 фото = ${PRICES.PHOTO_RESTORATION}₽</blockquote>
 
 ❗️* - <b>бот восстанавливает только одно фото за раз</b>☝🏻`.trim();
 
@@ -39,7 +39,7 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
-          [{text: '📸 Реставрировать фото', callback_data: 'photo_restoration_start'}],
+          [{text: '✨ Реставрировать фото', callback_data: 'photo_restoration_start'}],
           [{text: 'Видео-инструкция', callback_data: 'photo_restoration_instruction'}],
           [{text: 'Главное меню', callback_data: 'main_menu'}],
         ]

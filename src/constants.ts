@@ -15,7 +15,7 @@ export const mainMenuKeyboard = [
     Markup.button.callback('🎶 Создать музыку', 'music_creation')
   ],
   [
-    Markup.button.callback('✨ Реставрация фото', 'photo_restoration'),
+    Markup.button.callback('✨ Реставрировать фото', 'photo_restoration'),
     Markup.button.callback('🎨 ч/б в цветное фото', 'photo_colorize')
   ],
   [Markup.button.callback('Личный кабинет', 'profile')]

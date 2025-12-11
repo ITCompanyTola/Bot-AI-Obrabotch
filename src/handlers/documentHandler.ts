@@ -12,6 +12,8 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
     const userId = ctx.from?.id;
     if (!userId) return;
 
+    console.log('Тип полученного документа: ', ctx.message.document.mime_type);
+
     const userState = userStates.get(userId);
     if (!userState) return;
 
@@ -30,6 +32,7 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
           inline_keyboard: [[{text: 'Назад', callback_data: callbackData}]]
         }
       })
+      return;
     }
 
     const photoFileId = ctx.message.document.file_id;
@@ -65,7 +68,7 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
     }
 
     if (userState.step === 'waiting_for_restoration_photo') {
-      const prompt = 'Restore the photo';
+      const prompt = 'Restore this old photo: improve sharpness, remove defects, but preserve the original colors without recoloring.';
 
       processPhotoRestoration(ctx, userId, photoFileId, prompt);
 

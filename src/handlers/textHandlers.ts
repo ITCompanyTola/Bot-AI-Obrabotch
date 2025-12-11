@@ -51,7 +51,7 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
 
     if (userState?.step === 'waiting_for_restoration_photo') {
       const photo = ctx.message.photo[ctx.message.photo.length - 1];
-      const prompt = 'Restore the photo';
+      const prompt = 'Restore this old photo: improve sharpness, remove defects, but preserve the original colors without recoloring.';
 
       processPhotoRestoration(ctx, userId, photo.file_id, prompt);
 
@@ -60,7 +60,7 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
 
     if (userState?.step === 'waiting_for_colorize_photo') {
       const photo = ctx.message.photo[ctx.message.photo.length - 1];
-      const prompt = 'Restore this old photo: improve sharpness, remove defects, but preserve the original colors without recoloring.';
+      const prompt = 'Convert a black-and-white photo to color and improve the quality and clarity of the photo';
 
       processPhotoColorize(ctx, userId, photo.file_id, prompt);
     }

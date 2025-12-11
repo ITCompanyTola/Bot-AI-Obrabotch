@@ -76,6 +76,8 @@ async function checkColorizeTaskStatus(taskId: string): Promise<TaskStatusRespon
     );
 
     if (response.data.code !== 200) {
+      console.error('Error code:', response.data.code);
+      console.error(response.data.data.failMsg);
       throw new Error(`API Error: ${response.data.message}`);
     }
 

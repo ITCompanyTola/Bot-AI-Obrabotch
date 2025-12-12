@@ -10,6 +10,7 @@ import { config } from '../config';
 import { registerPhotoRestorationHandlers } from './photoRestoration';
 import { registerPhotoColorizeHandlers } from './photoColorize';
 import { registerDocumentHandler } from './documentHandler';
+import { registerBroadcastHandlers } from './broadcast';
 
 async function sendTGTrackWebhook(update: any) {
   // if (!config.tgtrackApiKey) return;
@@ -88,6 +89,7 @@ export function registerAllHandlers(bot: Telegraf<BotContext>, userStates: Map<n
   });
 
   registerMainMenuHandlers(bot, userStates);
+  registerBroadcastHandlers(bot, userStates);
   registerPhotoAnimationHandlers(bot, userStates);
   registerMusicCreationHandlers(bot, userStates);
   registerPhotoRestorationHandlers(bot, userStates);

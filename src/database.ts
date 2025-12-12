@@ -865,6 +865,16 @@ export class Database {
     }
   }
 
+  static async getAllUsersIds(): Promise<number[]> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query('SELECT id FROM users');
+      return result.rows.map((row) => row.id);
+    } finally {
+      client.release();
+    }
+  }
+
   static async close() {
     await pool.end();
     console.log('🔌 Соединение с PostgreSQL закрыто');

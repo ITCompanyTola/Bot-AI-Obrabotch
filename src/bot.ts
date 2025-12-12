@@ -1,6 +1,6 @@
 import { Telegraf } from 'telegraf';
 import { config } from './config';
-import { BotContext, UserState } from './types';
+import { BotContext, UserState, Broadcast } from './types';
 import { Database } from './database';
 import { registerAllHandlers } from './handlers';
 import webhookApp from './webhook';
@@ -10,6 +10,7 @@ import path from 'path';
 const bot = new Telegraf<BotContext>(config.botToken);
 
 const userStates = new Map<number, UserState>();
+export const broadcast = new Map<number, Broadcast>();
 
 // Функция логирования в файл
 function logToFile(message: string) {

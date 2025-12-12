@@ -6,6 +6,7 @@ import { processVideoGeneration } from '../services/klingService';
 import { logToFile } from '../bot';
 import { processPhotoRestoration } from '../services/nanoBananaService';
 import { processPhotoColorize } from '../services/nanoBananaProService';
+import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler } from './broadcast';
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -64,6 +65,10 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
 
       processPhotoColorize(ctx, userId, photo.file_id, prompt);
     }
+
+    if (userState?.step === 'waiting_broadcast_photo') {
+      broadcastPhotoHandler(ctx, userId, userState);
+    }
   });
 
   bot.on('text', async (ctx) => {
@@ -71,6 +76,10 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     if (!userId) return;
     
     const userState = userStates.get(userId);
+
+    if (userState?.step === 'waiting_broadcast_message') {
+      broadcastMessageHandler(ctx, userId, userState);
+    }
     
     if (userState?.step === 'waiting_email') {
       const email = ctx.message.text.trim();
@@ -190,5 +199,17 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     processVideoGeneration(ctx, userId, userState.photoFileId, prompt);
     
     userStates.delete(userId);
+  });
+
+  bot.on('video', (ctx) => {
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    const userState = userStates.get(userId);
+    if (!userState) return;
+    
+    if (userState?.step !== 'waiting_broadcast_video') return;
+
+    broadcastVideoHandler(ctx, userId, userState);
   });
 }

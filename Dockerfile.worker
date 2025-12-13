@@ -29,8 +29,5 @@ RUN npm ci --only=production
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
-# Создаем директорию для логов
-RUN mkdir -p /app/logs
-
 # Запускаем воркер
 CMD ["npm", "run", "start:worker"]

@@ -59,6 +59,8 @@ services:
       - REDIS_PORT=6379
     ports:
       - "3000:3000"
+    depends_on:
+      - redis
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.bot.rule=Host(`mybotai.ru`) || Host(`api.mybotai.ru`)"
@@ -89,9 +91,8 @@ services:
       - bot
     volumes:
       - ./logs:/app/logs
-      - ./src:/app/src
-      - ./dist:/app/dist
-    command: ["node", "dist/worker.js"]
+    networks:
+      - default
 
 volumes:
   postgres_data:

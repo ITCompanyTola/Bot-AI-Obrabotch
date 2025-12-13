@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import { config } from './config';
+import { CreateMailingData, CreateMailingTask, MailingData, MailingTask, UpdateMailingStats } from './types';
 
 const pool = new Pool({
   connectionString: config.databaseUrl,
@@ -870,6 +871,193 @@ export class Database {
     try {
       const result = await client.query('SELECT id FROM users');
       return result.rows.map((row) => row.id);
+    } finally {
+      client.release();
+    }
+  }
+
+  // ===== МЕТОДЫ ДЛЯ РАССЫЛОК =====
+
+  static async createMailingData(data: CreateMailingData): Promise<MailingData> {
+  const client = await pool.connect();
+  try {
+    // Telegram entities - это массив объектов вида {offset, length, type, ...}
+    // Нужно сохранить как JSON
+    let entitiesForDb = null;
+    
+    if (data.entities && Array.isArray(data.entities)) {
+      // Проверяем, что это валидные entities
+      const isValid = data.entities.every(entity => 
+        entity && typeof entity === 'object' && 'offset' in entity && 'length' in entity
+      );
+      
+      if (isValid) {
+        entitiesForDb = JSON.stringify(data.entities);
+        console.log('✅ Сохраняем entities:', entitiesForDb);
+      }
+    }
+    
+    const result = await client.query(
+      `INSERT INTO mailing_data 
+       (admin_id, message, entities, photo_file_id, video_file_id, total_users)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [
+        data.admin_id,
+        data.message,
+        entitiesForDb,
+        data.photo_file_id,
+        data.video_file_id,
+        data.total_users
+      ]
+    );
+
+    return result.rows[0];
+  } finally {
+    client.release();
+  }
+}
+
+  static async getMailingData(id: number): Promise<MailingData | null> {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      'SELECT * FROM mailing_data WHERE id = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    const row = result.rows[0];
+    
+    // Извлекаем entities
+    let entities = null;
+    if (row.entities) {
+      try {
+        // Если это строка JSON
+        if (typeof row.entities === 'string') {
+          entities = JSON.parse(row.entities);
+          console.log('📖 Прочитаны entities из БД:', entities);
+        }
+        // Если pg драйвер уже распарсил
+        else if (typeof row.entities === 'object') {
+          entities = row.entities;
+        }
+      } catch (error) {
+        console.error('❌ Ошибка чтения entities:', error);
+        entities = null;
+      }
+    }
+    
+    return {
+      ...row,
+      entities
+    };
+  } finally {
+    client.release();
+  }
+}
+
+  static async updateMailingStats(
+    mailingId: number, 
+    stats: UpdateMailingStats
+  ): Promise<void> {
+    const client = await pool.connect();
+    try {
+      const updates = [];
+      const values = [];
+      let paramIndex = 1;
+
+      if (stats.sent_count !== undefined) {
+        updates.push(`sent_count = $${paramIndex}`);
+        values.push(stats.sent_count);
+        paramIndex++;
+      }
+
+      if (stats.failed_count !== undefined) {
+        updates.push(`failed_count = $${paramIndex}`);
+        values.push(stats.failed_count);
+        paramIndex++;
+      }
+
+      if (stats.blocked_count !== undefined) {
+        updates.push(`blocked_count = $${paramIndex}`);
+        values.push(stats.blocked_count);
+        paramIndex++;
+      }
+
+      if (stats.status !== undefined) {
+        updates.push(`status = $${paramIndex}`);
+        values.push(stats.status);
+        paramIndex++;
+        
+        if (stats.status === 'completed' || stats.status === 'failed') {
+          updates.push(`completed_at = $${paramIndex}`);
+          values.push(new Date());
+          paramIndex++;
+        }
+      }
+
+      if (updates.length === 0) {
+        return;
+      }
+
+      values.push(mailingId);
+      
+      await client.query(
+        `UPDATE mailing_data 
+        SET ${updates.join(', ')}
+        WHERE id = $${paramIndex}`,
+        values
+      );
+    } finally {
+      client.release();
+    }
+  }
+
+  static async createMailingTask(data: CreateMailingTask): Promise<MailingTask> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `INSERT INTO mailing_tasks 
+        (mailing_id, user_id, status, error_message, attempts)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *`,
+        [
+          data.mailing_id,
+          data.user_id,
+          data.status,
+          data.error_message,
+          data.attempts || 1
+        ]
+      );
+
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getUsersBatch(skip: number = 0, limit: number = 100): Promise<number[]> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT id FROM users ORDER BY id OFFSET $1 LIMIT $2',
+        [skip, limit]
+      );
+      return result.rows.map(row => row.id);
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getTotalUsersCount(): Promise<number> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query('SELECT COUNT(*) as count FROM users');
+      return parseInt(result.rows[0].count);
     } finally {
       client.release();
     }

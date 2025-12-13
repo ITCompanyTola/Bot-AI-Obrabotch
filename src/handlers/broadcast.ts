@@ -2,6 +2,7 @@ import { Markup, Telegraf } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { broadcast } from '../bot';
+import { mailingQueue } from '../services/mailing-queue.service';
 
 
 async function sendBroadcastExample(ctx: any, userId: number, userState: UserState) {
@@ -56,6 +57,7 @@ export async function broadcastMessageHandler(ctx: any, userId: number, userStat
   // Сохраняем текст рассылки в глобальную переменную
   const broadcastMessage = ctx.message.text;
   const entities = ctx.message.entities;
+
   broadcast.set(userId, {
     message: broadcastMessage,
     entities: entities,
@@ -207,49 +209,64 @@ export function registerBroadcastHandlers(bot: Telegraf<BotContext>, userStates:
   });
 
   bot.action('send_broadcast', async (ctx) => {
-    try {
-      await ctx.answerCbQuery();
-    } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
-      }
+  try {
+    await ctx.answerCbQuery();
+  } catch (error: any) {
+    if (!error.description?.includes('query is too old')) {
+      console.error('Ошибка answerCbQuery:', error.message);
     }
-    
-    const userId = ctx.from?.id;
-    if (!userId) return;
+  }
+  
+  const userId = ctx.from?.id;
+  if (!userId) return;
 
-    const userState = userStates.get(userId);
-    if (!userState) return;
+  const userState = userStates.get(userId);
+  if (!userState) return;
 
-    const isAdmin = await Database.isAdmin(userId);
+  const isAdmin = await Database.isAdmin(userId);
+  if (!isAdmin) return;
 
-    if (!isAdmin) return;
+  const currentBroadcast = broadcast.get(userId);
+  if (!currentBroadcast) {
+    await ctx.reply('❌ Данные рассылки не найдены');
+    return;
+  }
 
-    const currentBroadcast = broadcast.get(userId);
-    if (!currentBroadcast) return;
-
+  try {
     const allUsersIds = await Database.getAllUsersIds();
+    
+    const mailingData = await Database.createMailingData({
+      admin_id: userId,
+      message: currentBroadcast.message,
+      entities: currentBroadcast.entities,
+      photo_file_id: currentBroadcast.photoFileId,
+      video_file_id: currentBroadcast.videoFileId,
+      total_users: allUsersIds.length
+    });
 
-    if (currentBroadcast.photoFileId) {
-      for (const userId of allUsersIds) {
-        await ctx.telegram.sendPhoto(userId, currentBroadcast.photoFileId, {
-          caption: currentBroadcast.message,
-          caption_entities: currentBroadcast.entities,
-        });
-      }
-    } else if (currentBroadcast.videoFileId) {
-      for (const userId of allUsersIds) {
-        await ctx.telegram.sendVideo(userId, currentBroadcast.videoFileId, {
-          caption: currentBroadcast.message,
-          caption_entities: currentBroadcast.entities,
-        });
-      }
-    } else {
-      for (const userId of allUsersIds) {
-        await ctx.telegram.sendMessage(userId, currentBroadcast.message, {
-          entities: currentBroadcast.entities,
-        });
-      }
+    console.log(`📊 Создана рассылка ID: ${mailingData.id}, пользователей: ${allUsersIds.length}`);
+
+    const job = await mailingQueue.addMailingJob({
+      mailingId: mailingData.id,
+      adminId: userId,
+      chunkSize: 100,
+      delayBetweenMessages: 500
+    });
+
+    await ctx.reply(
+      `📤 Рассылка поставлена в очередь!\n\n` +
+      `📝 ID рассылки: ${mailingData.id}\n` +
+      `👥 Пользователей: ${allUsersIds.length}\n` +
+      `⏱️ ID задачи: ${job.id}\n\n` +
+      `Статус можно отслеживать по уведомлениям.`
+    );
+
+    broadcast.delete(userId);
+    userStates.delete(userId);
+
+    } catch (error: any) {
+      console.error('❌ Ошибка создания рассылки:', error);
+      await ctx.reply(`❌ Ошибка создания рассылки: ${error.message}`);
     }
   });
 }

@@ -3,6 +3,7 @@ import { config } from './config';
 import { BotContext, UserState, Broadcast } from './types';
 import { Database } from './database';
 import { registerAllHandlers } from './handlers';
+import { mailingQueue } from './services/mailing-queue.service';
 import webhookApp from './webhook';
 import fs from 'fs';
 import path from 'path';
@@ -57,11 +58,13 @@ bot.launch()
   });
 
 process.once('SIGINT', async () => {
+  await mailingQueue.close();
   await Database.close();
   bot.stop('SIGINT');
 });
 
 process.once('SIGTERM', async () => {
+  await mailingQueue.close();
   await Database.close();
   bot.stop('SIGTERM');
 });

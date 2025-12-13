@@ -63,6 +63,7 @@ async function createVideoTask(imageUrl: string, prompt: string): Promise<string
 
 async function checkTaskStatus(taskId: string): Promise<TaskStatusResponse['data']> {
   try {
+    // добавить систему retry, чтобы не терять загруженное видео
     const response = await axios.get<TaskStatusResponse>(
       `${API_URL}/recordInfo?taskId=${taskId}`,
       {

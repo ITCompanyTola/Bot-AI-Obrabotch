@@ -33,6 +33,17 @@ services:
     networks:
       - default
 
+  # Redis для очередей (оставляем из prod)
+  redis:
+    image: redis:7-alpine
+    container_name: telegram-bot-redis-local
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6380:6379"  # Стандартный порт
+    volumes:
+      - redis_data_local:/data
+
   # Telegram Bot
   bot:
     build:
@@ -44,6 +55,8 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgresql://user:S3T9B9o541C-A2NE1@212.111.85.55:5432/PostgreSQL-1348
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     ports:
       - "3000:3000"
     labels:
@@ -58,9 +71,31 @@ services:
       - ./logs:/app/logs
     networks:
       - default
+  
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: telegram-bot-worker-local
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://user:S3T9B9o541C-A2NE1@212.111.85.55:5432/PostgreSQL-1348
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+      - bot
+    volumes:
+      - ./logs:/app/logs
+      - ./src:/app/src
+      - ./dist:/app/dist
+    command: ["node", "dist/worker.js"]
 
 volumes:
   postgres_data:
+  redis_data_local:
 
 networks:
   default:

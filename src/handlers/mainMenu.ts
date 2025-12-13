@@ -311,7 +311,7 @@ https://t.me/obrabotych_support
         await ctx.reply(
           `✅ Источник успешно создан!\n\n` +
           `📊 Название: <b>${sourceName}</b>\n` +
-          `🔑 Ключ: ${keySubstring}\n\n` +
+          `🔑 Ключ: https://t.me/Obrabotych_bot?start=${keySubstring}\n\n` +
           `Для просмотра статистики используйте: /stats_${sourceName}`,
           { parse_mode: 'HTML' }
         );
@@ -345,7 +345,7 @@ https://t.me/obrabotych_support
       let message = '📋 <b>Список всех источников:</b>\n\n';
       for (const source of sources) {
         message += `📌 <b>${source.source_name}</b>\n`;
-        message += `🔑 ${source.key_substring}\n`;
+        message += `🔑 https://t.me/Obrabotych_bot?start=${source.key_substring}\n`;
         message += `📊 Статистика: /stats_${source.source_name}\n\n`;
       }
 
@@ -477,7 +477,7 @@ https://t.me/obrabotych_support
       const statsMessage = `
 📊 <b>Статистика источника "${source.source_name}"</b>
 
-🔑 Ключ: ${source.key_substring}
+🔑 Ключ: https://t.me/Obrabotych_bot?start=${source.key_substring}
 
 <b>За все время</b>
 👥 Количество пользователей: <b>${stats.all.usersCount}</b>

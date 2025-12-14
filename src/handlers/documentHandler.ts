@@ -4,7 +4,7 @@ import { Database } from '../database';
 import { PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
 import { logToFile } from '../bot';
-import { processPhotoRestoration } from '../services/nanoBananaService';
+import { processDMPhotoCreation, processPhotoRestoration } from '../services/nanoBananaService';
 import { processPhotoColorize } from '../services/nanoBananaProService';
 
 export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
@@ -20,11 +20,15 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
     const callbackActions = {
       revive: 'photo_animation',
       restoration: 'photo_restoration',
-      colorize: 'photo_colorize'
+      colorize: 'photo_colorize',
+      dm_photo: 'ded_moroz_generate',
+      dm_video: 'ded_moroz_animate'
     }
     let callbackData = callbackActions.revive;
     if (userState.step === 'waiting_for_restoration_photo') callbackData = callbackActions.restoration;
     if (userState.step === 'waiting_for_colorize_photo') callbackData = callbackActions.colorize;
+    if (userState.step === 'waiting_DM_photo_generation') callbackData = callbackActions.dm_photo;
+    if (userState.step === 'waiting_DM_photo_for_video') callbackData = callbackActions.dm_video;
 
     if (!ctx.message.document.mime_type?.startsWith('image/')) {
       await ctx.reply('Документ может быть только фотографией! Попробуйте снова.', {
@@ -79,6 +83,16 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
       const prompt = 'Convert a black-and-white photo to color and improve the quality and clarity of the photo';
 
       processPhotoColorize(ctx, userId, photoFileId, prompt);
+
+      userStates.delete(userId);
+    }
+
+    if (userState.step === 'waiting_DM_photo_generation') {
+      const prompt = 'Russian Father Frost, long red coat down to the floor, thick white fur trim, gold braid, red belt, tall red hat with fur and gold trim, very long curly white beard down to his waist, red mittens with fur, majestic posture, photorealistic, premium class. Santa Claus should be approximately 165 cm tall and fit well into the loaded image';
+
+      processDMPhotoCreation(ctx, userId, photoFileId, prompt);
+
+      userStates.delete(userId);
     }
   });
 }

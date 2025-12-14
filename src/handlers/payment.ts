@@ -73,7 +73,7 @@ ${payment.confirmationUrl}
 async function showRefillAmountSelection(
   ctx: any, 
   userStates: Map<number, UserState>, 
-  refillSource: 'photo' | 'profile' | 'music' | 'restoration' | 'colorize', 
+  refillSource: 'photo' | 'profile' | 'music' | 'restoration' | 'colorize' | 'dm_photo' | 'dm_video', 
   useEdit: boolean = false) 
   {
   const userId = ctx.from?.id;
@@ -89,7 +89,9 @@ async function showRefillAmountSelection(
     profile: 'profile',
     music: 'music_creation',
     restoration: 'photo_restoration',
-    colorize: 'photo_colorize'
+    colorize: 'photo_colorize',
+    dm_photo: 'ded_moroz_generate',
+    dm_video: 'ded_moroz_animate'
   };
 
   const keyboard = Markup.inlineKeyboard([
@@ -225,6 +227,23 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     await showRefillAmountSelection(ctx, userStates, 'colorize', true);
   });
 
+  bot.action('refill_balance_from_dm_photo', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    logToFile(`📝 refill_balance_from_dm_photo вызван: userId=${userId}`);
+    
+    await showRefillAmountSelection(ctx, userStates, 'dm_photo', true);
+  });
+
   bot.action('refill_150', async (ctx) => {
     try {
       await ctx.answerCbQuery();
@@ -250,6 +269,10 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       backAction = 'refill_balance_from_restoration';
     } else if (userState?.refillSource === 'colorize') {
       backAction = 'refill_balance_from_colorize';
+    } else if (userState?.refillSource === 'dm_photo') {
+      backAction = 'refill_balance_from_dm_photo';
+    } else if (userState?.refillSource === 'dm_video') {
+      backAction = 'refill_balance_from_dm_video';
     }
     
     await requestEmailOrProceed(ctx, 150, userStates, backAction);
@@ -280,6 +303,10 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       backAction = 'refill_balance_from_restoration';
     } else if (userState?.refillSource === 'colorize') {
       backAction = 'refill_balance_from_colorize';
+    } else if (userState?.refillSource === 'dm_photo') {
+      backAction = 'refill_balance_from_dm_photo';
+    } else if (userState?.refillSource === 'dm_video') {
+      backAction = 'refill_balance_from_dm_video';
     }
     
     await requestEmailOrProceed(ctx, 300, userStates, backAction);
@@ -310,6 +337,10 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       backAction = 'refill_balance_from_restoration';
     } else if (userState?.refillSource === 'colorize') {
       backAction = 'refill_balance_from_colorize';
+    } else if (userState?.refillSource === 'dm_photo') {
+      backAction = 'refill_balance_from_dm_photo';
+    } else if (userState?.refillSource === 'dm_video') {
+      backAction = 'refill_balance_from_dm_video';
     }
     
     await requestEmailOrProceed(ctx, 800, userStates, backAction);
@@ -340,6 +371,10 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       backAction = 'refill_balance_from_restoration';
     } else if (userState?.refillSource === 'colorize') {
       backAction = 'refill_balance_from_colorize';
+    } else if (userState?.refillSource === 'dm_photo') {
+      backAction = 'refill_balance_from_dm_photo';
+    } else if (userState?.refillSource === 'dm_video') {
+      backAction = 'refill_balance_from_dm_video';
     }
     
     await requestEmailOrProceed(ctx, 1600, userStates, backAction);

@@ -272,7 +272,7 @@ export class Database {
   // Добавить новый тип для реставрации
   static async saveGeneratedFile(
     userId: number,
-    fileType: 'photo' | 'music' | 'restoration' | 'colorize',
+    fileType: 'photo' | 'music' | 'restoration' | 'colorize' | 'dm_photo' | 'dm_video',
     fileId: string,
     prompt?: string
   ): Promise<void> {
@@ -340,6 +340,21 @@ export class Database {
       const result = await client.query(
         `SELECT * FROM generated_files
          WHERE user_id = $1 AND file_type = 'colorize'
+         ORDER BY created_at DESC`,
+        [userId]
+      );
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getUserDMPhotos(userId: number): Promise<any[]> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM generated_files
+         WHERE user_id = $1 AND file_type = 'dm_photo'
          ORDER BY created_at DESC`,
         [userId]
       );

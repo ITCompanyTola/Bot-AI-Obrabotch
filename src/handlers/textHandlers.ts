@@ -4,7 +4,7 @@ import { Database } from '../database';
 import { PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
 import { logToFile } from '../bot';
-import { processPhotoRestoration } from '../services/nanoBananaService';
+import { processDMPhotoCreation, processPhotoRestoration } from '../services/nanoBananaService';
 import { processPhotoColorize } from '../services/nanoBananaProService';
 import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler } from './broadcast';
 
@@ -66,6 +66,13 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       processPhotoColorize(ctx, userId, photo.file_id, prompt);
     }
 
+    if (userState?.step === 'waiting_DM_photo_generation') {
+      const photo = ctx.message.photo[ctx.message.photo.length - 1];
+      const prompt = 'Russian Father Frost, long red coat down to the floor, thick white fur trim, gold braid, red belt, tall red hat with fur and gold trim, very long curly white beard down to his waist, red mittens with fur, majestic posture, photorealistic, premium class. Santa Claus should be approximately 165 cm tall and fit well into the loaded image';
+
+      processDMPhotoCreation(ctx, userId, photo.file_id, prompt);
+    }
+
     if (userState?.step === 'waiting_broadcast_photo') {
       broadcastPhotoHandler(ctx, userId, userState);
     }
@@ -108,6 +115,10 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
         backAction = 'refill_balance_from_restoration';
       } else if (userState?.refillSource === 'colorize') {
         backAction = 'refill_balance_from_colorize';
+      } else if (userState?.refillSource === 'dm_photo') {
+        backAction = 'refill_balance_from_dm_photo';
+      } else if (userState?.refillSource === 'dm_video') {
+        backAction = 'refill_balance_from_dm_video';
       }
       
       userStates.set(userId, {

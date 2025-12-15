@@ -42,7 +42,7 @@ async function createVideoTask(imageUrl: string, prompt: string): Promise<string
         model: 'veo3_fast', 
         imageUrls: imageUrls,
         prompt: prompt,
-        generationType: 'REFERENCE_2_VIDEO',
+        aspectRatio: 'Auto'
       },
       {
         headers: {

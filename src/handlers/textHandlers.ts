@@ -4,7 +4,7 @@ import { Database } from '../database';
 import { DED_MOROZ_REVIVE_PROMT, PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
 import { logToFile } from '../bot';
-import { processDMPhotoCreation, processPhotoRestoration } from '../services/nanoBananaService';
+import { processPhotoRestoration } from '../services/nanoBananaService';
 import { processPhotoColorize } from '../services/nanoBananaProService';
 import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler } from './broadcast';
 import { processVideoDMGeneration } from '../services/veoService';
@@ -73,7 +73,7 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       const photo = ctx.message.photo[ctx.message.photo.length - 1];
       const prompt = 'Russian Father Frost, long red coat down to the floor, thick white fur trim, gold braid, red belt, tall red hat with fur and gold trim, very long curly white beard down to his waist, red mittens with fur, majestic posture, photorealistic, premium class. Santa Claus should be approximately 165 cm tall and fit well into the loaded image';
 
-      processDMPhotoCreation(ctx, userId, photo.file_id, prompt);
+      // processDMPhotoCreation(ctx, userId, photo.file_id, prompt);
     }
     if (userState?.step === 'waiting_DM_photo_for_video') {
       const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;

@@ -11,7 +11,7 @@ export const PRICES = {
 };
 
 export const mainMenuKeyboard = [
-  [Markup.button.callback('🎅 Генерация Д.Мороза', 'ded_moroz')],
+  // [Markup.button.callback('🎅 Генерация Д.Мороза', 'ded_moroz')],
   [
     Markup.button.callback('📸 Оживить фото', 'photo_animation'),
     Markup.button.callback('🎶 Создать музыку', 'music_creation')

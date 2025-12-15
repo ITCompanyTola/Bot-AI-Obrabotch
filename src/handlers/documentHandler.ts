@@ -1,6 +1,6 @@
 import { Telegraf } from 'telegraf';
 import { BotContext, UserState } from '../types';
-import { processDMPhotoCreation, processPhotoRestoration } from '../services/nanoBananaService';
+import { processPhotoRestoration } from '../services/nanoBananaService';
 import { processPhotoColorize } from '../services/nanoBananaProService';
 import { DED_MOROZ_REVIVE_PROMT } from '../constants';
 
@@ -88,7 +88,7 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
     if (userState.step === 'waiting_DM_photo_generation') {
       const prompt = 'Russian Father Frost, long red coat down to the floor, thick white fur trim, gold braid, red belt, tall red hat with fur and gold trim, very long curly white beard down to his waist, red mittens with fur, majestic posture, photorealistic, premium class. Santa Claus should be approximately 165 cm tall and fit well into the loaded image';
 
-      processDMPhotoCreation(ctx, userId, photoFileId, prompt);
+      // processDMPhotoCreation(ctx, userId, photoFileId, prompt);
 
       userStates.delete(userId);
     }

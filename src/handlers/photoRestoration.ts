@@ -4,7 +4,7 @@ import { Database } from '../database';
 import { PRICES } from '../constants';
 
 const EXAMPLE_PHOTO_RESTORATION: string = 'AgACAgIAAxkBAAIGhWlAIxZIpY4AAZ9uqx4rBQZGsKDvGAACyg5rG-3UAAFKLeXPpsSJVG0BAAMCAAN4AAM2BA'; // Загрузить и вставить свое фото
-const PHOTO_RESTORATION_INSTRUCTION: string = ''; // Загрузить и вставить свое видео
+const PHOTO_RESTORATION_INSTRUCTION: string = 'BAACAgIAAxkBAAIG-GlASMGo3MjJcmQ97JvBvrpEboDhAAJZiwACGMQJSrcljU_f0NikNgQ'; // Загрузить и вставить свое видео
 
 export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, userState: Map<number, UserState>) {
   bot.action('photo_restoration', async (ctx) => {

@@ -255,8 +255,6 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     
     const userState = userStates.get(userId);
     if (!userState) return;
-
-    console.log('Тип полученного видео: ', ctx.message.video.file_id);
     
     if (userState?.step !== 'waiting_broadcast_video') return;
 

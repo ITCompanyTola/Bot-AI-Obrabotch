@@ -3,7 +3,8 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { PRICES } from '../constants';
 
-const EXAMPLE_PHOTO_COLORIZE: string = ''; // Загрузить и вставить свое фото
+
+const EXAMPLE_PHOTO_COLORIZE: string = 'AgACAgIAAxkBAAIGhGlAIs00mw5gM4m18PZee-1LvrC6AALHDmsb7dQAAUrwAZeP0-rZ7wEAAwIAA3kAAzYE'; // Загрузить и вставить свое фото
 const PHOTO_COLORIZE_INSTRUCTION: string = ''; // Загрузить и вставить свое видео
 
 export function registerPhotoColorizeHandlers(bot: Telegraf<BotContext>, userState: Map<number, UserState>) {
@@ -40,6 +41,7 @@ export function registerPhotoColorizeHandlers(bot: Telegraf<BotContext>, userSta
       reply_markup: {
         inline_keyboard: [
           [{text: '🎨 Сделать цветным фото', callback_data: 'photo_colorize_start'}],
+          [{text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_colorize'}],
           [{text: 'Видео-инструкция', callback_data: 'photo_colorize_instruction'}],
           [{text: 'Главное меню', callback_data: 'main_menu'}],
         ]
@@ -95,6 +97,7 @@ export function registerPhotoColorizeHandlers(bot: Telegraf<BotContext>, userSta
           }
         });
       }
+      return;
     } else {
       await ctx.telegram.sendMessage(userId, colorizeMessageWithoutExample, {
           parse_mode: 'HTML',

@@ -244,6 +244,23 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     await showRefillAmountSelection(ctx, userStates, 'dm_photo', true);
   });
 
+  bot.action('refill_balance_from_dm_video', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    
+    logToFile(`📝 refill_balance_from_dm_video вызван: userId=${userId}`);
+    
+    await showRefillAmountSelection(ctx, userStates, 'dm_video', true);
+  });
+
   bot.action('refill_150', async (ctx) => {
     try {
       await ctx.answerCbQuery();

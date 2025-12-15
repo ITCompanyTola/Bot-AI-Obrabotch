@@ -364,6 +364,21 @@ export class Database {
     }
   }
 
+  static async getUserDMVideos(userId: number): Promise<any[]> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM generated_files
+         WHERE user_id = $1 AND file_type = 'dm_video'
+         ORDER BY created_at DESC`,
+        [userId]
+      );
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  }
+
   static async setPolicyAccepted(userId: number): Promise<void> {
     const client = await pool.connect();
     try {

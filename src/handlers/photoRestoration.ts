@@ -3,7 +3,7 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { PRICES } from '../constants';
 
-const EXAMPLE_PHOTO_RESTORATION: string = ''; // Загрузить и вставить свое фото
+const EXAMPLE_PHOTO_RESTORATION: string = 'AgACAgIAAxkBAAIGhWlAIxZIpY4AAZ9uqx4rBQZGsKDvGAACyg5rG-3UAAFKLeXPpsSJVG0BAAMCAAN4AAM2BA'; // Загрузить и вставить свое фото
 const PHOTO_RESTORATION_INSTRUCTION: string = ''; // Загрузить и вставить свое видео
 
 export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, userState: Map<number, UserState>) {
@@ -40,6 +40,7 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
       reply_markup: {
         inline_keyboard: [
           [{text: '✨ Реставрировать фото', callback_data: 'photo_restoration_start'}],
+          [{text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_restoration'}],
           [{text: 'Видео-инструкция', callback_data: 'photo_restoration_instruction'}],
           [{text: 'Главное меню', callback_data: 'main_menu'}],
         ]
@@ -95,6 +96,7 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
           }
         });
       }
+      return;
     } else {
       await ctx.telegram.sendMessage(userId, restorationMessageWithoutExample, {
           parse_mode: 'HTML',

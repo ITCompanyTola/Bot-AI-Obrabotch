@@ -24,7 +24,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
     const balance = await Database.getUserBalance(userId);
     
     const photoAnimationMessage = `
-📸 <b>Наш бот умеет оживлять и реставрировать фото!</b>
+📸 <b>Наш бот умеет оживлять фото!</b>
 
 Вот как создать своё анимированное фото:
 
@@ -67,7 +67,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
             inline_keyboard: [
               [{ text: '📸 Оживить фото', callback_data: 'animate_photo' }],
               [{ text: 'Видео-инструкция', callback_data: 'video_instruction' }],
-              [{ text: 'Пополнить баланс', callback_data: 'refill_balance' }],
+              [{ text: '💳 Пополнить баланс', callback_data: 'refill_balance' }],
               [{ text: 'Заказать видео под ключ', callback_data: 'order_video' }],
               [{ text: 'Главное меню', callback_data: 'main_menu' }]
             ]
@@ -82,7 +82,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
           inline_keyboard: [
             [{ text: '📸 Оживить фото', callback_data: 'animate_photo' }],
             [{ text: 'Видео-инструкция', callback_data: 'video_instruction' }],
-            [{ text: 'Пополнить баланс', callback_data: 'refill_balance' }],
+            [{ text: '💳 Пополнить баланс', callback_data: 'refill_balance' }],
             [{ text: 'Заказать видео под ключ', callback_data: 'order_video' }],
             [{ text: 'Главное меню', callback_data: 'main_menu' }]
           ]

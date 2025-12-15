@@ -1,12 +1,13 @@
 import { Telegraf, Markup } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
-import { PRICES } from '../constants';
+import { DED_MOROZ_REVIVE_PROMT, PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
 import { logToFile } from '../bot';
 import { processDMPhotoCreation, processPhotoRestoration } from '../services/nanoBananaService';
 import { processPhotoColorize } from '../services/nanoBananaProService';
 import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler } from './broadcast';
+import { processVideoDMGeneration } from '../services/veoService';
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,6 +16,7 @@ function validateEmail(email: string): boolean {
 
 export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.on('photo', async (ctx) => {
+    // console.log(ctx.message.photo[ctx.message.photo.length - 1].file_id);
     const userId = ctx.from?.id;
     if (!userId) return;
     
@@ -31,13 +33,12 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
 🖼 <b>Опишите, как должна ожить фотография</b>
 
 Укажите, что именно должно происходить с каждым человеком на фото: отдельно или все вместе.
-Например:
-Позирует на камеру
-- Показывает язык
-- Машет рукой
-- Выходит из кадра
-- Девушка обнимает мужчину
-- Внук целует бабушку в щеку
+
+<b>Например:</b>
+- Улыбается в камеру без видимых зубов;
+- Показывает язык на камеру;
+- Машет рукой в камеру;
+- Нежно обнимает человека и целует его;
 …и любые другие подобные действия ✨
 
 ❗️<b>Важно:</b>
@@ -45,6 +46,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
 - <b><i>Не присылайте 18+ контент</i></b> и описания соответствующих действий. Такие запросы не обрабатываются, и оплата за генерацию возвращена не будет.
 
 - <b><i>Допустимо</i></b> присылать фото в купальнике или белье с нейтральным описанием вроде "Позирует на камеру" — мы не звери 😅
+
+- <b><i>Не пишите слишком длинный и сложный запрос</i></b>, это всего лишь оживление фотографии до 5 секунд, а не сложный видеоролик
     `.trim();
 
       await ctx.reply(descriptionMessage, { parse_mode: 'HTML' });
@@ -72,6 +75,24 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
 
       processDMPhotoCreation(ctx, userId, photo.file_id, prompt);
     }
+    if (userState?.step === 'waiting_DM_photo_for_video') {
+      const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+
+      userStates.set(userId, {
+        ...userState,
+        step: 'waiting_DM_text',
+        photoFileId: photoFileId,
+      });
+
+      const message = DED_MOROZ_REVIVE_PROMT;
+
+      await ctx.telegram.sendMessage(userId, message, {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [[{text: 'Назад', callback_data: 'ded_moroz_animate'}]]
+        }
+      });
+    }
 
     if (userState?.step === 'waiting_broadcast_photo') {
       broadcastPhotoHandler(ctx, userId, userState);
@@ -86,6 +107,22 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
 
     if (userState?.step === 'waiting_broadcast_message') {
       broadcastMessageHandler(ctx, userId, userState);
+      return;
+    }
+
+    if (userState?.step === 'waiting_DM_text') {
+      const prompt = ctx.message.text.trim();
+
+      console.log(`📝 Сохранен промпт для пользователя ${userId}: "${prompt}"`);
+
+      if (userState.photoFileId) {
+        processVideoDMGeneration(ctx, userId, userState.photoFileId, prompt);
+      } else {
+        await ctx.reply('❌ Произошла ошибка. Попробуйте снова.');
+      }
+
+      userStates.delete(userId);
+      return;
     }
     
     if (userState?.step === 'waiting_email') {
@@ -218,6 +255,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     
     const userState = userStates.get(userId);
     if (!userState) return;
+
+    console.log('Тип полученного видео: ', ctx.message.video.file_id);
     
     if (userState?.step !== 'waiting_broadcast_video') return;
 

@@ -1,11 +1,8 @@
-import { Telegraf, Markup } from 'telegraf';
+import { Telegraf } from 'telegraf';
 import { BotContext, UserState } from '../types';
-import { Database } from '../database';
-import { PRICES } from '../constants';
-import { processVideoGeneration } from '../services/klingService';
-import { logToFile } from '../bot';
 import { processDMPhotoCreation, processPhotoRestoration } from '../services/nanoBananaService';
 import { processPhotoColorize } from '../services/nanoBananaProService';
+import { DED_MOROZ_REVIVE_PROMT } from '../constants';
 
 export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.on('document', async (ctx) => {
@@ -52,13 +49,12 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
 🖼 <b>Опишите, как должна ожить фотография</b>
 
 Укажите, что именно должно происходить с каждым человеком на фото: отдельно или все вместе.
-Например:
-Позирует на камеру
-- Показывает язык
-- Машет рукой
-- Выходит из кадра
-- Девушка обнимает мужчину
-- Внук целует бабушку в щеку
+
+<b>Например:</b>
+- Улыбается в камеру без видимых зубов;
+- Показывает язык на камеру;
+- Машет рукой в камеру;
+- Нежно обнимает человека и целует его;
 …и любые другие подобные действия ✨
 
 ❗️<b>Важно:</b>
@@ -66,6 +62,8 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
 - <b><i>Не присылайте 18+ контент</i></b> и описания соответствующих действий. Такие запросы не обрабатываются, и оплата за генерацию возвращена не будет.
 
 - <b><i>Допустимо</i></b> присылать фото в купальнике или белье с нейтральным описанием вроде "Позирует на камеру" — мы не звери 😅
+
+- <b><i>Не пишите слишком длинный и сложный запрос</i></b>, это всего лишь оживление фотографии до 5 секунд, а не сложный видеоролик
     `.trim();
 
       await ctx.reply(descriptionMessage, { parse_mode: 'HTML' });
@@ -93,6 +91,25 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
       processDMPhotoCreation(ctx, userId, photoFileId, prompt);
 
       userStates.delete(userId);
+    }
+
+    if (userState.step === 'waiting_DM_photo_for_video') {
+      const photoFileId = ctx.message.document.file_id;
+
+      userStates.set(userId, {
+        ...userState,
+        step: 'waiting_DM_text',
+        photoFileId: photoFileId,
+      });
+
+      const message = DED_MOROZ_REVIVE_PROMT;
+
+      await ctx.telegram.sendMessage(userId, message, {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [[{text: 'Назад', callback_data: callbackData}]]
+        }
+      });
     }
   });
 }

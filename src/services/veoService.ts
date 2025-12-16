@@ -4,6 +4,7 @@ import { Markup } from 'telegraf';
 import { config } from '../config';
 import { Database } from '../database';
 import { mainMenuKeyboard, PRICES } from '../constants';
+import { userStates } from '../bot';
 
 const API_URL = 'https://api.kie.ai/api/v1/veo';
 const API_KEY = config.klingApiKey;
@@ -132,28 +133,16 @@ export async function generateVideoWithVeo(imageUrl: string, prompt: string): Pr
 
 export async function processVideoDMGeneration(ctx: any, userId: number, photoFileId: string, prompt: string) {
   try {
-    const deducted = await Database.deductBalance(
-      userId,
-      PRICES.DED_MOROZ_VIEDO,
-      'Оживление фото'
-    );
-
-    if (!deducted) {
-      await ctx.telegram.sendMessage(
-        userId,
-        '❌ Недостаточно средств для генерации'
-      );
-      return;
-    }
-
     console.log(`⏳ Начинается генерация видео для пользователя ${userId}...`);
 
     await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
 
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
+
+    const newPrompt = `Santa Claus's Text of the greeting: ${prompt}`;
     
-    const videoUrl = await generateVideoWithVeo(photoUrl.href, prompt);
+    const videoUrl = await generateVideoWithVeo(photoUrl.href, newPrompt);
 
     const videoResponse = await axios.get(videoUrl, { responseType: 'arraybuffer' });
     const videoBuffer = Buffer.from(videoResponse.data);
@@ -164,10 +153,13 @@ export async function processVideoDMGeneration(ctx: any, userId: number, photoFi
       parse_mode: 'HTML',
     });
 
-    await Database.saveGeneratedFile(userId, 'photo', sentMessage.video.file_id, prompt);
+    await Database.saveGeneratedFile(userId, 'dm_video', sentMessage.video.file_id, prompt);
+    await Database.saveGeneratedFile(userId, 'dm_photo', photoFileId, 'Дед Мороз');
 
     console.log(`✅ Видео сгенерировано и сохранено для пользователя ${userId}`);
     console.log(`📁 File ID: ${sentMessage.video.file_id}`);
+
+    userStates.delete(userId);
 
     const mainMenuMessage = `
 Наш бот умеет:
@@ -193,12 +185,12 @@ export async function processVideoDMGeneration(ctx: any, userId: number, photoFi
     
     await Database.addBalance(
       userId,
-      PRICES.PHOTO_ANIMATION,
+      PRICES.DED_MOROZ,
       'Возврат средств за ошибку генерации',
       'bonus'
     );
 
-    console.log(`💰 Возвращено ${PRICES.PHOTO_ANIMATION}₽ пользователю ${userId}`);
+    console.log(`💰 Возвращено ${PRICES.DED_MOROZ}₽ пользователю ${userId}`);
     
     await ctx.telegram.sendMessage(
       userId,

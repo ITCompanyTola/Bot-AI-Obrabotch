@@ -4,6 +4,8 @@ import { Markup } from 'telegraf';
 import { config } from '../config';
 import { Database } from '../database';
 import { mainMenuKeyboard, PRICES } from '../constants';
+import { UserState } from '../types';
+import { userStates } from '../bot';
 
 const API_URL = 'https://api.kie.ai/api/v1/jobs';
 const API_KEY = config.nanoBananaApiKey;
@@ -210,93 +212,112 @@ export async function processPhotoRestoration(ctx: any, userId: number, photoFil
 }
 
 // ДЕД МОРОЗ
-// async function generateDMPhotoWithBanana(imageUrl: string, prompt: string): Promise<string> {
-//   console.log(`📸 Создаю фото Деда Мороза: ${imageUrl}`);
-//   console.log(`💬 С описанием: ${prompt}`);
+async function generateDMPhotoWithBanana(imageUrl: string, prompt: string): Promise<string> {
+  console.log(`📸 Создаю фото Деда Мороза: ${imageUrl}`);
+  console.log(`💬 С описанием: ${prompt}`);
   
-//   const taskId = await createRestorationTask(imageUrl, prompt);
-//   console.log(`✅ Задача создана: ${taskId}`);
+  const taskId = await createRestorationTask(imageUrl, prompt);
+  console.log(`✅ Задача создана: ${taskId}`);
   
-//   const videoUrl = await waitForRestorationTaskCompletion(taskId);
-//   console.log(`✅ Фото готово: ${videoUrl}`);
+  const videoUrl = await waitForRestorationTaskCompletion(taskId);
+  console.log(`✅ Фото готово: ${videoUrl}`);
   
-//   return videoUrl;
-// }
+  return videoUrl;
+}
 
-// export async function processDMPhotoCreation(ctx: any, userId: number, photoFileId: string, prompt: string) {
-//   try {
-//     const deducted = await Database.deductBalance(
-//       userId,
-//       PRICES.DED_MOROZ_PHOTO,
-//       'Дед мороз фото'
-//     );
+export async function processDMPhotoCreation(ctx: any, userId: number, userState: UserState, prompt: string) {
+  try {
+    console.log(`⏳ Начинается создание фото Деда Мороза для пользователя ${userId}...`);
+    const photoFileId = userState.photoFileId;
+    const photoUrl = await ctx.telegram.getFileLink(photoFileId);
+    console.log(`📸 URL фото: ${photoUrl.href}`);
 
-//     if (!deducted) {
-//       await ctx.telegram.sendMessage(
-//         userId,
-//         '❌ Недостаточно средств для генерации'
-//       );
-//       return;
-//     }
-
-//     console.log(`⏳ Начинается создание фото Деда Мороза для пользователя ${userId}...`);
-
-//     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
-//     console.log(`📸 URL фото: ${photoUrl.href}`);
-
-//     await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
+    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
     
-//     const DMPhotoUrl = await generateDMPhotoWithBanana(photoUrl.href, prompt);
+    const DMPhotoUrl = await generateDMPhotoWithBanana(photoUrl.href, prompt);
 
-//     const photoResponse = await axios.get(DMPhotoUrl, { responseType: 'arraybuffer' });
-//     const photoBuffer = Buffer.from(photoResponse.data);
+    const photoResponse = await axios.get(DMPhotoUrl, { responseType: 'arraybuffer' });
+    const photoBuffer = Buffer.from(photoResponse.data);
 
-//     const caption = `✅ Ваше фото с Дедом Морозом готово!`.trim()
-//     const sentMessage = await ctx.telegram.sendPhoto(userId, { source: photoBuffer }, {
-//       caption: caption,
-//       parse_mode: 'HTML',
-//     });
+    if (userState.freeGenerations == undefined) return;
+    let caption = `
+✅ Ваше фото с Дедом Морозом готово! ❄️✨
 
-//     const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
-//     await Database.saveGeneratedFile(userId, 'dm_photo', fileId, prompt);
+1️⃣ Если Дед Мороз понравился — нажмите кнопку подтвердить и перейдём к волшебному видео для вашего ребёнка ❤️
+2️⃣ Если Дед Мороз не устроил — смело жмите кнопку повторить
 
-//     console.log(`✅ Фото с Дедом Морозом сгенерировано и сохранено для пользователя ${userId}`);
-//     console.log(`📁 File ID: ${fileId}`);
+Помните, у вас ещё ${userState.freeGenerations} бесплатные попытки 🙌`.trim()
 
-//     const mainMenuMessage = `
-// Наш бот умеет:
-// - <b><i>оживлять фото</i></b> 📸✨
-// - создавать <b><i>крутые треки</i></b> 🎵🔥
-// - <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-// - переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
+    if (userState.freeGenerations === 1) {
+      caption = `
+✅ Ваше фото с Дедом Морозом готово! ❄️✨
 
-// Вы можете творить сами или доверить работу нам 🤝
-// В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-//     `.trim();
+Посмотрите, как он получился на этот раз🎅
 
-//     await ctx.telegram.sendMessage(
-//       userId,
-//       mainMenuMessage,
-//       {
-//         parse_mode: 'HTML',
-//         ...Markup.inlineKeyboard(mainMenuKeyboard)
-//     });
+1️⃣ Если Дед Мороз понравился — нажмите кнопку подтвердить и перейдём к волшебному видео для вашего ребёнка ❤️
+2️⃣ Если Дед Мороз не устроил — смело жмите кнопку повторить
 
-//   } catch (error) {
-//     console.error('❌ Ошибка генерации фотографии:', error);
+У вас осталась ещё 1 бесплатная попытка — давайте сделаем идеальное фото вместе! 🙌✨`
+    } else if (userState.freeGenerations === 0) {
+      caption = `
+✅ Ваше фото с Дедом Морозом готово! ❄️✨
+
+Мы уверены, он волшебно получился на этот раз ❤️
+
+Теперь можно только перейти к созданию поздравления — нажмите кнопку подтвердить 🙌🏻`
+
+      const sentMessage = await ctx.telegram.sendPhoto(userId, { source: photoBuffer }, {
+        caption: caption,
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Подтвердить', callback_data: 'confirm_dm' }],
+          ]
+        }
+      });
+
+      const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
+
+      userStates.set(userId, {
+        ...userState,
+        dmPhotoFileId: fileId,
+        freeGenerations: userState.freeGenerations - 1,
+      });
+      return;
+    }
+    const sentMessage = await ctx.telegram.sendPhoto(userId, { source: photoBuffer }, {
+      caption: caption,
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: 'Подтвердить', callback_data: 'confirm_dm' }],
+          [{ text: `Сгенерировать ${4 - userState.freeGenerations}/3`, callback_data: 'repeat_dm' }]
+        ]
+      }
+    });
+
+    const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
+
+    userStates.set(userId, {
+      ...userState,
+      dmPhotoFileId: fileId,
+      freeGenerations: userState.freeGenerations - 1,
+    });
+  } catch (error) {
+    console.error('❌ Ошибка генерации фотографии:', error);
     
-//     await Database.addBalance(
-//       userId,
-//       PRICES.DED_MOROZ_PHOTO,
-//       'Возврат средств за ошибку генерации',
-//       'bonus'
-//     );
+    await Database.addBalance(
+      userId,
+      PRICES.DED_MOROZ,
+      'Возврат средств за ошибку генерации',
+      'bonus'
+    );
 
-//     console.log(`💰 Возвращено ${PRICES.DED_MOROZ_PHOTO}₽ пользователю ${userId}`);
+    console.log(`💰 Возвращено ${PRICES.DED_MOROZ}₽ пользователю ${userId}`);
     
-//     await ctx.telegram.sendMessage(
-//       userId,
-//       '❌ Произошла ошибка при генерации. Средства возвращены на баланс.'
-//     );
-//   }
-// }
+    await ctx.telegram.sendMessage(
+      userId,
+      '❌ Произошла ошибка при генерации. Средства возвращены на баланс.'
+    );
+  }
+}

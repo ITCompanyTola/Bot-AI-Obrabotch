@@ -1,10 +1,10 @@
 import { Telegraf, Markup } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
-import { DED_MOROZ_REVIVE_PROMT, PRICES } from '../constants';
+import { PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
 import { logToFile } from '../bot';
-import { processPhotoRestoration } from '../services/nanoBananaService';
+import { processPhotoRestoration, processDMPhotoCreation } from '../services/nanoBananaService';
 import { processPhotoColorize } from '../services/nanoBananaProService';
 import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler } from './broadcast';
 import { processVideoDMGeneration } from '../services/veoService';
@@ -69,29 +69,18 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       processPhotoColorize(ctx, userId, photo.file_id, prompt);
     }
 
+    // Выполняется один раз
     if (userState?.step === 'waiting_DM_photo_generation') {
       const photo = ctx.message.photo[ctx.message.photo.length - 1];
       const prompt = 'Russian Father Frost, long red coat down to the floor, thick white fur trim, gold braid, red belt, tall red hat with fur and gold trim, very long curly white beard down to his waist, red mittens with fur, majestic posture, photorealistic, premium class. Santa Claus should be approximately 165 cm tall and fit well into the loaded image';
 
-      // processDMPhotoCreation(ctx, userId, photo.file_id, prompt);
-    }
-    if (userState?.step === 'waiting_DM_photo_for_video') {
-      const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
-
       userStates.set(userId, {
         ...userState,
-        step: 'waiting_DM_text',
-        photoFileId: photoFileId,
+        photoFileId: photo.file_id
       });
-
-      const message = DED_MOROZ_REVIVE_PROMT;
-
-      await ctx.telegram.sendMessage(userId, message, {
-        parse_mode: 'HTML',
-        reply_markup: {
-          inline_keyboard: [[{text: 'Назад', callback_data: 'ded_moroz_animate'}]]
-        }
-      });
+      const newUserState = userStates.get(userId);
+      if (newUserState === undefined) return;
+      processDMPhotoCreation(ctx, userId, newUserState, prompt);
     }
 
     if (userState?.step === 'waiting_broadcast_photo') {
@@ -115,8 +104,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
 
       console.log(`📝 Сохранен промпт для пользователя ${userId}: "${prompt}"`);
 
-      if (userState.photoFileId) {
-        processVideoDMGeneration(ctx, userId, userState.photoFileId, prompt);
+      if (userState.dmPhotoFileId) {
+        processVideoDMGeneration(ctx, userId, userState.dmPhotoFileId, prompt);
       } else {
         await ctx.reply('❌ Произошла ошибка. Попробуйте снова.');
       }
@@ -152,10 +141,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
         backAction = 'refill_balance_from_restoration';
       } else if (userState?.refillSource === 'colorize') {
         backAction = 'refill_balance_from_colorize';
-      } else if (userState?.refillSource === 'dm_photo') {
-        backAction = 'refill_balance_from_dm_photo';
-      } else if (userState?.refillSource === 'dm_video') {
-        backAction = 'refill_balance_from_dm_video';
+      } else if (userState?.refillSource === 'dm') {
+        backAction = 'refill_balance_from_dm';
       }
       
       userStates.set(userId, {

@@ -23,7 +23,6 @@ export type UserStep =
   | 'waiting_broadcast_photo'
   | 'waiting_broadcast_video'
   | 'waiting_DM_photo_generation'
-  | 'waiting_DM_photo_for_video'
   | 'waiting_DM_text'
   | null;
 
@@ -35,8 +34,10 @@ export interface UserState {
   paymentId?: string;
   musicText?: string;
   musicStyle?: string;
-  refillSource?: 'photo' | 'profile' | 'music' | 'restoration' | 'colorize' | 'dm_photo' | 'dm_video';
+  refillSource?: 'photo' | 'profile' | 'music' | 'restoration' | 'colorize' | 'dm';
   pendingPaymentAmount?: number;
+  freeGenerations?: number;
+  dmPhotoFileId?: string;
 }
 export interface MailingData {
   id: number;

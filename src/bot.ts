@@ -10,7 +10,7 @@ import path from 'path';
 
 const bot = new Telegraf<BotContext>(config.botToken);
 
-const userStates = new Map<number, UserState>();
+export const userStates = new Map<number, UserState>();
 export const broadcast = new Map<number, Broadcast>();
 
 // Функция логирования в файл

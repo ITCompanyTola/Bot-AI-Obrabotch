@@ -1,8 +1,8 @@
 import { Telegraf } from 'telegraf';
 import { BotContext, UserState } from '../types';
-import { processPhotoRestoration } from '../services/nanoBananaService';
+import { processDMPhotoCreation, processPhotoRestoration } from '../services/nanoBananaService';
 import { processPhotoColorize } from '../services/nanoBananaProService';
-import { DED_MOROZ_REVIVE_PROMT } from '../constants';
+
 
 export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.on('document', async (ctx) => {
@@ -18,14 +18,12 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
       revive: 'photo_animation',
       restoration: 'photo_restoration',
       colorize: 'photo_colorize',
-      dm_photo: 'ded_moroz_generate',
-      dm_video: 'ded_moroz_animate'
+      dm_photo: 'ded_moroz_start',
     }
     let callbackData = callbackActions.revive;
     if (userState.step === 'waiting_for_restoration_photo') callbackData = callbackActions.restoration;
     if (userState.step === 'waiting_for_colorize_photo') callbackData = callbackActions.colorize;
     if (userState.step === 'waiting_DM_photo_generation') callbackData = callbackActions.dm_photo;
-    if (userState.step === 'waiting_DM_photo_for_video') callbackData = callbackActions.dm_video;
 
     if (!ctx.message.document.mime_type?.startsWith('image/')) {
       await ctx.reply('Документ может быть только фотографией! Попробуйте снова.', {
@@ -87,29 +85,13 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
 
     if (userState.step === 'waiting_DM_photo_generation') {
       const prompt = 'Russian Father Frost, long red coat down to the floor, thick white fur trim, gold braid, red belt, tall red hat with fur and gold trim, very long curly white beard down to his waist, red mittens with fur, majestic posture, photorealistic, premium class. Santa Claus should be approximately 165 cm tall and fit well into the loaded image';
-
-      // processDMPhotoCreation(ctx, userId, photoFileId, prompt);
-
-      userStates.delete(userId);
-    }
-
-    if (userState.step === 'waiting_DM_photo_for_video') {
-      const photoFileId = ctx.message.document.file_id;
-
       userStates.set(userId, {
         ...userState,
-        step: 'waiting_DM_text',
-        photoFileId: photoFileId,
+        photoFileId: photoFileId
       });
-
-      const message = DED_MOROZ_REVIVE_PROMT;
-
-      await ctx.telegram.sendMessage(userId, message, {
-        parse_mode: 'HTML',
-        reply_markup: {
-          inline_keyboard: [[{text: 'Назад', callback_data: callbackData}]]
-        }
-      });
+      const newUserState = userStates.get(userId);
+      if (newUserState === undefined) return;
+      processDMPhotoCreation(ctx, userId, newUserState, prompt);
     }
   });
 }

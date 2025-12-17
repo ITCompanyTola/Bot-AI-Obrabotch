@@ -264,6 +264,10 @@ https://t.me/obrabotych_support
 💰 Сумма успешных пополнений: <b>${stats.all.totalPaymentsAmount.toFixed(2)}₽</b>
 📸 Количество генераций фото: <b>${stats.all.photoGenerations}</b>
 🎵 Количество генераций музыки: <b>${stats.all.musicGenerations}</b>
+🏞 Количество генераций реставрации: <b>${stats.all.restorationGenerations}</b>
+🎨 Количество генерации ЧБ: <b>${stats.all.colorizeGenerations}</b>
+🎅 Количество генераций Д.Мороза: <b>${stats.all.dmVideoGenerations}</b>
+
 
 <b>За последние 7 дней</b>
 👥 Количество пользователей: <b>${stats.last7Days.usersCount}</b>
@@ -271,6 +275,9 @@ https://t.me/obrabotych_support
 💰 Сумма успешных пополнений: <b>${stats.last7Days.totalPaymentsAmount.toFixed(2)}₽</b>
 📸 Количество генераций фото: <b>${stats.last7Days.photoGenerations}</b>
 🎵 Количество генераций музыки: <b>${stats.last7Days.musicGenerations}</b>
+🏞 Количество генераций реставрации: <b>${stats.last7Days.restorationGenerations}</b>
+🎨 Количество генерации ЧБ: <b>${stats.last7Days.colorizeGenerations}</b>
+🎅 Количество генераций Д.Мороза: <b>${stats.last7Days.dmVideoGenerations}</b>
 
 <b>За сегодня ${todayStr}</b>
 👥 Количество пользователей: <b>${stats.today.usersCount}</b>
@@ -278,6 +285,9 @@ https://t.me/obrabotych_support
 💰 Сумма успешных пополнений: <b>${stats.today.totalPaymentsAmount.toFixed(2)}₽</b>
 📸 Количество генераций фото: <b>${stats.today.photoGenerations}</b>
 🎵 Количество генераций музыки: <b>${stats.today.musicGenerations}</b>
+🏞 Количество генераций реставрации: <b>${stats.today.restorationGenerations}</b>
+🎨 Количество генерации ЧБ: <b>${stats.today.colorizeGenerations}</b>
+🎅 Количество генераций Д.Мороза: <b>${stats.today.dmVideoGenerations}</b>
       `.trim();
       
       await ctx.reply(statsMessage, { parse_mode: 'HTML' });

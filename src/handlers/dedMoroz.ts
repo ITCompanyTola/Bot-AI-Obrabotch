@@ -32,7 +32,7 @@ export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<nu
         reply_markup: {
           inline_keyboard: [
             [{ text: '🎅 Поздравление Д.Мороза', callback_data: 'ded_moroz_start' }],
-            [{ text: 'Видео-инструкция', callback_data: 'video_instruction' }],
+            [{ text: 'Видео-инструкция', callback_data: 'ded_moroz_instruction' }],
             [{ text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_dm' }],
             [{ text: 'Главное меню', callback_data: 'main_menu' }]
           ]
@@ -45,7 +45,7 @@ export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<nu
       reply_markup: {
         inline_keyboard: [
           [{ text: '🎅 Поздравление Д.Мороза', callback_data: 'ded_moroz_start' }],
-          [{ text: 'Видео-инструкция', callback_data: 'video_instruction' }],
+          [{ text: 'Видео-инструкция', callback_data: 'ded_moroz_instruction' }],
           [{ text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_dm' }],
           [{ text: 'Главное меню', callback_data: 'main_menu' }]
         ]

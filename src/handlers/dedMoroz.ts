@@ -195,7 +195,7 @@ export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<nu
         }
       });
     } else {
-      await ctx.editMessageText('Ошибка загрузки видео!', {
+      await ctx.telegram.sendMessage(userId,'Ошибка загрузки видео!', {
         parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [

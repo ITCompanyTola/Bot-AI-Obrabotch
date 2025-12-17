@@ -103,7 +103,7 @@ async function showRefillAmountSelection(
     [Markup.button.callback('Назад', backActions[refillSource])]
   ]);
 
-  if (useEdit) {
+  if (useEdit && refillSource !== 'dm') {
     await ctx.editMessageText(refillMessage, keyboard);
   } else {
     await ctx.telegram.sendMessage(userId, refillMessage, keyboard);

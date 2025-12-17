@@ -215,17 +215,9 @@ export class MailingWorker {
   private determineErrorStatus(error: any): "failed" | "blocked" {
     const errorMessage = error.message || "";
 
-    if (
-      errorMessage.includes("bot was blocked") ||
-      errorMessage.includes("user is deactivated") ||
-      errorMessage.includes("USER_DEACTIVATED") ||
-      errorMessage.includes("user not found") ||
-      error.code === 403
-    ) {
-      return "blocked";
-    }
+    if (errorMessage.includes("bot was blocked")) return "blocked";
 
-    return "failed";
+    return 'failed';
   }
 
   private async updateProgress(

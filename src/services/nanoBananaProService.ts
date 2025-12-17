@@ -4,6 +4,7 @@ import { Markup } from 'telegraf';
 import { config } from '../config';
 import { Database } from '../database';
 import { mainMenuKeyboard, PRICES } from '../constants';
+import { axiosRetry } from '../utils/axiosRetry';
 
 const API_URL = 'https://api.kie.ai/api/v1/jobs';
 const API_KEY = config.nanoBananaApiKey;
@@ -155,7 +156,10 @@ export async function processPhotoColorize(ctx: any, userId: number, photoFileId
     
     const colorizedPhotoUrl = await generatePhotoWithBanana(photoUrl.href, prompt);
 
-    const photoResponse = await axios.get(colorizedPhotoUrl, { responseType: 'arraybuffer' });
+    const photoResponse = await axiosRetry(colorizedPhotoUrl, 5);
+    if (photoResponse == null) {
+      throw new Error('Фото не загрузилось');
+    }
     const photoBuffer = Buffer.from(photoResponse.data);
 
     const caption = `✅ Ваше фото готово!`.trim()
@@ -176,6 +180,7 @@ export async function processPhotoColorize(ctx: any, userId: number, photoFileId
 - создавать <b><i>крутые треки</i></b> 🎵🔥
 - <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
 - переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
+- делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
 
 Вы можете творить сами или доверить работу нам 🤝
 В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!

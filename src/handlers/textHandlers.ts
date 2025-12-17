@@ -16,7 +16,7 @@ function validateEmail(email: string): boolean {
 
 export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.on('photo', async (ctx) => {
-    // console.log(ctx.message.photo[ctx.message.photo.length - 1].file_id);
+    console.log(ctx.message.photo[ctx.message.photo.length - 1].file_id);
     const userId = ctx.from?.id;
     if (!userId) return;
     
@@ -237,6 +237,7 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
   });
 
   bot.on('video', (ctx) => {
+    console.log('Видео получено', ctx.message.video.file_id);
     const userId = ctx.from?.id;
     if (!userId) return;
     

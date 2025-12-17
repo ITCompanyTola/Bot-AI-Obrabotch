@@ -46,10 +46,10 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
             Markup.button.callback('Мои видео', 'my_photos'),
             Markup.button.callback('Мои треки', 'my_tracks')
           ],
-          // [
-          //   Markup.button.callback('Мои фото Д.Мороза', 'my_dm_photos'),
-          //   Markup.button.callback('Мои видео Д.Мороза', 'my_dm_videos')
-          // ],
+          [
+            Markup.button.callback('Мои фото Д.Мороза', 'my_dm_photos'),
+            Markup.button.callback('Мои видео Д.Мороза', 'my_dm_videos')
+          ],
           [Markup.button.callback('💳 Пополнить баланс', 'refill_balance_from_profile')],
           [Markup.button.callback('Документы', 'documents')],
           [Markup.button.callback('Главное меню', 'main_menu')]

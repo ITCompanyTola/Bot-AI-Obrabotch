@@ -4,6 +4,7 @@ import { Markup } from 'telegraf';
 import { config } from '../config';
 import { Database } from '../database';
 import { mainMenuKeyboard, PRICES } from '../constants';
+import { axiosRetry } from '../utils/axiosRetry';
 
 const API_URL = 'https://api.kie.ai/api/v1/jobs';
 const API_KEY = config.klingApiKey;
@@ -151,7 +152,10 @@ export async function processVideoGeneration(ctx: any, userId: number, photoFile
     
     const videoUrl = await generateVideoWithKling(photoUrl.href, prompt);
 
-    const videoResponse = await axios.get(videoUrl, { responseType: 'arraybuffer' });
+    const videoResponse = await axiosRetry(videoUrl, 5);
+    if (videoResponse == null) {
+      throw new Error('Видео не загрузилось');
+    }
     const videoBuffer = Buffer.from(videoResponse.data);
 
     const caption = (`
@@ -175,6 +179,7 @@ export async function processVideoGeneration(ctx: any, userId: number, photoFile
 - создавать <b><i>крутые треки</i></b> 🎵🔥
 - <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
 - переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
+- делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
 
 Вы можете творить сами или доверить работу нам 🤝
 В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!

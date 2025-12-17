@@ -6,7 +6,7 @@ import { processDMPhotoCreation } from '../services/nanoBananaService';
 
 const PHOTO_GENERATION_EXAMPLE_ID: string = 'AgACAgIAAxkBAAIH0mlBg6y50IezM_kY_My77ebA96oMAAI9Emsb7dQISjIqf-2iAAHmGgEAAwIAA3kAAzYE';
 const VIDEO_EXAMPLE_ID: string = 'BAACAgIAAxkDAAIIAmlBjEHGqE6ISIeXUTxsODb5MlSBAALIlwACPZUQSqqFRol_8fhoNgQ';
-const VIDEO_INSTRUCTION_ID: string = '';
+const VIDEO_INSTRUCTION_ID: string = 'BAACAgIAAxkBAAII5GlCrrE10M9OA4c_g16cPWvWJM5rAALYjAACzBkZSiWoTfr9I-2PNgQ';
 
 export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('ded_moroz', async (ctx) => {

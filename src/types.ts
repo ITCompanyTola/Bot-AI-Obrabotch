@@ -14,7 +14,6 @@ export type UserStep =
   | 'waiting_for_restoration_photo' 
   | 'waiting_for_colorize_photo'
   | 'waiting_description' 
-  | 'waiting_payment' 
   | 'waiting_music_text' 
   | 'waiting_music_style' 
   | 'waiting_music_params' 
@@ -30,6 +29,7 @@ export interface UserState {
   step: UserStep;
   photoFileId?: string;
   prompt?: string;
+  generatedPrompt?: string;
   paymentAmount?: number;
   paymentId?: string;
   musicText?: string;

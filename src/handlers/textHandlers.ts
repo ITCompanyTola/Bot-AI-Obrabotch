@@ -8,6 +8,7 @@ import { processPhotoRestoration, processDMPhotoCreation } from '../services/nan
 import { processPhotoColorize } from '../services/nanoBananaProService';
 import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler } from './broadcast';
 import { processVideoDMGeneration } from '../services/veoService';
+import { updatePrompt } from '../services/openaiService';
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -196,14 +197,78 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     if (userState?.step !== 'waiting_description' || !userState.photoFileId) return;
     
     const prompt = ctx.message.text;
-    
+
+    await ctx.reply('📝 Пожалуйста, подождите... Ваш промпт улучшается');
+
+    const updatedPromptMessage = await updatePrompt(prompt);
+
     userStates.set(userId, {
-      step: 'waiting_payment',
-      photoFileId: userState.photoFileId,
-      prompt: prompt
-    });
+      ...userState,
+      prompt: prompt,
+      generatedPrompt: updatedPromptMessage
+    })
+
+    const message = `Ваш промпт:\n${prompt}\n\nОтредактированный промпт:\n${updatedPromptMessage}`
+    await ctx.reply(message, {
+      reply_markup: {
+        inline_keyboard: [
+          [{text: 'Оставляем', callback_data: 'confirm_ai_prompt'}],
+          [{text: 'Пересгенерировать', callback_data: 'regenerate_prompt'}],
+          [{text: 'Использовать свой', callback_data: 'confirm_prompt'}],
+        ]
+      }
+    })
+  });
+
+  bot.on('video', (ctx) => {
+    console.log('Видео получено', ctx.message.video.file_id);
+    const userId = ctx.from?.id;
+    if (!userId) return;
     
-    console.log(`📝 Сохранен промпт для пользователя ${userId}: "${prompt}"`);
+    const userState = userStates.get(userId);
+    if (!userState) return;
+    
+    if (userState?.step !== 'waiting_broadcast_video') return;
+
+    broadcastVideoHandler(ctx, userId, userState);
+  });
+
+  bot.action('regenerate_prompt', async (ctx) => {
+    await ctx.answerCbQuery();
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    const userState = userStates.get(userId);
+    if (!userState || !userState.prompt) return;
+    
+    await ctx.reply('📝 Пожалуйста, подождите... Ваш промпт улучшается');
+
+    const updatedPromptMessage = await updatePrompt(userState.prompt);
+
+    userStates.set(userId, {
+      ...userState,
+      generatedPrompt: updatedPromptMessage
+    })
+
+    const message = `Ваш промпт:\n${userState.prompt}\n\nОтредактированный промпт:\n${updatedPromptMessage}`
+    await ctx.reply(message, {
+      reply_markup: {
+        inline_keyboard: [
+          [{text: 'Оставляем', callback_data: 'confirm_ai_prompt'}],
+          [{text: 'Пересгенерировать', callback_data: 'regenerate_prompt'}],
+          [{text: 'Использовать свой', callback_data: 'confirm_prompt'}],
+        ]
+      }
+    })
+  });
+
+  bot.action('confirm_prompt', async (ctx) => {
+    await ctx.answerCbQuery();
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    const userState = userStates.get(userId);
+    if (!userState) return;
+    
+    console.log(`📝 Сохранен промпт для пользователя ${userId}: "${userState.generatedPrompt}"`);
     
     const balance = await Database.getUserBalance(userId);
     const hasBalance = await Database.hasEnoughBalance(userId, PRICES.PHOTO_ANIMATION);
@@ -231,21 +296,50 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     
     await ctx.reply('⏳ Начинаю генерацию... Это займет около 3 минут.');
     
-    processVideoGeneration(ctx, userId, userState.photoFileId, prompt);
+    if (userState.photoFileId == undefined || userState.generatedPrompt == undefined) return;
+    processVideoGeneration(ctx, userId, userState.photoFileId, userState.generatedPrompt);
     
     userStates.delete(userId);
   });
 
-  bot.on('video', (ctx) => {
-    console.log('Видео получено', ctx.message.video.file_id);
+  bot.action('confirm_ai_prompt', async (ctx) => {
+    await ctx.answerCbQuery();
     const userId = ctx.from?.id;
     if (!userId) return;
-    
     const userState = userStates.get(userId);
     if (!userState) return;
     
-    if (userState?.step !== 'waiting_broadcast_video') return;
+    console.log(`📝 Сохранен промпт для пользователя ${userId}: "${userState.generatedPrompt}"`);
+    
+    const balance = await Database.getUserBalance(userId);
+    const hasBalance = await Database.hasEnoughBalance(userId, PRICES.PHOTO_ANIMATION);
+    
+    if (!hasBalance) {
+      const paymentMessage = `
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽
+📹 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION}₽ / $1</blockquote>
 
-    broadcastVideoHandler(ctx, userId, userState);
+Выберете способ оплаты ⤵️
+      `.trim();
+
+      await ctx.reply(
+        paymentMessage,
+        {
+          parse_mode: 'HTML',
+          ...Markup.inlineKeyboard([
+            [Markup.button.callback('Оплата картой', 'refill_balance')],
+            [Markup.button.callback('Главное меню', 'main_menu')]
+          ])
+        }
+      );
+      return;
+    }
+    
+    await ctx.reply('⏳ Начинаю генерацию... Это займет около 3 минут.');
+    
+    if (userState.photoFileId == undefined || userState.generatedPrompt == undefined) return;
+    processVideoGeneration(ctx, userId, userState.photoFileId, userState.generatedPrompt);
+    
+    userStates.delete(userId);
   });
 }

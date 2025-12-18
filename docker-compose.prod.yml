@@ -1,38 +1,6 @@
 version: '3.8'
 
 services:
-  traefik:
-    image: traefik:v3.1
-    container_name: traefik
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./traefik/traefik.yml:/traefik.yml:ro
-      - ./traefik/acme.json:/acme.json
-    command:
-      - "--api=true"                 # включаем Dashboard
-      - "--api.dashboard=true"       # explicit Dashboard
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.letsEncrypt.acme.email=tolaweb@yandex.ru"
-      - "--certificatesresolvers.letsEncrypt.acme.storage=/acme.json"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.mybotai.ru`)"
-      - "traefik.http.routers.traefik.entrypoints=websecure"
-      - "traefik.http.routers.traefik.tls=true"
-      - "traefik.http.routers.traefik.tls.certresolver=letsEncrypt"
-      - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$apr1$$wLGkE25P$$quD8O/Dse456ikobVYqhf0"
-      - "traefik.http.routers.traefik.middlewares=traefik-auth"
-    networks:
-      - default
-
   # Redis для очередей (оставляем из prod)
   redis:
     image: redis:7-alpine
@@ -51,23 +19,20 @@ services:
       dockerfile: Dockerfile
     container_name: telegram-bot
     restart: always
+    dns:
+      - 8.8.8.8  # Google DNS
+      - 1.1.1.1  # Cloudflare DNS
+    dns_search: .
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgresql://user:S3T9B9o541C-A2NE1@212.111.85.55:5432/PostgreSQL-1348
+      - DATABASE_URL=postgresql://postgres:123@172.17.0.1:5432/postgres
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     ports:
       - "3000:3000"
     depends_on:
       - redis
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.bot.rule=Host(`mybotai.ru`) || Host(`api.mybotai.ru`)"
-      - "traefik.http.routers.bot.entrypoints=websecure"
-      - "traefik.http.services.bot.loadbalancer.server.port=3000"
-      - "traefik.http.routers.bot.tls.certresolver=letsEncrypt"
-      - "traefik.http.routers.bot.tls=true"
     volumes:
       # Mount for logs or data persistence if needed
       - ./logs:/app/logs
@@ -83,7 +48,7 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgresql://user:S3T9B9o541C-A2NE1@212.111.85.55:5432/PostgreSQL-1348
+      - DATABASE_URL=postgresql://postgres:123@172.17.0.1:5432/postgres
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:

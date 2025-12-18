@@ -1,7 +1,7 @@
 import { Telegraf } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
-import { PRICES } from '../constants';
+import { getPostcardMessage, POSCTARD_MESSAGE, POSTCARD_MESSAGE_START, POSTCARD_PHOTO_START, PRICES } from '../constants';
 
 const EXAMPLE_POSTCARD: string = ''; // Загрузить и вставить свое фото
 const POSTCARD_INSTRUCTION: string = ''; // Загрузить и вставить свое видео
@@ -21,10 +21,9 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
 
     const balance = await Database.getUserBalance(userId);
 
-    const photoRestorationMessage = `
-Начало открытки`.trim();
+    const postcardMessage = POSCTARD_MESSAGE;
 
-    await ctx.telegram.sendMessage(userId, photoRestorationMessage, {
+    await ctx.telegram.sendMessage(userId, postcardMessage, {
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
@@ -48,9 +47,12 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const message = 'Создать открытку';
+    const balance = await Database.getUserBalance(userId);
+
+    const message = getPostcardMessage(balance);
 
     await ctx.reply(message, {
+      parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
           [{text: 'Создать открытку', callback_data: 'postcard_text_start'}],
@@ -74,7 +76,7 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const message = 'Введите текст для генерации октрытки';
+    const message = POSTCARD_MESSAGE_START;
 
     if (await Database.hasEnoughBalance(userId, PRICES.POSTCARD)) {
       userStates.set(userId, {
@@ -82,6 +84,7 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
       });
 
       await ctx.reply(message, {
+        parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
             [{text: 'Назад', callback_data: 'postcard_text'}]
@@ -121,8 +124,11 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const message = 'Создать открытку из фото';
+    const balance = await Database.getUserBalance(userId);
+
+    const message = getPostcardMessage(balance);
     await ctx.reply(message, {
+      parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
           [{text: 'Создать открытку', callback_data: 'postcard_photo_start'}],
@@ -146,13 +152,14 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const message = 'Отправьте фото для создания из него открытки';
+    const message = POSTCARD_PHOTO_START;
     
     if (await Database.hasEnoughBalance(userId, PRICES.POSTCARD)) {
       userStates.set(userId, {
         step: 'waiting_postcard_photo',
       });
       await ctx.reply(message, {
+        parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
             [{text: 'Назад', callback_data: 'postcard_photo'}]

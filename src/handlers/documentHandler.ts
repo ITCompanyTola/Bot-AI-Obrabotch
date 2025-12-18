@@ -1,6 +1,6 @@
 import { Telegraf } from 'telegraf';
 import { BotContext, UserState } from '../types';
-import { processDMPhotoCreation, processPhotoRestoration } from '../services/nanoBananaService';
+import { processDMPhotoCreation, processPhotoRestoration, processPostcardCreationWithBanana } from '../services/nanoBananaService';
 import { processPhotoColorize } from '../services/nanoBananaProService';
 
 
@@ -19,11 +19,13 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
       restoration: 'photo_restoration',
       colorize: 'photo_colorize',
       dm_photo: 'ded_moroz_start',
+      postcard: 'postcard'
     }
     let callbackData = callbackActions.revive;
     if (userState.step === 'waiting_for_restoration_photo') callbackData = callbackActions.restoration;
     if (userState.step === 'waiting_for_colorize_photo') callbackData = callbackActions.colorize;
     if (userState.step === 'waiting_DM_photo_generation') callbackData = callbackActions.dm_photo;
+    if (userState.step === 'waiting_postcard_photo') callbackData = callbackActions.postcard;
 
     if (!ctx.message.document.mime_type?.startsWith('image/')) {
       await ctx.reply('Документ может быть только фотографией! Попробуйте снова.', {
@@ -79,6 +81,17 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
       const prompt = 'Convert a black-and-white photo to color and improve the quality and clarity of the photo';
 
       processPhotoColorize(ctx, userId, photoFileId, prompt);
+
+      userStates.delete(userId);
+    }
+
+    if (userState?.step === 'waiting_postcard_photo') {
+      const postcardPrompt = `
+Задача: Сгенерируй картинку с надписью "С днем рождения"
+Стиль картинки: праздничный и теплый дизайн
+`.trim();
+
+      processPostcardCreationWithBanana(ctx, userId, photoFileId, postcardPrompt);
 
       userStates.delete(userId);
     }

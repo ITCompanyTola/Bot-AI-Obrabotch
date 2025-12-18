@@ -167,6 +167,10 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
         backAction = 'refill_balance_from_colorize';
       } else if (userState?.refillSource === 'dm') {
         backAction = 'refill_balance_from_dm';
+      } else if (userState?.refillSource === 'postcardText') {
+        backAction = 'refill_balance_from_postcard_text';
+      } else if (userState?.refillSource === 'postcardPhoto') {
+        backAction = 'refill_balance_from_postcard_photo';
       }
       
       userStates.set(userId, {

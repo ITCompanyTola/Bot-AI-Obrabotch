@@ -36,7 +36,7 @@ export interface UserState {
   paymentId?: string;
   musicText?: string;
   musicStyle?: string;
-  refillSource?: 'photo' | 'profile' | 'music' | 'restoration' | 'colorize' | 'dm';
+  refillSource?: 'photo' | 'profile' | 'music' | 'restoration' | 'colorize' | 'dm' | 'postcardPhoto' | 'postcardText';
   pendingPaymentAmount?: number;
   freeGenerations?: number;
   dmPhotoFileId?: string;

@@ -101,7 +101,7 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
-          [{text: 'Оплата картой', callback_data: 'refill_balance_from_postcard'}],
+          [{text: 'Оплата картой', callback_data: 'refill_balance_from_postcard_text'}],
           [{text: 'Главное меню', callback_data: 'main_menu'}]
         ]
       }
@@ -172,7 +172,7 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
-          [{text: 'Оплата картой', callback_data: 'refill_balance_from_postcard'}],
+          [{text: 'Оплата картой', callback_data: 'refill_balance_from_postcard_photo'}],
           [{text: 'Главное меню', callback_data: 'main_menu'}]
         ]
       }

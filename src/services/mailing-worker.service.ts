@@ -188,20 +188,46 @@ export class MailingWorker {
 
   private async sendMessageToUser(userId: number, mailing: any): Promise<void> {
     try {
+      // Создаем клавиатуру с кнопкой если есть
+      let replyMarkup: any = undefined;
+      
+      if (mailing.button_text && mailing.button_callback) {
+        replyMarkup = {
+          inline_keyboard: [[
+            { 
+              text: mailing.button_text, 
+              callback_data: mailing.button_callback 
+            }
+          ]]
+        };
+      }
+
       if (mailing.photo_file_id) {
-        await this.bot.telegram.sendPhoto(userId, mailing.photo_file_id, {
+        const options: any = {
           caption: mailing.message,
           caption_entities: mailing.entities,
-        });
+        };
+        if (replyMarkup) {
+          options.reply_markup = replyMarkup;
+        }
+        await this.bot.telegram.sendPhoto(userId, mailing.photo_file_id, options);
       } else if (mailing.video_file_id) {
-        await this.bot.telegram.sendVideo(userId, mailing.video_file_id, {
+        const options: any = {
           caption: mailing.message,
           caption_entities: mailing.entities,
-        });
+        };
+        if (replyMarkup) {
+          options.reply_markup = replyMarkup;
+        }
+        await this.bot.telegram.sendVideo(userId, mailing.video_file_id, options);
       } else {
-        await this.bot.telegram.sendMessage(userId, mailing.message, {
+        const options: any = {
           entities: mailing.entities,
-        });
+        };
+        if (replyMarkup) {
+          options.reply_markup = replyMarkup;
+        }
+        await this.bot.telegram.sendMessage(userId, mailing.message, options);
       }
     } catch (error: any) {
       console.error(

@@ -945,10 +945,15 @@ export class Database {
       }
     }
     
+    console.log('📊 Сохранение данных рассылки:');
+    console.log('- Сообщение:', data.message?.substring(0, 100));
+    console.log('- Текст кнопки:', data.button_text);
+    console.log('- Callback кнопки:', data.button_callback);
+    
     const result = await client.query(
       `INSERT INTO mailing_data 
-       (admin_id, message, entities, photo_file_id, video_file_id, total_users)
-       VALUES ($1, $2, $3, $4, $5, $6)
+       (admin_id, message, entities, photo_file_id, video_file_id, button_text, button_callback, total_users)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
         data.admin_id,
@@ -956,9 +961,17 @@ export class Database {
         entitiesForDb,
         data.photo_file_id,
         data.video_file_id,
+        data.button_text || null,  // Добавляем button_text
+        data.button_callback || null, // Добавляем button_callback
         data.total_users
       ]
     );
+
+    console.log('✅ Данные рассылки сохранены в БД:', {
+      id: result.rows[0].id,
+      hasButtonText: !!result.rows[0].button_text,
+      hasButtonCallback: !!result.rows[0].button_callback
+    });
 
     return result.rows[0];
   } finally {
@@ -966,7 +979,7 @@ export class Database {
   }
 }
 
-  static async getMailingData(id: number): Promise<MailingData | null> {
+ static async getMailingData(id: number): Promise<MailingData | null> {
   const client = await pool.connect();
   try {
     const result = await client.query(
@@ -980,6 +993,13 @@ export class Database {
 
     const row = result.rows[0];
     
+    console.log('📖 Чтение данных рассылки из БД:', {
+      id: row.id,
+      button_text: row.button_text,
+      button_callback: row.button_callback,
+      hasButton: !!row.button_text && !!row.button_callback
+    });
+    
     // Извлекаем entities
     let entities = null;
     if (row.entities) {
@@ -987,7 +1007,6 @@ export class Database {
         // Если это строка JSON
         if (typeof row.entities === 'string') {
           entities = JSON.parse(row.entities);
-          console.log('📖 Прочитаны entities из БД:', entities);
         }
         // Если pg драйвер уже распарсил
         else if (typeof row.entities === 'object') {
@@ -1001,7 +1020,10 @@ export class Database {
     
     return {
       ...row,
-      entities
+      entities,
+      // Убедимся, что поля определены
+      button_text: row.button_text || undefined,
+      button_callback: row.button_callback || undefined
     };
   } finally {
     client.release();

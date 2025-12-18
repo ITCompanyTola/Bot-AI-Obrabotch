@@ -3,10 +3,10 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
-import { logToFile } from '../bot';
+import { broadcast, logToFile } from '../bot';
 import { processPhotoRestoration, processDMPhotoCreation, processPostcardCreationWithBanana } from '../services/nanoBananaService';
 import { processPhotoColorize } from '../services/nanoBananaProService';
-import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler } from './broadcast';
+import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler, sendBroadcastExample } from './broadcast';
 import { processVideoDMGeneration } from '../services/veoService';
 import { updatePrompt } from '../services/openaiService';
 import { processPostcardCreation } from '../services/fluxService';
@@ -111,6 +111,68 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
 
     if (userState?.step === 'waiting_broadcast_message') {
       broadcastMessageHandler(ctx, userId, userState);
+      return;
+    }
+
+    // Обработка текста кнопки для рассылки
+    if (userState?.step === 'waiting_broadcast_button_text') {
+      const buttonText = ctx.message.text;
+      
+      console.log(`✅ Получен текст кнопки от ${userId}: "${buttonText}"`);
+      
+      // Сохраняем текст кнопки в userState
+      userStates.set(userId, {
+        ...userState,
+        step: 'waiting_broadcast_button_callback',
+        broadcastButtonText: buttonText
+      });
+
+      await ctx.reply('✅ Текст кнопки сохранен!\n\nТеперь введите callback_data для кнопки (максимум 64 символа):\n\nПример: join_channel или start_bot', {
+        reply_markup: {
+          inline_keyboard: [[{text: 'Отмена', callback_data: 'broadcast_no_button'}]]
+        }
+      });
+      return;
+    }
+
+    // Обработка callback_data для кнопки рассылки
+    if (userState?.step === 'waiting_broadcast_button_callback') {
+      const callbackData = ctx.message.text;
+      
+      console.log(`✅ Получен callback_data от ${userId}: "${callbackData}"`);
+      
+      // Валидация длины callback_data
+      if (callbackData.length > 64) {
+        await ctx.reply('❌ Ошибка: callback_data не должен превышать 64 символа. Введите еще раз:');
+        return;
+      }
+
+      const currentBroadcast = broadcast.get(userId);
+      if (!currentBroadcast) {
+        await ctx.reply('❌ Данные рассылки не найдены. Начните заново.');
+        userStates.delete(userId);
+        return;
+      }
+
+      // Сохраняем кнопку в broadcast
+      broadcast.set(userId, {
+        ...currentBroadcast,
+        button: {
+          text: userState.broadcastButtonText || 'Кнопка',
+          callbackData: callbackData
+        }
+      });
+
+      // Показываем превью с кнопкой
+      await sendBroadcastExample(ctx, userId, userState);
+      
+      // Очищаем временные данные из userState
+      userStates.set(userId, {
+        ...userState,
+        step: null,
+        broadcastButtonText: undefined,
+        broadcastButtonCallback: undefined
+      });
       return;
     }
 

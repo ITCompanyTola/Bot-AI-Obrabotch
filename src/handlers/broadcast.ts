@@ -4,8 +4,7 @@ import { Database } from '../database';
 import { broadcast } from '../bot';
 import { mailingQueue } from '../services/mailing-queue.service';
 
-
-async function sendBroadcastExample(ctx: any, userId: number, userState: UserState) {
+export async function sendBroadcastExample(ctx: any, userId: number, userState: UserState) {
   const isAdmin = await Database.isAdmin(userId);
 
   if (!isAdmin) return;
@@ -14,37 +13,39 @@ async function sendBroadcastExample(ctx: any, userId: number, userState: UserSta
 
   if (!currentBroadcast) return;
 
+  // Создаем клавиатуру с кнопкой если есть
+  const inlineKeyboard: any[] = [];
+  
+  if (currentBroadcast.button) {
+    inlineKeyboard.push([{ 
+      text: currentBroadcast.button.text, 
+      callback_data: currentBroadcast.button.callbackData 
+    }]);
+  }
+  
+  inlineKeyboard.push([{ text: 'Подтвердить', callback_data: 'send_broadcast' }]);
+  inlineKeyboard.push([{ text: 'Главное меню', callback_data: 'main_menu' }]);
+
+  const replyMarkup = {
+    inline_keyboard: inlineKeyboard
+  };
+
   if (currentBroadcast.photoFileId) {
     await ctx.telegram.sendPhoto(userId, currentBroadcast.photoFileId, {
       caption: currentBroadcast.message,
       caption_entities: currentBroadcast.entities,
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: 'Подтвердить', callback_data: 'send_broadcast' }],
-          [{ text: 'Главное меню', callback_data: 'main_menu' }],
-        ],
-      }
+      reply_markup: replyMarkup
     });
   } else if (currentBroadcast.videoFileId) {
     await ctx.telegram.sendVideo(userId, currentBroadcast.videoFileId, {
       caption: currentBroadcast.message,
       caption_entities: currentBroadcast.entities,
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: 'Подтвердить', callback_data: 'send_broadcast' }],
-          [{ text: 'Главное меню', callback_data: 'main_menu' }],
-        ],
-      }
+      reply_markup: replyMarkup
     });
   } else {
     await ctx.telegram.sendMessage(userId, currentBroadcast.message, {
       entities: currentBroadcast.entities,
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: 'Подтвердить', callback_data: 'send_broadcast' }],
-          [{ text: 'Главное меню', callback_data: 'main_menu' }],
-        ],
-      }
+      reply_markup: replyMarkup
     });
   }
 }
@@ -54,7 +55,6 @@ export async function broadcastMessageHandler(ctx: any, userId: number, userStat
 
   if (!isAdmin) return;
 
-  // Сохраняем текст рассылки в глобальную переменную
   const broadcastMessage = ctx.message.text;
   const entities = ctx.message.entities;
 
@@ -84,7 +84,6 @@ export async function broadcastPhotoHandler(ctx: any, userId: number, userState:
   const currentBroadcast = broadcast.get(userId);
   if (!currentBroadcast) return;
 
-  // Сохраняем фотографию для рассылки в глобальную переменную
   broadcast.set(userId, {
     ...currentBroadcast,
     photoFileId: photoFileId,
@@ -92,7 +91,15 @@ export async function broadcastPhotoHandler(ctx: any, userId: number, userState:
 
   console.log(broadcast);
 
-  sendBroadcastExample(ctx, userId, userState);
+  // После добавления фото спрашиваем о кнопке
+  await ctx.reply('Хотите добавить кнопку к рассылке?', {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: 'Да, добавить кнопку', callback_data: 'broadcast_add_button' }],
+        [{ text: 'Нет, без кнопки', callback_data: 'broadcast_no_button' }],
+      ]
+    }
+  });
 }
 
 export async function broadcastVideoHandler(ctx: any, userId: number, userState: UserState) {
@@ -105,13 +112,36 @@ export async function broadcastVideoHandler(ctx: any, userId: number, userState:
   const currentBroadcast = broadcast.get(userId);
   if (!currentBroadcast) return;
 
-  // Сохраняем видео для рассылки в глобальную переменную
   broadcast.set(userId, {
     ...currentBroadcast,
     videoFileId: videoFileId,
   });
 
-  sendBroadcastExample(ctx, userId, userState);
+  // После добавления видео спрашиваем о кнопке
+  await ctx.reply('Хотите добавить кнопку к рассылке?', {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: 'Да, добавить кнопку', callback_data: 'broadcast_add_button' }],
+        [{ text: 'Нет, без кнопки', callback_data: 'broadcast_no_button' }],
+      ]
+    }
+  });
+}
+
+// Обработчик для текста без медиа
+export async function broadcastTextHandler(ctx: any, userId: number, userState: UserState) {
+  const isAdmin = await Database.isAdmin(userId);
+  if (!isAdmin) return;
+
+  // Для текста без медиа сразу спрашиваем о кнопке
+  await ctx.reply('Хотите добавить кнопку к рассылке?', {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: 'Да, добавить кнопку', callback_data: 'broadcast_add_button' }],
+        [{ text: 'Нет, без кнопки', callback_data: 'broadcast_no_button' }],
+      ]
+    }
+  });
 }
 
 export function registerBroadcastHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
@@ -160,7 +190,6 @@ export function registerBroadcastHandlers(bot: Telegraf<BotContext>, userStates:
         inline_keyboard: [[{text: 'Отмена рассылки', callback_data: 'main_menu'}]],
       }
     });
-    // Отсылаемся на textHandlers.ts, где будем ждать фотографию для рассылки
   });
 
   bot.action('broadcast_accept_video', async (ctx) => {
@@ -205,7 +234,56 @@ export function registerBroadcastHandlers(bot: Telegraf<BotContext>, userStates:
     const userState = userStates.get(userId);
     if (!userState) return;
 
-    sendBroadcastExample(ctx, userId, userState);
+    // Переходим к вопросу о кнопке
+    await broadcastTextHandler(ctx, userId, userState);
+  });
+
+  bot.action('broadcast_add_button', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const userState = userStates.get(userId);
+    if (!userState) return;
+
+    userStates.set(userId, {
+      ...userState,
+      step: 'waiting_broadcast_button_text',
+    });
+
+    console.log(`✅ Установлен step: waiting_broadcast_button_text для пользователя ${userId}`);
+
+    await ctx.reply('Введите текст для кнопки:', {
+      reply_markup: {
+        inline_keyboard: [[{text: 'Отмена', callback_data: 'broadcast_no_button'}]]
+      }
+    });
+  });
+
+  bot.action('broadcast_no_button', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const userState = userStates.get(userId);
+    if (!userState) return;
+
+    // Показываем превью без кнопки
+    await sendBroadcastExample(ctx, userId, userState);
   });
 
   bot.action('send_broadcast', async (ctx) => {
@@ -234,6 +312,8 @@ export function registerBroadcastHandlers(bot: Telegraf<BotContext>, userStates:
 
   try {
     const allUsersIds = await Database.getAllUsersIds();
+
+    console.log(currentBroadcast);
     
     const mailingData = await Database.createMailingData({
       admin_id: userId,
@@ -241,6 +321,8 @@ export function registerBroadcastHandlers(bot: Telegraf<BotContext>, userStates:
       entities: currentBroadcast.entities,
       photo_file_id: currentBroadcast.photoFileId,
       video_file_id: currentBroadcast.videoFileId,
+      button_text: currentBroadcast.button?.text,
+      button_callback: currentBroadcast.button?.callbackData,
       total_users: allUsersIds.length
     });
 
@@ -257,6 +339,7 @@ export function registerBroadcastHandlers(bot: Telegraf<BotContext>, userStates:
       `📤 Рассылка поставлена в очередь!\n\n` +
       `📝 ID рассылки: ${mailingData.id}\n` +
       `👥 Пользователей: ${allUsersIds.length}\n` +
+      `${currentBroadcast.button ? `🔘 Кнопка: "${currentBroadcast.button.text}" (${currentBroadcast.button.callbackData})\n` : ''}` +
       `⏱️ ID задачи: ${job.id}\n\n` +
       `Статус можно отслеживать по уведомлениям.`
     );

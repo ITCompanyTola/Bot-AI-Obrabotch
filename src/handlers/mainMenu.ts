@@ -459,6 +459,44 @@ https://t.me/obrabotych_support
     }
   });
 
+  bot.command('team', async (ctx) => {
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const isAdmin = await Database.isAdmin(userId);
+    if (!isAdmin) {
+      await ctx.reply('❌ У вас нет прав для выполнения этой команды');
+      return;
+    }
+
+    const helpMessage = `
+📖 <b>Помощь</b>
+<b><i>Список команд:</i></b>
+
+<b>Источники</b>
+* <code>/add_source <i>название_источника</i></code> - Добавить источник
+* <code>/rename_source <b><i>старое_название</i></b> <b><i>новое_название</i></b></code> - Переименовать источник
+* /list_sources - Список всех источников
+* <code>/stats_<b><i>название_источника</i></b></code> - Получить статистику по источнику
+
+<b>Статистика</b>
+* /stats_pw - Получить статистику вовлеченности пользователей
+* /stats_all - Получить общую статистику бота
+
+<b>Рассылка</b>
+* /broadcast - Рассылка сообщений пользователям
+
+<b><i>Callback команды для кнопки:</i></b>
+Оживить фото: <code>photo_animation</code>
+Создать музыку: <code>music_creation</code>
+Реставрация: <code>photo_restoration</code>
+ЧБ: <code>photo_colorize</code>
+Дед мороз: <code>ded_moroz</code>
+Открытки: <code>postcard</code>`.trim()
+
+    await ctx.reply(helpMessage, { parse_mode: 'HTML' });
+  });
+
   bot.on('text', async (ctx, next) => {
     const text = ctx.message?.text;
     if (!text || !text.startsWith('/stats_')) {

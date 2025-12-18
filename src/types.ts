@@ -7,6 +7,10 @@ export interface Broadcast {
   entities: any;
   photoFileId?: string;
   videoFileId?: string;
+  button?: {
+    text: string;
+    callbackData: string;
+  };
 }
 
 export type UserStep = 
@@ -21,6 +25,8 @@ export type UserStep =
   | 'waiting_broadcast_message'
   | 'waiting_broadcast_photo'
   | 'waiting_broadcast_video'
+  | 'waiting_broadcast_button_text'
+  | 'waiting_broadcast_button_callback'
   | 'waiting_DM_photo_generation'
   | 'waiting_DM_text'
   | 'waiting_postcard_text'
@@ -40,7 +46,10 @@ export interface UserState {
   pendingPaymentAmount?: number;
   freeGenerations?: number;
   dmPhotoFileId?: string;
+  broadcastButtonText?: string;
+  broadcastButtonCallback?: string;
 }
+
 export interface MailingData {
   id: number;
   admin_id: number;
@@ -48,6 +57,8 @@ export interface MailingData {
   entities: any;
   photo_file_id?: string;
   video_file_id?: string;
+  button_text?: string;
+  button_callback?: string;
   total_users: number;
   sent_count: number;
   failed_count: number;
@@ -63,6 +74,8 @@ export interface CreateMailingData {
   entities: any;
   photo_file_id?: string;
   video_file_id?: string;
+  button_text?: string;
+  button_callback?: string;
   total_users: number;
 }
 

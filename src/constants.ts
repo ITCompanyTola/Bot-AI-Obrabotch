@@ -7,10 +7,12 @@ export const PRICES = {
   PHOTO_RESTORATION: 35,
   PHOTO_COLORIZE: 35,
   DED_MOROZ: 195,
+  POSTCARD: 45,
 };
 
 export const mainMenuKeyboard = [
   [Markup.button.callback('🎅 Поздравление Д.Мороза', 'ded_moroz')],
+  [Markup.button.callback('ОТКРЫТКА', 'postcard')],
   [
     Markup.button.callback('📸 Оживить фото', 'photo_animation'),
     Markup.button.callback('🎶 Создать музыку', 'music_creation')

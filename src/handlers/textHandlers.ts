@@ -70,6 +70,7 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       processPhotoColorize(ctx, userId, photo.file_id, prompt);
     }
 
+
     // Выполняется один раз
     if (userState?.step === 'waiting_DM_photo_generation') {
       const photo = ctx.message.photo[ctx.message.photo.length - 1];
@@ -97,6 +98,12 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
 
     if (userState?.step === 'waiting_broadcast_message') {
       broadcastMessageHandler(ctx, userId, userState);
+      return;
+    }
+
+    if (userState?.step === 'waiting_postcard_text') {
+      const prompt = ctx.message.text.trim();
+      
       return;
     }
 

@@ -23,6 +23,7 @@ export type UserStep =
   | 'waiting_broadcast_video'
   | 'waiting_DM_photo_generation'
   | 'waiting_DM_text'
+  | 'waiting_postcard_text'
   | null;
 
 export interface UserState {

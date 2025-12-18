@@ -136,8 +136,8 @@ export async function processVideoDMGeneration(ctx: any, userId: number, photoFi
   try {
     const deducted = await Database.deductBalance(
       userId,
-      PRICES.MUSIC_CREATION,
-      'Создание музыки'
+      PRICES.DED_MOROZ,
+      'Создание Деда Мороза'
     );
 
     if (!deducted) {
@@ -147,7 +147,7 @@ export async function processVideoDMGeneration(ctx: any, userId: number, photoFi
       );
       return;
     }
-    
+
     console.log(`⏳ Начинается генерация видео для пользователя ${userId}...`);
 
     await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');

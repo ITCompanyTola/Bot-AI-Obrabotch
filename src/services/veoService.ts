@@ -134,6 +134,20 @@ export async function generateVideoWithVeo(imageUrl: string, prompt: string): Pr
 
 export async function processVideoDMGeneration(ctx: any, userId: number, photoFileId: string, prompt: string) {
   try {
+    const deducted = await Database.deductBalance(
+      userId,
+      PRICES.MUSIC_CREATION,
+      'Создание музыки'
+    );
+
+    if (!deducted) {
+      await ctx.telegram.sendMessage(
+        userId,
+        '❌ Недостаточно средств для генерации'
+      );
+      return;
+    }
+    
     console.log(`⏳ Начинается генерация видео для пользователя ${userId}...`);
 
     await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');

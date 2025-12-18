@@ -229,6 +229,19 @@ async function generateDMPhotoWithBanana(imageUrl: string, prompt: string): Prom
 
 export async function processDMPhotoCreation(ctx: any, userId: number, userState: UserState, prompt: string) {
   try {
+    const deducted = await Database.deductBalance(
+      userId,
+      PRICES.DED_MOROZ,
+      'Создание Деда Мороза'
+    );
+
+    if (!deducted) {
+      await ctx.telegram.sendMessage(
+        userId,
+        '❌ Недостаточно средств для генерации'
+      );
+      return;
+    }
     console.log(`⏳ Начинается создание фото Деда Мороза для пользователя ${userId}...`);
     const photoFileId = userState.photoFileId;
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
@@ -319,6 +332,100 @@ export async function processDMPhotoCreation(ctx: any, userId: number, userState
     );
 
     console.log(`💰 Возвращено ${PRICES.DED_MOROZ}₽ пользователю ${userId}`);
+    
+    await ctx.telegram.sendMessage(
+      userId,
+      '❌ Произошла ошибка при генерации. Средства возвращены на баланс.'
+    );
+  }
+}
+
+// Открытка
+
+async function generatePostcardWithBanana(imageUrl: string, prompt: string): Promise<string> {
+  console.log(`📸 Создаю открытку: ${imageUrl}`);
+  console.log(`💬 С описанием: ${prompt}`);
+  
+  const taskId = await createRestorationTask(imageUrl, prompt);
+  console.log(`✅ Задача создана: ${taskId}`);
+  
+  const videoUrl = await waitForRestorationTaskCompletion(taskId);
+  console.log(`✅ Открытка готова: ${videoUrl}`);
+  
+  return videoUrl;
+}
+
+export async function processPostcardCreationWithBanana(ctx: any, userId: number, photoFileId: string, prompt: string) {
+  try {
+    const deducted = await Database.deductBalance(
+      userId,
+      PRICES.POSTCARD,
+      'Создание открытки'
+    );
+
+    if (!deducted) {
+      await ctx.telegram.sendMessage(
+        userId,
+        '❌ Недостаточно средств для генерации'
+      );
+      return;
+    }
+    console.log(`⏳ Начинается создание открытки для пользователя ${userId}...`);
+    const photoUrl = await ctx.telegram.getFileLink(photoFileId);
+    console.log(`📸 URL фото: ${photoUrl.href}`);
+
+    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
+    
+    const DMPhotoUrl = await generatePostcardWithBanana(photoUrl.href, prompt);
+
+    const photoResponse = await axiosRetry(DMPhotoUrl, 3);
+    if (photoResponse == null) {
+      throw new Error('Не удалось загрузить фото');
+    };
+    const photoBuffer = Buffer.from(photoResponse.data);
+    const caption = `✅ Ваша открытка готова!`.trim()
+    const sentMessage = await ctx.telegram.sendPhoto(userId, { source: photoBuffer }, {
+      caption: caption,
+      parse_mode: 'HTML',
+    });
+
+    const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
+    await Database.saveGeneratedFile(userId, 'postcard', fileId, prompt);
+
+    console.log(`✅ Отреставрированная фотография сгенерирована и сохранена для пользователя ${userId}`);
+    console.log(`📁 File ID: ${fileId}`);
+
+    const mainMenuMessage = `
+Наш бот умеет:
+- <b><i>оживлять фото</i></b> 📸✨
+- создавать <b><i>крутые треки</i></b> 🎵🔥
+- <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
+- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
+- делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
+
+Вы можете творить сами или доверить работу нам 🤝
+В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
+    `.trim();
+
+    await ctx.telegram.sendMessage(
+      userId,
+      mainMenuMessage,
+      {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard(mainMenuKeyboard)
+    });
+    
+  } catch (error) {
+    console.error('❌ Ошибка генерации открытки:', error);
+    
+    await Database.addBalance(
+      userId,
+      PRICES.POSTCARD,
+      'Возврат средств за ошибку генерации',
+      'bonus'
+    );
+
+    console.log(`💰 Возвращено ${PRICES.POSTCARD}₽ пользователю ${userId}`);
     
     await ctx.telegram.sendMessage(
       userId,

@@ -32,9 +32,7 @@ interface TaskStatusResponse {
   }
 }
 
-async function createColorizeTask(image_url: string, prompt: string): Promise<string> {
-  const image_urls: string[] = [];
-  image_urls.push(image_url);
+async function createColorizeTask(prompt: string): Promise<string> {
   try {
     const response = await axios.post<TaskResponse>(
       `${API_URL}/createTask`,
@@ -118,11 +116,11 @@ async function waitForColorizeTaskCompletion(taskId: string, maxAttempts: number
   throw new Error('Превышено время ожидания генерации');
 }
 
-async function generatePhotoWithBanana(imageUrl: string, prompt: string): Promise<string> {
-  console.log(`📸 Создаю открытку: ${imageUrl}`);
+async function generatePhotoWithFlux(prompt: string): Promise<string> {
+  console.log(`📸 Создаю открытку`);
   console.log(`💬 С описанием: ${prompt}`);
   
-  const taskId = await createColorizeTask(imageUrl, prompt);
+  const taskId = await createColorizeTask(prompt);
   console.log(`✅ Задача создана: ${taskId}`);
   
   const photoUrl = await waitForColorizeTaskCompletion(taskId);
@@ -131,12 +129,12 @@ async function generatePhotoWithBanana(imageUrl: string, prompt: string): Promis
   return photoUrl;
 }
 
-export async function processPostcardCreation(ctx: any, userId: number, photoFileId: string, prompt: string) {
+export async function processPostcardCreation(ctx: any, userId: number, prompt: string) {
   try {
     const deducted = await Database.deductBalance(
       userId,
-      PRICES.PHOTO_COLORIZE,
-      'Окрашивание фото'
+      PRICES.POSTCARD,
+      'Создание открытки'
     );
 
     if (!deducted) {
@@ -147,14 +145,11 @@ export async function processPostcardCreation(ctx: any, userId: number, photoFil
       return;
     }
 
-    console.log(`⏳ Начинается окрашивание фото для пользователя ${userId}...`);
-
-    const photoUrl = await ctx.telegram.getFileLink(photoFileId);
-    console.log(`📸 URL фото: ${photoUrl.href}`);
+    console.log(`⏳ Начинается создание открытки для пользователя ${userId}...`);
 
     await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
     
-    const colorizedPhotoUrl = await generatePhotoWithBanana(photoUrl.href, prompt);
+    const colorizedPhotoUrl = await generatePhotoWithFlux(prompt);
 
     const photoResponse = await axiosRetry(colorizedPhotoUrl, 5);
     if (photoResponse == null) {
@@ -162,16 +157,16 @@ export async function processPostcardCreation(ctx: any, userId: number, photoFil
     }
     const photoBuffer = Buffer.from(photoResponse.data);
 
-    const caption = `✅ Ваше фото готово!`.trim()
+    const caption = `✅ Ваша открытка готова!`.trim()
     const sentMessage = await ctx.telegram.sendPhoto(userId, { source: photoBuffer }, {
       caption: caption,
       parse_mode: 'HTML',
     });
 
     const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
-    await Database.saveGeneratedFile(userId, 'colorize', fileId, prompt);
+    await Database.saveGeneratedFile(userId, 'postcard', fileId, prompt);
 
-    console.log(`✅ Окрашенная фотография сгенерирована и сохранена для пользователя ${userId}`);
+    console.log(`✅ Открытка сгенерирована и сохранена для пользователя ${userId}`);
     console.log(`📁 File ID: ${fileId}`);
 
     const mainMenuMessage = `
@@ -195,16 +190,16 @@ export async function processPostcardCreation(ctx: any, userId: number, photoFil
   });
 
   } catch (error) {
-    console.error('❌ Ошибка генерации фотографии:', error);
+    console.error('❌ Ошибка генерации открытки:', error);
     
     await Database.addBalance(
       userId,
-      PRICES.PHOTO_COLORIZE,
+      PRICES.POSTCARD,
       'Возврат средств за ошибку генерации',
       'bonus'
     );
 
-    console.log(`💰 Возвращено ${PRICES.PHOTO_COLORIZE}₽ пользователю ${userId}`);
+    console.log(`💰 Возвращено ${PRICES.POSTCARD}₽ пользователю ${userId}`);
     
     await ctx.telegram.sendMessage(
       userId,

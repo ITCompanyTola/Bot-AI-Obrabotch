@@ -4,11 +4,12 @@ import { Database } from '../database';
 import { PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
 import { logToFile } from '../bot';
-import { processPhotoRestoration, processDMPhotoCreation } from '../services/nanoBananaService';
+import { processPhotoRestoration, processDMPhotoCreation, processPostcardCreationWithBanana } from '../services/nanoBananaService';
 import { processPhotoColorize } from '../services/nanoBananaProService';
 import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler } from './broadcast';
 import { processVideoDMGeneration } from '../services/veoService';
 import { updatePrompt } from '../services/openaiService';
+import { processPostcardCreation } from 'services/fluxService';
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -88,6 +89,18 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     if (userState?.step === 'waiting_broadcast_photo') {
       broadcastPhotoHandler(ctx, userId, userState);
     }
+
+    if (userState?.step === 'waiting_postcard_photo') {
+      const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+      const postcardPrompt = `
+Задача: Сгенерируй картинку с надписью "С днем рождения"
+Стиль картинки: праздничный и теплый дизайн
+`.trim();
+
+      processPostcardCreationWithBanana(ctx, userId, photoFileId, postcardPrompt);
+
+      userStates.delete(userId);
+    }
   });
 
   bot.on('text', async (ctx) => {
@@ -104,6 +117,9 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     if (userState?.step === 'waiting_postcard_text') {
       const prompt = ctx.message.text.trim();
       
+      processPostcardCreation(ctx, userId, prompt);
+
+      userStates.delete(userId);
       return;
     }
 

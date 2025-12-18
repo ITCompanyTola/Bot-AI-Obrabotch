@@ -24,6 +24,7 @@ export type UserStep =
   | 'waiting_DM_photo_generation'
   | 'waiting_DM_text'
   | 'waiting_postcard_text'
+  | 'waiting_postcard_photo'
   | null;
 
 export interface UserState {

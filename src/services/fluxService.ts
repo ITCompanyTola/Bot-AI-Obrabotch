@@ -40,7 +40,7 @@ async function createColorizeTask(prompt: string): Promise<string> {
         model: MODEL,
         input: {
           prompt: prompt,
-          aspect_ratio: 'auto',
+          aspect_ratio: '1:1',
           resolution: '1K'
         }
       },

@@ -3,8 +3,8 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { PRICES } from '../constants';
 
-const EXAMPLE_POSTCARD: string = 'AgACAgIAAxkBAAIGhWlAIxZIpY4AAZ9uqx4rBQZGsKDvGAACyg5rG-3UAAFKLeXPpsSJVG0BAAMCAAN4AAM2BA'; // Загрузить и вставить свое фото
-const POSTCARD_INSTRUCTION: string = 'BAACAgIAAxkBAAIG-GlASMGo3MjJcmQ97JvBvrpEboDhAAJZiwACGMQJSrcljU_f0NikNgQ'; // Загрузить и вставить свое видео
+const EXAMPLE_POSTCARD: string = ''; // Загрузить и вставить свое фото
+const POSTCARD_INSTRUCTION: string = ''; // Загрузить и вставить свое видео
 
 export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('postcard', async (ctx) => {

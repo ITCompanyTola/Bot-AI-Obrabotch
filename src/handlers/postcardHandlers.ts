@@ -1,7 +1,7 @@
 import { Telegraf } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
-import { getPostcardMessage, POSCTARD_MESSAGE, POSTCARD_MESSAGE_START, POSTCARD_PHOTO_START, PRICES } from '../constants';
+import { getPostcardMessage, getPostcardPhotoMessage, POSCTARD_MESSAGE, POSTCARD_MESSAGE_START, POSTCARD_PHOTO_START, PRICES } from '../constants';
 
 const EXAMPLE_POSTCARD: string = ''; // Загрузить и вставить свое фото
 const POSTCARD_INSTRUCTION: string = ''; // Загрузить и вставить свое видео
@@ -27,8 +27,8 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
-          [{text: 'Создать открытку', callback_data: 'postcard_text'}],
-          [{text: 'Открытка из фото', callback_data: 'postcard_photo'}],
+          [{text: 'Открытка по тексту ✍️', callback_data: 'postcard_text'}],
+          [{text: 'Открытка из фото 🖼️', callback_data: 'postcard_photo'}],
           [{text: 'Главное меню', callback_data: 'main_menu'}],
         ]
       }
@@ -55,9 +55,9 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
-          [{text: 'Создать открытку', callback_data: 'postcard_text_start'}],
+          [{text: 'Создать открытку из текста ✍️', callback_data: 'postcard_text_start'}],
           [{text: 'Видео-инструкция', callback_data: 'postcard_text_instruction'}],
-          [{text: 'Пополнить баланс', callback_data: 'refill_balance_from_postcard_text'}],
+          [{text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_postcard_text'}],
           [{text: 'Назад', callback_data: 'postcard'}]
         ]
       }
@@ -78,7 +78,7 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
 
     const message = POSTCARD_MESSAGE_START;
 
-    if (await Database.hasEnoughBalance(userId, PRICES.POSTCARD)) {
+    if (await Database.hasEnoughBalance(userId, PRICES.POSTCARD_TEXT)) {
       userStates.set(userId, {
         step: 'waiting_postcard_text',
       });
@@ -96,7 +96,7 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
 
     const paymentMessage = `
 💰 Ваш баланс: ${balance.toFixed(2)} ₽
-📸 Создание 1 Открытки = ${PRICES.POSTCARD}₽
+📸 Создание 1 Открытки = ${PRICES.POSTCARD_TEXT}₽
     
 Выберете способ оплаты ⤵️`.trim();
     
@@ -126,14 +126,14 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
 
     const balance = await Database.getUserBalance(userId);
 
-    const message = getPostcardMessage(balance);
+    const message = getPostcardPhotoMessage(balance);
     await ctx.reply(message, {
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
-          [{text: 'Создать открытку', callback_data: 'postcard_photo_start'}],
+          [{text: 'Создать открытку из фото 🖼️', callback_data: 'postcard_photo_start'}],
           [{text: 'Видео-инструкция', callback_data: 'postcard_photo_instruction'}],
-          [{text: 'Пополнить баланс', callback_data: 'refill_balance_from_postcard_photo'}],
+          [{text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_postcard_photo'}],
           [{text: 'Назад', callback_data: 'postcard'}]
         ]
       }
@@ -154,7 +154,7 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
 
     const message = POSTCARD_PHOTO_START;
     
-    if (await Database.hasEnoughBalance(userId, PRICES.POSTCARD)) {
+    if (await Database.hasEnoughBalance(userId, PRICES.POSTCARD_PHOTO)) {
       userStates.set(userId, {
         step: 'waiting_postcard_photo',
       });
@@ -171,7 +171,7 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
 
     const paymentMessage = `
 💰 Ваш баланс: ${balance.toFixed(2)} ₽
-📸 Создание 1 Открытки = ${PRICES.POSTCARD}₽
+📸 Создание 1 Открытки = ${PRICES.POSTCARD_PHOTO}₽
     
 Выберете способ оплаты ⤵️`.trim();
     

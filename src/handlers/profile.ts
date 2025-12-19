@@ -38,6 +38,7 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
       {
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
+          [Markup.button.callback('Получить 100₽ 💰', 'create_refferal')],
           [
             Markup.button.callback('Мои реставрации', 'my_restorations'),
             Markup.button.callback('Мои цветные фото', 'my_colorize')
@@ -50,11 +51,121 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
             Markup.button.callback('Мои фото Д.Мороза', 'my_dm_photos'),
             Markup.button.callback('Мои видео Д.Мороза', 'my_dm_videos')
           ],
+          [Markup.button.callback('Мои открытки', 'my_postcards')],
           [Markup.button.callback('💳 Пополнить баланс', 'refill_balance_from_profile')],
           [Markup.button.callback('Документы', 'documents')],
           [Markup.button.callback('Главное меню', 'main_menu')]
         ])
       }
+    );
+  });
+
+  bot.action('my_postcards', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    await ctx.editMessageText('Выберите тип открытки', {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: 'По тексту', callback_data: 'my_postcards_text' }],
+          [{ text: 'По фото', callback_data: 'my_postcards_photo' }],
+          [{ text: 'Назад', callback_data: 'profile' }]
+        ]
+      }
+    })
+    });
+
+  bot.action('my_postcards_text', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const postcards_text = await Database.getUserPostcardsText(userId);
+    
+    if (postcards_text.length === 0) {
+      await ctx.editMessageText(
+        '📄 У вас пока нет открыток с текстом',
+        Markup.inlineKeyboard([
+          [Markup.button.callback('Назад', 'my_postcards')]
+        ])
+      );
+      return;
+    }
+
+    for (const postcard of postcards_text) {
+      try {
+        await ctx.telegram.sendPhoto(userId, postcard.file_id, {
+          caption: postcard.prompt ? `Описание: ${postcard.prompt}` : undefined
+        });
+      } catch (error) {
+        console.error('Ошибка отправки открытки с текстом:', error);
+        await ctx.telegram.sendMessage(userId, `❌ Открытка недоступна (ID: ${postcard.id})`);
+      }
+    }
+
+    await ctx.telegram.sendMessage(
+      userId,
+      `Ваши Открытки с текстом (${postcards_text.length}):`,
+      Markup.inlineKeyboard([
+        [Markup.button.callback('Назад', 'my_postcards')]
+      ])
+    );
+  });
+
+  bot.action('my_postcards_photo', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+    
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const postcards_photo = await Database.getUserPostcardsPhoto(userId);
+    
+    if (postcards_photo.length === 0) {
+      await ctx.editMessageText(
+        '📄 У вас пока нет открыток с фото',
+        Markup.inlineKeyboard([
+          [Markup.button.callback('Назад', 'my_postcards')]
+        ])
+      );
+      return;
+    }
+
+    for (const postcard of postcards_photo) {
+      try {
+        await ctx.telegram.sendPhoto(userId, postcard.file_id);
+      } catch (error) {
+        console.error('Ошибка отправки открытки с фото:', error);
+        await ctx.telegram.sendMessage(userId, `❌ Открытка недоступна (ID: ${postcard.id})`);
+      }
+    }
+
+    await ctx.telegram.sendMessage(
+      userId,
+      `Ваши Открытки с фото (${postcards_photo.length}):`,
+      Markup.inlineKeyboard([
+        [Markup.button.callback('Назад', 'my_postcards')]
+      ])
     );
   });
 

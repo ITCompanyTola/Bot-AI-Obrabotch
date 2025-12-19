@@ -133,7 +133,7 @@ export async function processPostcardCreation(ctx: any, userId: number, prompt: 
   try {
     const deducted = await Database.deductBalance(
       userId,
-      PRICES.POSTCARD,
+      PRICES.POSTCARD_TEXT,
       'Создание открытки'
     );
 
@@ -164,9 +164,9 @@ export async function processPostcardCreation(ctx: any, userId: number, prompt: 
     });
 
     const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
-    await Database.saveGeneratedFile(userId, 'postcard', fileId, prompt);
+    await Database.saveGeneratedFile(userId, 'postcard_text', fileId, prompt);
 
-    console.log(`✅ Открытка сгенерирована и сохранена для пользователя ${userId}`);
+    console.log(`✅ Открытка из текста сгенерирована и сохранена для пользователя ${userId}`);
     console.log(`📁 File ID: ${fileId}`);
 
     const mainMenuMessage = `
@@ -194,12 +194,12 @@ export async function processPostcardCreation(ctx: any, userId: number, prompt: 
     
     await Database.addBalance(
       userId,
-      PRICES.POSTCARD,
+      PRICES.POSTCARD_TEXT,
       'Возврат средств за ошибку генерации',
       'bonus'
     );
 
-    console.log(`💰 Возвращено ${PRICES.POSTCARD}₽ пользователю ${userId}`);
+    console.log(`💰 Возвращено ${PRICES.POSTCARD_TEXT}₽ пользователю ${userId}`);
     
     await ctx.telegram.sendMessage(
       userId,

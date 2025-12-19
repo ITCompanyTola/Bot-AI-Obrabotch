@@ -40,8 +40,8 @@ export interface Transaction {
 }
 
 export interface UserRefferalData {
-  userRefferalKey?: string;
-  refferalKeyUsed?: boolean;
+  source_key?: string;
+  refferal_key_used?: boolean;
 }
 
 export class Database {
@@ -277,7 +277,7 @@ export class Database {
   // Добавить новый тип для реставрации
   static async saveGeneratedFile(
     userId: number,
-    fileType: 'photo' | 'music' | 'restoration' | 'colorize' | 'dm_photo' | 'dm_video' | 'postcard',
+    fileType: 'photo' | 'music' | 'restoration' | 'colorize' | 'dm_photo' | 'dm_video' | 'postcard_photo' | 'postcard_text',
     fileId: string,
     prompt?: string
   ): Promise<void> {
@@ -1182,6 +1182,45 @@ export class Database {
     try { 
       const result = await client.query('SELECT id FROM users WHERE user_refferal_key = $1', [refferalKey]);
       return result.rows[0].id;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async setRefferalKeyUsed(userId: number): Promise<void> {
+    const client = await pool.connect();
+    try {
+      await client.query('UPDATE users SET refferal_key_used = true WHERE id = $1', [userId]);
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getUserPostcardsText(userId: number): Promise<any[]> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM generated_files
+         WHERE user_id = $1 AND file_type = 'postcard_text'
+         ORDER BY created_at DESC`,
+        [userId]
+      );
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getUserPostcardsPhoto(userId: number): Promise<any[]> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM generated_files
+         WHERE user_id = $1 AND file_type = 'postcard_photo'
+         ORDER BY created_at DESC`,
+        [userId]
+      );
+      return result.rows;
     } finally {
       client.release();
     }

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Buffer } from 'buffer';
 import { Markup } from 'telegraf';
 import { config } from '../config';
-import { Database } from '../database';
+import { Database, UserRefferalData } from '../database';
 import { mainMenuKeyboard, PRICES } from '../constants';
 import { UserState } from '../types';
 import { userStates } from '../bot';
@@ -149,6 +149,37 @@ export async function processPhotoRestoration(ctx: any, userId: number, photoFil
       );
       return;
     }
+    // начало логики реферальной программы
+    try {
+        const refferalData: UserRefferalData = await Database.getUserRefferalData(userId);
+        console.log(refferalData);
+        const userRefferalKey = refferalData?.source_key;
+        const refferalKeyUsed = refferalData?.refferal_key_used;
+        console.log(`🔑 Реферальные данные пользователя: userRefferalKey=${userRefferalKey}, refferalKeyUsed=${refferalKeyUsed}`);
+        if (userRefferalKey != undefined && refferalKeyUsed != undefined) {
+         if (!refferalKeyUsed) {
+            const reffererUserId = await Database.getUserIdByRefferalKey(userRefferalKey);
+            console.log(`🔑 Реферер пользователя: ${reffererUserId}`);
+            if (reffererUserId) {
+              await Database.addBalance(
+                reffererUserId,
+                100,
+                `Реферальная программа`,
+                'bonus'
+              );
+
+              await Database.setRefferalKeyUsed(userId);
+
+              await ctx.telegram.sendMessage(reffererUserId, `🎉 На ваш счёт <b>начислено 100₽</b> за приглашённого пользователя`, {
+                parse_mode: 'HTML',
+              });
+            }
+          } 
+        }
+      } catch(error) {
+        console.log('❌ Ошибка получения реферальных данных:', error);
+      }
+    // конец логики реферальной программы
 
     console.log(`⏳ Начинается реставрация фото для пользователя ${userId}...`);
 
@@ -359,7 +390,7 @@ export async function processPostcardCreationWithBanana(ctx: any, userId: number
   try {
     const deducted = await Database.deductBalance(
       userId,
-      PRICES.POSTCARD,
+      PRICES.POSTCARD_PHOTO,
       'Создание открытки'
     );
 
@@ -390,9 +421,9 @@ export async function processPostcardCreationWithBanana(ctx: any, userId: number
     });
 
     const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
-    await Database.saveGeneratedFile(userId, 'postcard', fileId, prompt);
+    await Database.saveGeneratedFile(userId, 'postcard_photo', fileId, prompt);
 
-    console.log(`✅ Отреставрированная фотография сгенерирована и сохранена для пользователя ${userId}`);
+    console.log(`✅ Открытка из фото сгенерирована и сохранена для пользователя ${userId}`);
     console.log(`📁 File ID: ${fileId}`);
 
     const mainMenuMessage = `
@@ -420,12 +451,12 @@ export async function processPostcardCreationWithBanana(ctx: any, userId: number
     
     await Database.addBalance(
       userId,
-      PRICES.POSTCARD,
+      PRICES.POSTCARD_PHOTO,
       'Возврат средств за ошибку генерации',
       'bonus'
     );
 
-    console.log(`💰 Возвращено ${PRICES.POSTCARD}₽ пользователю ${userId}`);
+    console.log(`💰 Возвращено ${PRICES.POSTCARD_PHOTO}₽ пользователю ${userId}`);
     
     await ctx.telegram.sendMessage(
       userId,

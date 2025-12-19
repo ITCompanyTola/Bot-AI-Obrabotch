@@ -28,7 +28,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     
       userStates.set(userId, {
         step: 'waiting_description',
-        photoFileId: photo.file_id
+        photoFileId: photo.file_id,
+        regenPromptAttempts: 2,
       });
     
       const descriptionMessage = `
@@ -284,22 +285,27 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     
     const prompt = ctx.message.text;
 
-    await ctx.reply('📝 Пожалуйста, подождите... Ваш промпт улучшается');
+    await ctx.reply('Подождите немного — мы <b><i>улучшаем ваше описание</i></b>, чтобы результат получился максимально <b><i>качественным</i></b>🔥', {
+      parse_mode: 'HTML',
+    });
 
     const updatedPromptMessage = await updatePrompt(prompt);
-
+    if (userState.regenPromptAttempts == undefined) {
+      await ctx.reply('❌ Произошла ошибка. Попробуйте снова.');
+      return;
+    }
     userStates.set(userId, {
       ...userState,
       prompt: prompt,
-      generatedPrompt: updatedPromptMessage
-    })
+      regenPromptAttempts: Number(userState.regenPromptAttempts) - 1,
+    });
 
-    const message = `Ваш промпт:\n${prompt}\n\nОтредактированный промпт:\n${updatedPromptMessage}`
+    const message = `✅ Ваше описание улучшено:\n${updatedPromptMessage}`
     await ctx.reply(message, {
       reply_markup: {
         inline_keyboard: [
-          [{text: 'Оставляем', callback_data: 'confirm_ai_prompt'}],
-          [{text: 'Пересгенерировать', callback_data: 'regenerate_prompt'}],
+          [{text: 'Оставить описание', callback_data: 'confirm_ai_prompt'}],
+          [{text: `Улучшить еще раз ${4 - userState.regenPromptAttempts}/3`, callback_data: 'regenerate_prompt'}],
           [{text: 'Использовать свой', callback_data: 'confirm_prompt'}],
         ]
       }
@@ -326,21 +332,39 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     const userState = userStates.get(userId);
     if (!userState || !userState.prompt) return;
     
-    await ctx.reply('📝 Пожалуйста, подождите... Ваш промпт улучшается');
+    await ctx.reply('Подождите немного — мы <b><i>улучшаем ваше описание</i></b>, чтобы результат получился максимально <b><i>качественным</i></b>🔥', {
+      parse_mode: 'HTML',
+    });
 
     const updatedPromptMessage = await updatePrompt(userState.prompt);
+    if (userState.regenPromptAttempts == undefined) {
+      await ctx.reply('❌ Произошла ошибка. Попробуйте снова.');
+      return;
+    }
 
     userStates.set(userId, {
       ...userState,
-      generatedPrompt: updatedPromptMessage
+      generatedPrompt: updatedPromptMessage,
+      regenPromptAttempts: Number(userState.regenPromptAttempts) - 1
     })
-
-    const message = `Ваш промпт:\n${userState.prompt}\n\nОтредактированный промпт:\n${updatedPromptMessage}`
+    if (userState.regenPromptAttempts == 0) {
+      const message = `✅ Ваше описание улучшено:\n${updatedPromptMessage}`
+      await ctx.reply(message, {
+        reply_markup: {
+          inline_keyboard: [
+            [{text: 'Оставить описание', callback_data: 'confirm_ai_prompt'}],
+            [{text: 'Использовать свой', callback_data: 'confirm_prompt'}],
+          ]
+        }
+      });
+      return;
+    }
+    const message = `✅ Ваше описание улучшено:\n${updatedPromptMessage}`
     await ctx.reply(message, {
       reply_markup: {
         inline_keyboard: [
-          [{text: 'Оставляем', callback_data: 'confirm_ai_prompt'}],
-          [{text: 'Пересгенерировать', callback_data: 'regenerate_prompt'}],
+          [{text: 'Оставить описание', callback_data: 'confirm_ai_prompt'}],
+          [{text: `Улучшить еще раз ${4 - userState.regenPromptAttempts}/3`, callback_data: 'regenerate_prompt'}],
           [{text: 'Использовать свой', callback_data: 'confirm_prompt'}],
         ]
       }

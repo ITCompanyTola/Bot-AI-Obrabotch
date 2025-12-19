@@ -39,7 +39,7 @@ export function registerRefferal(bot: Telegraf<BotContext>, userStates: Map<numb
     const isRefferalCreated = await Database.isRefferalCreated(userId);
 
     if (isRefferalCreated) {
-      const refferalLink = await Database.getRefferalLink(userId);
+      const refferalLink = `https://t.me/Photograffunbot?start=${await Database.getRefferalLink(userId)}`.trim();
       const qrBuffer = await createQRBuffer(refferalLink);
       if (qrBuffer === null) {
         await ctx.reply('Произошла ошибка при создании QR-кода', {
@@ -52,9 +52,10 @@ export function registerRefferal(bot: Telegraf<BotContext>, userStates: Map<numb
         return;
       }
       await ctx.telegram.sendPhoto(userId, { source: qrBuffer}, {
-        caption: `🔗 Ваша ссылка: https://t.me/Photograffunbot?start=${refferalLink}`,
+        caption: `Нажмите на кнопку Порекомендовать, чтобы создать реферальную ссылку. За каждого пользователя, который перейдет по вашей ссылке и пополнит баланс вы получите 100₽ на счет.`,
         reply_markup: {
           inline_keyboard: [
+            [{ text: 'Порекомендовать', switch_inline_query: `Крутой ИИ-бот для разных генераций 👇 ${refferalLink}` }],
             [{ text: 'Главное меню', callback_data: 'main_menu' }]
           ]
         }
@@ -80,7 +81,7 @@ export function registerRefferal(bot: Telegraf<BotContext>, userStates: Map<numb
         caption: `Нажмите на кнопку Порекомендовать, чтобы создать реферальную ссылку. За каждого пользователя, который перейдет по вашей ссылке и пополнит баланс вы получите 100₽ на счет.`,
         reply_markup: {
           inline_keyboard: [
-            [{ text: 'Порекомендовать', switch_inline_query: `Скорее беги оживлять фото! ${refferalLink}` }],
+            [{ text: 'Порекомендовать', switch_inline_query: `Крутой ИИ-бот для разных генераций 👇 ${refferalLink}` }],
             [{ text: 'Главное меню', callback_data: 'main_menu' }]
           ]
         }

@@ -68,6 +68,10 @@ app.post('/webhook/yookassa', async (req, res) => {
                 `Реферальная программа`,
                 'bonus'
               );
+
+              await bot.telegram.sendMessage(reffererUserId, `🎉 На ваш счёт <b>начислено 100₽</b> за приглашённого пользователя`, {
+                parse_mode: 'HTML',
+              });
             }
           } 
         }

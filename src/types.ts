@@ -45,6 +45,7 @@ export interface UserState {
   refillSource?: 'photo' | 'profile' | 'music' | 'restoration' | 'colorize' | 'dm' | 'postcardPhoto' | 'postcardText';
   pendingPaymentAmount?: number;
   freeGenerations?: number;
+  regenPromptAttempts?: number;
   dmPhotoFileId?: string;
   broadcastButtonText?: string;
   broadcastButtonCallback?: string;

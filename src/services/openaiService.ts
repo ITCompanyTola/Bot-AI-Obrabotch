@@ -1,6 +1,7 @@
 import { OPENROUTER_SERVICE_PROMPT } from "../constants";
 
-export async function updatePrompt(prompt: string): Promise<string> {
+export async function updatePrompt(prompt: string, imageUrl?: string): Promise<string> {
+  console.log('updatePrompt', prompt, imageUrl);
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -8,7 +9,8 @@ export async function updatePrompt(prompt: string): Promise<string> {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      "model": "deepseek/deepseek-chat-v3.1",
+      "model": "openai/gpt-4o-mini",
+      "max_tokens": 8000,
       "messages": [
         {
           "role": "system",
@@ -16,19 +18,31 @@ export async function updatePrompt(prompt: string): Promise<string> {
         },
         {
           "role": "user",
-          "content": `Отредактируй данный промпт, чтобы он сработал более эффективно: ${prompt}`
+          "content": [
+            {
+              "type": "text",
+              "text": `Промпт пользователя: ${prompt}`
+            },
+            {
+              "type": "image_url",
+              "image_url": {
+                "url": imageUrl,
+              }
+            }
+          ]
         }
       ]
     })
   });
 
   const data = await response.json() as any;
+  console.log(data);
   
-  const messageContent = data.choices?.[0]?.message?.content;
+  const messageContentResponse = data.choices?.[0]?.message?.content;
   
-  if (!messageContent) {
+  if (!messageContentResponse) {
     throw new Error("Ответ от модели пуст или имеет неожиданную структуру");
   }
   
-  return messageContent;
+  return messageContentResponse;
 }

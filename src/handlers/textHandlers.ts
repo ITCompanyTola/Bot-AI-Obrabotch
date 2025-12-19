@@ -288,8 +288,12 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     await ctx.reply('Подождите немного — мы <b><i>улучшаем ваше описание</i></b>, чтобы результат получился максимально <b><i>качественным</i></b>🔥', {
       parse_mode: 'HTML',
     });
-
-    const updatedPromptMessage = await updatePrompt(prompt);
+    console.log(userState.photoFileId);
+    if (!userState.photoFileId || !prompt) return;
+    const photoUrl = await ctx.telegram.getFileLink(userState.photoFileId);
+    const photoUrlString = photoUrl.href;
+    console.log(photoUrlString);
+    const updatedPromptMessage = await updatePrompt(prompt, photoUrlString);
     if (userState.regenPromptAttempts == undefined) {
       await ctx.reply('❌ Произошла ошибка. Попробуйте снова.');
       return;
@@ -336,7 +340,10 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       parse_mode: 'HTML',
     });
 
-    const updatedPromptMessage = await updatePrompt(userState.prompt);
+    if (!userState.photoFileId) return;
+    const photoUrl = await ctx.telegram.getFileLink(userState.photoFileId);
+    const photoUrlString = photoUrl.href;
+    const updatedPromptMessage = await updatePrompt(userState.prompt, photoUrlString);
     if (userState.regenPromptAttempts == undefined) {
       await ctx.reply('❌ Произошла ошибка. Попробуйте снова.');
       return;

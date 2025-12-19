@@ -155,7 +155,7 @@ export async function processVideoDMGeneration(ctx: any, userId: number, photoFi
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
 
-    const newPrompt = `Santa Claus's Text of the greeting: ${prompt}`;
+    const newPrompt = `Santa Claus's text of the greeting: ${prompt} Do not add subtitles`;
     
     const videoUrl = await generateVideoWithVeo(photoUrl.href, newPrompt);
 

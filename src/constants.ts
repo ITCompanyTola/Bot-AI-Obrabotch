@@ -21,6 +21,7 @@ export const mainMenuKeyboard = [
     Markup.button.callback('✨ Реставрировать фото', 'photo_restoration'),
     Markup.button.callback('🎨 ч/б в цветное фото', 'photo_colorize')
   ],
+  [Markup.button.callback('Получить 100₽ 💰', 'create_refferal')],
   [Markup.button.callback('Написать в поддержку', 'support')],
   [Markup.button.callback('Личный кабинет', 'profile')]
 ]
@@ -123,3 +124,45 @@ export const POSTCARD_PHOTO_START = `
 
 Отправьте <b><i>фотографию</i></b> — и она станет готовой открыткой ✨`.trim()
 
+export const POSTCARD_PHOTO_PROMPT = `
+Task:
+Create a vintage New Year's card based on the uploaded photo.
+
+Style and era:
+Soviet fairy-tale New Year's card from the 1950s–1970s.
+Soft, picturesque illustration, hand-drawn, warmth, comfort, and nostalgia.
+Not cartoonish, not modern, not digital art.
+
+Keep the arrangement of all people in the photo, without adding or removing characters.
+Do not change the poses and positions of people.
+Camera at eye level.
+The background is neat and wintery, with a Christmas tree and decorations located to the side or behind, not obscuring the characters or placed in the center.
+Classic composition of Soviet postcards with a family.
+
+Faces:
+Use faces strictly from the uploaded photo (one-to-one likeness).
+Keep the shape, proportions, age, emotions, and facial expressions.
+Rejuvenation, aging, cartoonishness, and feature replacement are prohibited.
+Only soft artistic stylization is allowed.
+
+Clothing and images:
+Soviet winter clothing style appropriate for the era.
+Soft and warm outfits for children, classic winter coats and hats for adults.
+No modern elements.
+
+Background and decor:
+Winter background with a fir tree and New Year's decorations in the background.
+Light snow, frost patterns.
+Illustrative forest animals may be present, but should not distract attention.
+The background emphasizes the atmosphere but does not change the composition.
+
+Color and atmosphere:
+Light winter palette, pastel shades.
+Old paper effect, light grain.
+Soft warm light, festive mood.
+
+Inscription:
+“С новым годом”
+Handwritten fairy-tale font in the style of Soviet postcards.
+The inscription is neatly placed and does not cover the faces.
+`.trim()

@@ -311,7 +311,7 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     } else if (userState?.refillSource === 'postcardPhoto') {
       backAction = 'refill_balance_from_postcard_photo';
     }
-    await requestEmailOrProceed(ctx, 150, userStates, backAction);
+    await requestEmailOrProceed(ctx, 5, userStates, backAction);
   });
 
   bot.action('refill_300', async (ctx) => {

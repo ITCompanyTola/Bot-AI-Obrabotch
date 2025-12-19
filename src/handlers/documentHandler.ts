@@ -2,6 +2,7 @@ import { Telegraf } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { processDMPhotoCreation, processPhotoRestoration, processPostcardCreationWithBanana } from '../services/nanoBananaService';
 import { processPhotoColorize } from '../services/nanoBananaProService';
+import { POSTCARD_PHOTO_PROMPT } from '../constants';
 
 
 export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
@@ -86,10 +87,7 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
     }
 
     if (userState?.step === 'waiting_postcard_photo') {
-      const postcardPrompt = `
-Задача: Сгенерируй картинку с надписью "С днем рождения"
-Стиль картинки: праздничный и теплый дизайн
-`.trim();
+      const postcardPrompt = POSTCARD_PHOTO_PROMPT;
 
       processPostcardCreationWithBanana(ctx, userId, photoFileId, postcardPrompt);
 

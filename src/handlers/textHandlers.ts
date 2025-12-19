@@ -1,7 +1,7 @@
 import { Telegraf, Markup } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
-import { PRICES } from '../constants';
+import { POSTCARD_PHOTO_PROMPT, PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
 import { broadcast, logToFile } from '../bot';
 import { processPhotoRestoration, processDMPhotoCreation, processPostcardCreationWithBanana } from '../services/nanoBananaService';
@@ -92,10 +92,7 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
 
     if (userState?.step === 'waiting_postcard_photo') {
       const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
-      const postcardPrompt = `
-Задача: Сгенерируй картинку с надписью "С днем рождения"
-Стиль картинки: праздничный и теплый дизайн
-`.trim();
+      const postcardPrompt = POSTCARD_PHOTO_PROMPT;
 
       processPostcardCreationWithBanana(ctx, userId, photoFileId, postcardPrompt);
 

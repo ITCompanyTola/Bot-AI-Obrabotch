@@ -39,6 +39,11 @@ export interface Transaction {
   created_at: Date;
 }
 
+export interface UserRefferalData {
+  userRefferalKey?: string;
+  refferalKeyUsed?: boolean;
+}
+
 export class Database {
   static async initialize() {
     try {
@@ -1128,6 +1133,55 @@ export class Database {
     try {
       const result = await client.query('SELECT COUNT(*) as count FROM users');
       return parseInt(result.rows[0].count);
+    } finally {
+      client.release();
+    }
+  }
+
+  static async isRefferalCreated(userId: number): Promise<boolean> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query('SELECT id FROM users WHERE id = $1 AND user_refferal_key IS NOT NULL', [userId]);
+      return result.rows.length > 0;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getRefferalLink(userId: number): Promise<string> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query('SELECT user_refferal_key FROM users WHERE id = $1', [userId]);
+      return result.rows[0].user_refferal_key;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async createRefferal(userId: number, userRefferalKey: string): Promise<void> {
+    const client = await pool.connect();
+    try {
+      await client.query('UPDATE users SET user_refferal_key = $1 WHERE id = $2', [userRefferalKey, userId]);
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getUserRefferalData(userId: number): Promise<UserRefferalData> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query('SELECT source_key, refferal_key_used FROM users WHERE id = $1', [userId]);
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getUserIdByRefferalKey(refferalKey: string): Promise<number> {
+    const client = await pool.connect();
+    try { 
+      const result = await client.query('SELECT id FROM users WHERE user_refferal_key = $1', [refferalKey]);
+      return result.rows[0].id;
     } finally {
       client.release();
     }

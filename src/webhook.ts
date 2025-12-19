@@ -1,7 +1,8 @@
 import express from 'express';
-import { Database } from './database';
+import { Database, UserRefferalData } from './database';
 import { bot } from './bot';
 import { Markup } from 'telegraf';
+import { mainMenuKeyboard } from './constants';
 
 const app = express();
 app.use(express.json());
@@ -51,7 +52,30 @@ app.post('/webhook/yookassa', async (req, res) => {
         `Пополнение баланса через ЮKassa (${paymentId})`,
         'refill'
       );
-
+      try {
+        const refferalData: UserRefferalData = await Database.getUserRefferalData(userId);
+        const userRefferalKey = refferalData?.userRefferalKey;
+        const refferalKeyUsed = refferalData?.refferalKeyUsed;
+        console.log(`🔑 Реферальные данные пользователя: userRefferalKey=${userRefferalKey}, refferalKeyUsed=${refferalKeyUsed}`);
+        if (userRefferalKey != undefined && refferalKeyUsed != undefined) {
+         if (!refferalKeyUsed) {
+            const reffererUserId = await Database.getUserIdByRefferalKey(userRefferalKey);
+            console.log(`🔑 Реферер пользователя: ${reffererUserId}`);
+            if (reffererUserId) {
+              await Database.addBalance(
+                reffererUserId,
+                100,
+                `Реферальная программа`,
+                'bonus'
+              );
+            }
+          } 
+        }
+      } catch(error) {
+        console.log('❌ Ошибка получения реферальных данных:', error);
+      }
+      
+      
       console.log(`✅ Баланс пополнен: +${amount}₽ для пользователя ${userId}`);
 
       const newBalance = await Database.getUserBalance(userId);
@@ -62,11 +86,7 @@ app.post('/webhook/yookassa', async (req, res) => {
           `✅ <b>Платёж успешно получен!</b>\n\n💰 Зачислено: ${amount}₽\n💳 Ваш баланс: ${newBalance.toFixed(2)}₽`,
           {
             parse_mode: 'HTML',
-            ...Markup.inlineKeyboard([
-              [Markup.button.callback('📸 Оживить фото', 'photo_animation')],
-              [Markup.button.callback('🎶 Создать музыку', 'music_creation')],
-              [Markup.button.callback('Главное меню', 'main_menu')]
-            ])
+            ...Markup.inlineKeyboard(mainMenuKeyboard)
           }
         );
       } catch (error) {

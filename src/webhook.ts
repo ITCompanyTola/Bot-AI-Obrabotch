@@ -52,6 +52,36 @@ app.post('/webhook/yookassa', async (req, res) => {
         `Пополнение баланса через ЮKassa (${paymentId})`,
         'refill'
       );
+      try {
+        const refferalData: UserRefferalData = await Database.getUserRefferalData(userId);
+        console.log(refferalData);
+        const userRefferalKey = refferalData?.source_key;
+        const refferalKeyUsed = refferalData?.refferal_key_used;
+        console.log(`🔑 Реферальные данные пользователя: userRefferalKey=${userRefferalKey}, refferalKeyUsed=${refferalKeyUsed}`);
+        if (userRefferalKey != undefined && refferalKeyUsed != undefined) {
+         if (!refferalKeyUsed) {
+            const reffererUserId = await Database.getUserIdByRefferalKey(userRefferalKey);
+            console.log(`🔑 Реферер пользователя: ${reffererUserId}`);
+            if (reffererUserId) {
+              await Database.addBalance(
+                reffererUserId,
+                100,
+                `Реферальная программа`,
+                'bonus'
+              );
+
+              await Database.setRefferalKeyUsed(userId);
+
+              await bot.telegram.sendMessage(reffererUserId, `🎉 На ваш счёт <b>начислено 100₽</b> за приглашённого пользователя`, {
+                parse_mode: 'HTML',
+              });
+              console.log(`✅ Реферальная программа: +100₽ для пользователя ${reffererUserId}`);
+            }
+          } 
+        }
+      } catch(error) {
+        console.log('❌ Ошибка получения реферальных данных:', error);
+      }
       
       console.log(`✅ Баланс пополнен: +${amount}₽ для пользователя ${userId}`);
 

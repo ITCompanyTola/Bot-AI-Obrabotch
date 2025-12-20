@@ -149,37 +149,6 @@ export async function processPhotoRestoration(ctx: any, userId: number, photoFil
       );
       return;
     }
-    // начало логики реферальной программы
-    try {
-        const refferalData: UserRefferalData = await Database.getUserRefferalData(userId);
-        console.log(refferalData);
-        const userRefferalKey = refferalData?.source_key;
-        const refferalKeyUsed = refferalData?.refferal_key_used;
-        console.log(`🔑 Реферальные данные пользователя: userRefferalKey=${userRefferalKey}, refferalKeyUsed=${refferalKeyUsed}`);
-        if (userRefferalKey != undefined && refferalKeyUsed != undefined) {
-         if (!refferalKeyUsed) {
-            const reffererUserId = await Database.getUserIdByRefferalKey(userRefferalKey);
-            console.log(`🔑 Реферер пользователя: ${reffererUserId}`);
-            if (reffererUserId) {
-              await Database.addBalance(
-                reffererUserId,
-                100,
-                `Реферальная программа`,
-                'bonus'
-              );
-
-              await Database.setRefferalKeyUsed(userId);
-
-              await ctx.telegram.sendMessage(reffererUserId, `🎉 На ваш счёт <b>начислено 100₽</b> за приглашённого пользователя`, {
-                parse_mode: 'HTML',
-              });
-            }
-          } 
-        }
-      } catch(error) {
-        console.log('❌ Ошибка получения реферальных данных:', error);
-      }
-    // конец логики реферальной программы
 
     console.log(`⏳ Начинается реставрация фото для пользователя ${userId}...`);
 
@@ -404,8 +373,6 @@ export async function processPostcardCreationWithBanana(ctx: any, userId: number
     console.log(`⏳ Начинается создание открытки для пользователя ${userId}...`);
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
-
-    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
     
     const DMPhotoUrl = await generatePostcardWithBanana(photoUrl.href, prompt);
 

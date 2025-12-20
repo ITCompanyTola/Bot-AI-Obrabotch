@@ -3,7 +3,7 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { getPostcardMessage, getPostcardPhotoMessage, POSCTARD_MESSAGE, POSTCARD_MESSAGE_START, POSTCARD_PHOTO_START, PRICES } from '../constants';
 
-const EXAMPLE_POSTCARD: string = ''; // Загрузить и вставить свое фото
+const EXAMPLE_POSTCARD_PHOTO_ID: string = 'AgACAgIAAxkBAAIN1mlGxi4ldMTCegkyiPLhy4z_bv3bAALcDWsbVow5Sh52Q0nqCqtkAQADAgADeAADNgQ'; // Загрузить и вставить свое фото
 const POSTCARD_INSTRUCTION: string = ''; // Загрузить и вставить свое видео
 
 export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
@@ -158,6 +158,18 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
       userStates.set(userId, {
         step: 'waiting_postcard_photo',
       });
+      if (EXAMPLE_POSTCARD_PHOTO_ID && EXAMPLE_POSTCARD_PHOTO_ID.length > 0) {
+        await ctx.replyWithPhoto(EXAMPLE_POSTCARD_PHOTO_ID, {
+          caption: message,
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [
+              [{text: 'Назад', callback_data: 'postcard_photo'}]
+            ]
+          }
+        });
+        return;
+      }
       await ctx.reply(message, {
         parse_mode: 'HTML',
         reply_markup: {

@@ -5,11 +5,12 @@ import { POSTCARD_PHOTO_PROMPT, PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
 import { broadcast, logToFile } from '../bot';
 import { processPhotoRestoration, processDMPhotoCreation, processPostcardCreationWithBanana } from '../services/nanoBananaService';
-import { processPhotoColorize } from '../services/nanoBananaProService';
+import { processPhotoColorize, processPostcardCreationWithBananaPro } from '../services/nanoBananaProService';
 import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler, sendBroadcastExample } from './broadcast';
 import { processVideoDMGeneration } from '../services/veoService';
 import { updatePrompt } from '../services/openaiService';
 import { processPostcardCreation } from '../services/fluxService';
+import { generatePostcard } from '../services/GPT5miniService';
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -95,7 +96,7 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
       const postcardPrompt = POSTCARD_PHOTO_PROMPT;
 
-      processPostcardCreationWithBanana(ctx, userId, photoFileId, postcardPrompt);
+      processPostcardCreationWithBananaPro(ctx, userId, photoFileId, postcardPrompt);
 
       userStates.delete(userId);
     }
@@ -288,11 +289,11 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     await ctx.reply('Подождите немного — мы <b><i>улучшаем ваше описание</i></b>, чтобы результат получился максимально <b><i>качественным</i></b>🔥', {
       parse_mode: 'HTML',
     });
-    console.log(userState.photoFileId);
+
     if (!userState.photoFileId || !prompt) return;
     const photoUrl = await ctx.telegram.getFileLink(userState.photoFileId);
     const photoUrlString = photoUrl.href;
-    console.log(photoUrlString);
+
     const updatedPromptMessage = await updatePrompt(prompt, photoUrlString);
     if (userState.regenPromptAttempts == undefined) {
       await ctx.reply('❌ Произошла ошибка. Попробуйте снова.');
@@ -301,6 +302,7 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     userStates.set(userId, {
       ...userState,
       prompt: prompt,
+      generatedPrompt: updatedPromptMessage,
       regenPromptAttempts: Number(userState.regenPromptAttempts) - 1,
     });
 
@@ -413,8 +415,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     
     await ctx.reply('⏳ Начинаю генерацию... Это займет около 3 минут.');
     
-    if (userState.photoFileId == undefined || userState.generatedPrompt == undefined) return;
-    processVideoGeneration(ctx, userId, userState.photoFileId, userState.generatedPrompt);
+    if (userState.photoFileId == undefined || userState.prompt == undefined) return;
+    processVideoGeneration(ctx, userId, userState.photoFileId, userState.prompt);
     
     userStates.delete(userId);
   });

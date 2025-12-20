@@ -1,73 +1,73 @@
 import { Telegraf, Markup } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
-//import { createPayment, checkPaymentStatus } from '../services/paymentService';
+import { createPayment, checkPaymentStatus } from '../services/paymentService';
 import { logToFile } from '../bot';
 
 async function showPaymentMessage(ctx: any, amount: number, userStates: Map<number, UserState>, backAction: string, useReply: boolean = false) {
-//   const userId = ctx.from?.id;
-//   if (!userId) return;
+  const userId = ctx.from?.id;
+  if (!userId) return;
 
-//   try {
-//     logToFile(`💳 Попытка создания платежа: userId=${userId}, amount=${amount}`);
+  try {
+    logToFile(`💳 Попытка создания платежа: userId=${userId}, amount=${amount}`);
     
-//     const email = await Database.getUserEmail(userId);
+    const email = await Database.getUserEmail(userId);
 
-//     const payment = await createPayment(
-//       amount,
-//       `Пополнение баланса на ${amount}₽`,
-//       userId,
-//       email || ''
-//     );
+    const payment = await createPayment(
+      amount,
+      `Пополнение баланса на ${amount}₽`,
+      userId,
+      email || ''
+    );
 
-//     logToFile(`✅ Платеж создан успешно: paymentId=${payment.paymentId}, url=${payment.confirmationUrl}`);
+    logToFile(`✅ Платеж создан успешно: paymentId=${payment.paymentId}, url=${payment.confirmationUrl}`);
 
-//     const currentState = userStates.get(userId) || { step: null };
-//     userStates.set(userId, {
-//       ...currentState,
-//       paymentId: payment.paymentId,
-//       paymentAmount: amount,
-//       step: null,
-//       pendingPaymentAmount: undefined
-//     });
+    const currentState = userStates.get(userId) || { step: null };
+    userStates.set(userId, {
+      ...currentState,
+      paymentId: payment.paymentId,
+      paymentAmount: amount,
+      step: null,
+      pendingPaymentAmount: undefined
+    });
 
-//     await Database.savePendingPayment(userId, payment.paymentId, amount);
+    await Database.savePendingPayment(userId, payment.paymentId, amount);
 
-//     const paymentMessage = `
-// 💳 Сумма к оплате: ${amount}₽
+    const paymentMessage = `
+💳 Сумма к оплате: ${amount}₽
 
-// Ваша ссылка для оплаты:
-// ${payment.confirmationUrl}
+Ваша ссылка для оплаты:
+${payment.confirmationUrl}
 
-// После успешной оплаты баланс будет автоматически начислен в течение нескольких секунд ⚡️
-//     `.trim();
+После успешной оплаты баланс будет автоматически начислен в течение нескольких секунд ⚡️
+    `.trim();
 
-//     const keyboard = Markup.inlineKeyboard([
-//       [Markup.button.url(`💳 Оплатить ${amount}₽`, payment.confirmationUrl)],
-//       [Markup.button.callback('Назад', backAction)]
-//     ]);
+    const keyboard = Markup.inlineKeyboard([
+      [Markup.button.url(`💳 Оплатить ${amount}₽`, payment.confirmationUrl)],
+      [Markup.button.callback('Назад', backAction)]
+    ]);
 
-//     if (useReply) {
-//       await ctx.reply(paymentMessage, keyboard);
-//     } else {
-//       await ctx.editMessageText(paymentMessage, keyboard);
-//     }
+    if (useReply) {
+      await ctx.reply(paymentMessage, keyboard);
+    } else {
+      await ctx.editMessageText(paymentMessage, keyboard);
+    }
     
-//     logToFile(`✅ Сообщение с платежом отправлено userId=${userId}`);
-//   } catch (error: any) {
-//     logToFile(`❌ ОШИБКА создания платежа: userId=${userId}, error=${error.message}, stack=${error.stack}`);
-//     console.error('Ошибка создания платежа:', error);
+    logToFile(`✅ Сообщение с платежом отправлено userId=${userId}`);
+  } catch (error: any) {
+    logToFile(`❌ ОШИБКА создания платежа: userId=${userId}, error=${error.message}, stack=${error.stack}`);
+    console.error('Ошибка создания платежа:', error);
     
-//     const keyboard = Markup.inlineKeyboard([
-//       [Markup.button.callback('Назад', backAction)]
-//     ]);
+    const keyboard = Markup.inlineKeyboard([
+      [Markup.button.callback('Назад', backAction)]
+    ]);
 
-//     if (useReply) {
-//       await ctx.reply('❌ Ошибка создания платежа. Попробуйте позже.', keyboard);
-//     } else {
-//       await ctx.editMessageText('❌ Ошибка создания платежа. Попробуйте позже.', keyboard);
-//     }
-//   }
+    if (useReply) {
+      await ctx.reply('❌ Ошибка создания платежа. Попробуйте позже.', keyboard);
+    } else {
+      await ctx.editMessageText('❌ Ошибка создания платежа. Попробуйте позже.', keyboard);
+    }
+  }
 }
 
 async function showRefillAmountSelection(
@@ -311,7 +311,7 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     } else if (userState?.refillSource === 'postcardPhoto') {
       backAction = 'refill_balance_from_postcard_photo';
     }
-    await requestEmailOrProceed(ctx, 5, userStates, backAction);
+    await requestEmailOrProceed(ctx, 150, userStates, backAction);
   });
 
   bot.action('refill_300', async (ctx) => {

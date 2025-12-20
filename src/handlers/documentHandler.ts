@@ -1,8 +1,9 @@
 import { Telegraf } from 'telegraf';
 import { BotContext, UserState } from '../types';
-import { processDMPhotoCreation, processPhotoRestoration, processPostcardCreationWithBanana } from '../services/nanoBananaService';
-import { processPhotoColorize } from '../services/nanoBananaProService';
+import { processDMPhotoCreation, processPhotoRestoration } from '../services/nanoBananaService';
+import { processPhotoColorize, processPostcardCreationWithBananaPro } from '../services/nanoBananaProService';
 import { POSTCARD_PHOTO_PROMPT } from '../constants';
+import { processPostcardCreation } from '../services/fluxService';
 
 
 export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
@@ -89,7 +90,7 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>, userStates: M
     if (userState?.step === 'waiting_postcard_photo') {
       const postcardPrompt = POSTCARD_PHOTO_PROMPT;
 
-      processPostcardCreationWithBanana(ctx, userId, photoFileId, postcardPrompt);
+      processPostcardCreationWithBananaPro(ctx, userId, photoFileId, postcardPrompt);
 
       userStates.delete(userId);
     }

@@ -1,13 +1,16 @@
 import { Telegraf, Markup } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
-import { PRICES } from '../constants';
+import { POSTCARD_PHOTO_PROMPT, PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
-import { logToFile } from '../bot';
-import { processPhotoRestoration, processDMPhotoCreation } from '../services/nanoBananaService';
-import { processPhotoColorize } from '../services/nanoBananaProService';
-import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler } from './broadcast';
+import { broadcast, logToFile } from '../bot';
+import { processPhotoRestoration, processDMPhotoCreation, processPostcardCreationWithBanana } from '../services/nanoBananaService';
+import { processPhotoColorize, processPostcardCreationWithBananaPro } from '../services/nanoBananaProService';
+import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler, sendBroadcastExample } from './broadcast';
 import { processVideoDMGeneration } from '../services/veoService';
+import { updatePrompt } from '../services/openaiService';
+import { processPostcardCreation } from '../services/fluxService';
+import { generatePostcard } from '../services/GPT5miniService';
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,7 +29,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     
       userStates.set(userId, {
         step: 'waiting_description',
-        photoFileId: photo.file_id
+        photoFileId: photo.file_id,
+        regenPromptAttempts: 2,
       });
     
       const descriptionMessage = `
@@ -69,6 +73,7 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       processPhotoColorize(ctx, userId, photo.file_id, prompt);
     }
 
+
     // Выполняется один раз
     if (userState?.step === 'waiting_DM_photo_generation') {
       const photo = ctx.message.photo[ctx.message.photo.length - 1];
@@ -86,6 +91,15 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     if (userState?.step === 'waiting_broadcast_photo') {
       broadcastPhotoHandler(ctx, userId, userState);
     }
+
+    if (userState?.step === 'waiting_postcard_photo') {
+      const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+      const postcardPrompt = POSTCARD_PHOTO_PROMPT;
+
+      processPostcardCreationWithBananaPro(ctx, userId, photoFileId, postcardPrompt);
+
+      userStates.delete(userId);
+    }
   });
 
   bot.on('text', async (ctx) => {
@@ -96,6 +110,77 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
 
     if (userState?.step === 'waiting_broadcast_message') {
       broadcastMessageHandler(ctx, userId, userState);
+      return;
+    }
+
+    // Обработка текста кнопки для рассылки
+    if (userState?.step === 'waiting_broadcast_button_text') {
+      const buttonText = ctx.message.text;
+      
+      console.log(`✅ Получен текст кнопки от ${userId}: "${buttonText}"`);
+      
+      // Сохраняем текст кнопки в userState
+      userStates.set(userId, {
+        ...userState,
+        step: 'waiting_broadcast_button_callback',
+        broadcastButtonText: buttonText
+      });
+
+      await ctx.reply('✅ Текст кнопки сохранен!\n\nТеперь введите callback_data для кнопки (максимум 64 символа):\n\nПример: join_channel или start_bot', {
+        reply_markup: {
+          inline_keyboard: [[{text: 'Отмена', callback_data: 'broadcast_no_button'}]]
+        }
+      });
+      return;
+    }
+
+    // Обработка callback_data для кнопки рассылки
+    if (userState?.step === 'waiting_broadcast_button_callback') {
+      const callbackData = ctx.message.text;
+      
+      console.log(`✅ Получен callback_data от ${userId}: "${callbackData}"`);
+      
+      // Валидация длины callback_data
+      if (callbackData.length > 64) {
+        await ctx.reply('❌ Ошибка: callback_data не должен превышать 64 символа. Введите еще раз:');
+        return;
+      }
+
+      const currentBroadcast = broadcast.get(userId);
+      if (!currentBroadcast) {
+        await ctx.reply('❌ Данные рассылки не найдены. Начните заново.');
+        userStates.delete(userId);
+        return;
+      }
+
+      // Сохраняем кнопку в broadcast
+      broadcast.set(userId, {
+        ...currentBroadcast,
+        button: {
+          text: userState.broadcastButtonText || 'Кнопка',
+          callbackData: callbackData
+        }
+      });
+
+      // Показываем превью с кнопкой
+      await sendBroadcastExample(ctx, userId, userState);
+      
+      // Очищаем временные данные из userState
+      userStates.set(userId, {
+        ...userState,
+        step: null,
+        broadcastButtonText: undefined,
+        broadcastButtonCallback: undefined
+      });
+      return;
+    }
+
+    if (userState?.step === 'waiting_postcard_text') {
+      const prompt = ctx.message.text.trim();
+      
+      processPostcardCreation(ctx, userId, prompt);
+
+      userStates.delete(userId);
       return;
     }
 
@@ -143,6 +228,10 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
         backAction = 'refill_balance_from_colorize';
       } else if (userState?.refillSource === 'dm') {
         backAction = 'refill_balance_from_dm';
+      } else if (userState?.refillSource === 'postcardText') {
+        backAction = 'refill_balance_from_postcard_text';
+      } else if (userState?.refillSource === 'postcardPhoto') {
+        backAction = 'refill_balance_from_postcard_photo';
       }
       
       userStates.set(userId, {
@@ -196,14 +285,109 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     if (userState?.step !== 'waiting_description' || !userState.photoFileId) return;
     
     const prompt = ctx.message.text;
-    
-    userStates.set(userId, {
-      step: 'waiting_payment',
-      photoFileId: userState.photoFileId,
-      prompt: prompt
+
+    await ctx.reply('Подождите немного — мы <b><i>улучшаем ваше описание</i></b>, чтобы результат получился максимально <b><i>качественным</i></b>🔥', {
+      parse_mode: 'HTML',
     });
+
+    if (!userState.photoFileId || !prompt) return;
+    const photoUrl = await ctx.telegram.getFileLink(userState.photoFileId);
+    const photoUrlString = photoUrl.href;
+
+    const updatedPromptMessage = await updatePrompt(prompt, photoUrlString);
+    if (userState.regenPromptAttempts == undefined) {
+      await ctx.reply('❌ Произошла ошибка. Попробуйте снова.');
+      return;
+    }
+    userStates.set(userId, {
+      ...userState,
+      prompt: prompt,
+      generatedPrompt: updatedPromptMessage,
+      regenPromptAttempts: Number(userState.regenPromptAttempts) - 1,
+    });
+
+    const message = `✅ Ваше описание улучшено:\n${updatedPromptMessage}`
+    await ctx.reply(message, {
+      reply_markup: {
+        inline_keyboard: [
+          [{text: 'Оставить описание', callback_data: 'confirm_ai_prompt'}],
+          [{text: `Улучшить еще раз ${4 - userState.regenPromptAttempts}/3`, callback_data: 'regenerate_prompt'}],
+          [{text: 'Использовать свой', callback_data: 'confirm_prompt'}],
+        ]
+      }
+    })
+  });
+
+  bot.on('video', (ctx) => {
+    console.log('Видео получено', ctx.message.video.file_id);
+    const userId = ctx.from?.id;
+    if (!userId) return;
     
-    console.log(`📝 Сохранен промпт для пользователя ${userId}: "${prompt}"`);
+    const userState = userStates.get(userId);
+    if (!userState) return;
+    
+    if (userState?.step !== 'waiting_broadcast_video') return;
+
+    broadcastVideoHandler(ctx, userId, userState);
+  });
+
+  bot.action('regenerate_prompt', async (ctx) => {
+    await ctx.answerCbQuery();
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    const userState = userStates.get(userId);
+    if (!userState || !userState.prompt) return;
+    
+    await ctx.reply('Подождите немного — мы <b><i>улучшаем ваше описание</i></b>, чтобы результат получился максимально <b><i>качественным</i></b>🔥', {
+      parse_mode: 'HTML',
+    });
+
+    if (!userState.photoFileId) return;
+    const photoUrl = await ctx.telegram.getFileLink(userState.photoFileId);
+    const photoUrlString = photoUrl.href;
+    const updatedPromptMessage = await updatePrompt(userState.prompt, photoUrlString);
+    if (userState.regenPromptAttempts == undefined) {
+      await ctx.reply('❌ Произошла ошибка. Попробуйте снова.');
+      return;
+    }
+
+    userStates.set(userId, {
+      ...userState,
+      generatedPrompt: updatedPromptMessage,
+      regenPromptAttempts: Number(userState.regenPromptAttempts) - 1
+    })
+    if (userState.regenPromptAttempts == 0) {
+      const message = `✅ Ваше описание улучшено:\n${updatedPromptMessage}`
+      await ctx.reply(message, {
+        reply_markup: {
+          inline_keyboard: [
+            [{text: 'Оставить описание', callback_data: 'confirm_ai_prompt'}],
+            [{text: 'Использовать свой', callback_data: 'confirm_prompt'}],
+          ]
+        }
+      });
+      return;
+    }
+    const message = `✅ Ваше описание улучшено:\n${updatedPromptMessage}`
+    await ctx.reply(message, {
+      reply_markup: {
+        inline_keyboard: [
+          [{text: 'Оставить описание', callback_data: 'confirm_ai_prompt'}],
+          [{text: `Улучшить еще раз ${4 - userState.regenPromptAttempts}/3`, callback_data: 'regenerate_prompt'}],
+          [{text: 'Использовать свой', callback_data: 'confirm_prompt'}],
+        ]
+      }
+    })
+  });
+
+  bot.action('confirm_prompt', async (ctx) => {
+    await ctx.answerCbQuery();
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    const userState = userStates.get(userId);
+    if (!userState) return;
+    
+    console.log(`📝 Сохранен промпт для пользователя ${userId}: "${userState.generatedPrompt}"`);
     
     const balance = await Database.getUserBalance(userId);
     const hasBalance = await Database.hasEnoughBalance(userId, PRICES.PHOTO_ANIMATION);
@@ -231,21 +415,50 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     
     await ctx.reply('⏳ Начинаю генерацию... Это займет около 3 минут.');
     
-    processVideoGeneration(ctx, userId, userState.photoFileId, prompt);
+    if (userState.photoFileId == undefined || userState.prompt == undefined) return;
+    processVideoGeneration(ctx, userId, userState.photoFileId, userState.prompt);
     
     userStates.delete(userId);
   });
 
-  bot.on('video', (ctx) => {
-    console.log('Видео получено', ctx.message.video.file_id);
+  bot.action('confirm_ai_prompt', async (ctx) => {
+    await ctx.answerCbQuery();
     const userId = ctx.from?.id;
     if (!userId) return;
-    
     const userState = userStates.get(userId);
     if (!userState) return;
     
-    if (userState?.step !== 'waiting_broadcast_video') return;
+    console.log(`📝 Сохранен промпт для пользователя ${userId}: "${userState.generatedPrompt}"`);
+    
+    const balance = await Database.getUserBalance(userId);
+    const hasBalance = await Database.hasEnoughBalance(userId, PRICES.PHOTO_ANIMATION);
+    
+    if (!hasBalance) {
+      const paymentMessage = `
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽
+📹 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION}₽ / $1</blockquote>
 
-    broadcastVideoHandler(ctx, userId, userState);
+Выберете способ оплаты ⤵️
+      `.trim();
+
+      await ctx.reply(
+        paymentMessage,
+        {
+          parse_mode: 'HTML',
+          ...Markup.inlineKeyboard([
+            [Markup.button.callback('Оплата картой', 'refill_balance')],
+            [Markup.button.callback('Главное меню', 'main_menu')]
+          ])
+        }
+      );
+      return;
+    }
+    
+    await ctx.reply('⏳ Начинаю генерацию... Это займет около 3 минут.');
+    
+    if (userState.photoFileId == undefined || userState.generatedPrompt == undefined) return;
+    processVideoGeneration(ctx, userId, userState.photoFileId, userState.generatedPrompt);
+    
+    userStates.delete(userId);
   });
 }

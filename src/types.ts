@@ -7,6 +7,10 @@ export interface Broadcast {
   entities: any;
   photoFileId?: string;
   videoFileId?: string;
+  button?: {
+    text: string;
+    callbackData: string;
+  };
 }
 
 export type UserStep = 
@@ -14,7 +18,6 @@ export type UserStep =
   | 'waiting_for_restoration_photo' 
   | 'waiting_for_colorize_photo'
   | 'waiting_description' 
-  | 'waiting_payment' 
   | 'waiting_music_text' 
   | 'waiting_music_style' 
   | 'waiting_music_params' 
@@ -22,23 +25,32 @@ export type UserStep =
   | 'waiting_broadcast_message'
   | 'waiting_broadcast_photo'
   | 'waiting_broadcast_video'
+  | 'waiting_broadcast_button_text'
+  | 'waiting_broadcast_button_callback'
   | 'waiting_DM_photo_generation'
   | 'waiting_DM_text'
+  | 'waiting_postcard_text'
+  | 'waiting_postcard_photo'
   | null;
 
 export interface UserState {
   step: UserStep;
   photoFileId?: string;
   prompt?: string;
+  generatedPrompt?: string;
   paymentAmount?: number;
   paymentId?: string;
   musicText?: string;
   musicStyle?: string;
-  refillSource?: 'photo' | 'profile' | 'music' | 'restoration' | 'colorize' | 'dm';
+  refillSource?: 'photo' | 'profile' | 'music' | 'restoration' | 'colorize' | 'dm' | 'postcardPhoto' | 'postcardText';
   pendingPaymentAmount?: number;
   freeGenerations?: number;
+  regenPromptAttempts?: number;
   dmPhotoFileId?: string;
+  broadcastButtonText?: string;
+  broadcastButtonCallback?: string;
 }
+
 export interface MailingData {
   id: number;
   admin_id: number;
@@ -46,6 +58,8 @@ export interface MailingData {
   entities: any;
   photo_file_id?: string;
   video_file_id?: string;
+  button_text?: string;
+  button_callback?: string;
   total_users: number;
   sent_count: number;
   failed_count: number;
@@ -61,6 +75,8 @@ export interface CreateMailingData {
   entities: any;
   photo_file_id?: string;
   video_file_id?: string;
+  button_text?: string;
+  button_callback?: string;
   total_users: number;
 }
 

@@ -12,6 +12,8 @@ import { registerPhotoColorizeHandlers } from './photoColorize';
 import { registerDocumentHandler } from './documentHandler';
 import { registerBroadcastHandlers } from './broadcast';
 import { registerDMHandlers } from './dedMoroz';
+import { registerPostcardHandlers } from './postcardHandlers';
+import { registerRefferal } from './refferalHandler';
 
 async function sendTGTrackWebhook(update: any) {
   // if (!config.tgtrackApiKey) return;
@@ -94,7 +96,9 @@ export function registerAllHandlers(bot: Telegraf<BotContext>, userStates: Map<n
   registerPhotoAnimationHandlers(bot, userStates);
   registerMusicCreationHandlers(bot, userStates);
   registerPhotoRestorationHandlers(bot, userStates);
+  registerRefferal(bot, userStates);
   registerPhotoColorizeHandlers(bot, userStates);
+  registerPostcardHandlers(bot, userStates);
   registerDMHandlers(bot, userStates);
   registerProfileHandlers(bot, userStates);
   registerPaymentHandlers(bot, userStates);

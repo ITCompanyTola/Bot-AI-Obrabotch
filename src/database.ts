@@ -39,6 +39,11 @@ export interface Transaction {
   created_at: Date;
 }
 
+export interface UserRefferalData {
+  source_key?: string;
+  refferal_key_used?: boolean;
+}
+
 export class Database {
   static async initialize() {
     try {
@@ -272,7 +277,7 @@ export class Database {
   // Добавить новый тип для реставрации
   static async saveGeneratedFile(
     userId: number,
-    fileType: 'photo' | 'music' | 'restoration' | 'colorize' | 'dm_photo' | 'dm_video',
+    fileType: 'photo' | 'music' | 'restoration' | 'colorize' | 'dm_photo' | 'dm_video' | 'postcard_photo' | 'postcard_text',
     fileId: string,
     prompt?: string
   ): Promise<void> {
@@ -945,10 +950,15 @@ export class Database {
       }
     }
     
+    console.log('📊 Сохранение данных рассылки:');
+    console.log('- Сообщение:', data.message?.substring(0, 100));
+    console.log('- Текст кнопки:', data.button_text);
+    console.log('- Callback кнопки:', data.button_callback);
+    
     const result = await client.query(
       `INSERT INTO mailing_data 
-       (admin_id, message, entities, photo_file_id, video_file_id, total_users)
-       VALUES ($1, $2, $3, $4, $5, $6)
+       (admin_id, message, entities, photo_file_id, video_file_id, button_text, button_callback, total_users)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
         data.admin_id,
@@ -956,9 +966,17 @@ export class Database {
         entitiesForDb,
         data.photo_file_id,
         data.video_file_id,
+        data.button_text || null,  // Добавляем button_text
+        data.button_callback || null, // Добавляем button_callback
         data.total_users
       ]
     );
+
+    console.log('✅ Данные рассылки сохранены в БД:', {
+      id: result.rows[0].id,
+      hasButtonText: !!result.rows[0].button_text,
+      hasButtonCallback: !!result.rows[0].button_callback
+    });
 
     return result.rows[0];
   } finally {
@@ -966,7 +984,7 @@ export class Database {
   }
 }
 
-  static async getMailingData(id: number): Promise<MailingData | null> {
+ static async getMailingData(id: number): Promise<MailingData | null> {
   const client = await pool.connect();
   try {
     const result = await client.query(
@@ -980,6 +998,13 @@ export class Database {
 
     const row = result.rows[0];
     
+    console.log('📖 Чтение данных рассылки из БД:', {
+      id: row.id,
+      button_text: row.button_text,
+      button_callback: row.button_callback,
+      hasButton: !!row.button_text && !!row.button_callback
+    });
+    
     // Извлекаем entities
     let entities = null;
     if (row.entities) {
@@ -987,7 +1012,6 @@ export class Database {
         // Если это строка JSON
         if (typeof row.entities === 'string') {
           entities = JSON.parse(row.entities);
-          console.log('📖 Прочитаны entities из БД:', entities);
         }
         // Если pg драйвер уже распарсил
         else if (typeof row.entities === 'object') {
@@ -1001,7 +1025,10 @@ export class Database {
     
     return {
       ...row,
-      entities
+      entities,
+      // Убедимся, что поля определены
+      button_text: row.button_text || undefined,
+      button_callback: row.button_callback || undefined
     };
   } finally {
     client.release();
@@ -1106,6 +1133,94 @@ export class Database {
     try {
       const result = await client.query('SELECT COUNT(*) as count FROM users');
       return parseInt(result.rows[0].count);
+    } finally {
+      client.release();
+    }
+  }
+
+  static async isRefferalCreated(userId: number): Promise<boolean> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query('SELECT id FROM users WHERE id = $1 AND user_refferal_key IS NOT NULL', [userId]);
+      return result.rows.length > 0;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getRefferalLink(userId: number): Promise<string> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query('SELECT user_refferal_key FROM users WHERE id = $1', [userId]);
+      return result.rows[0].user_refferal_key;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async createRefferal(userId: number, userRefferalKey: string): Promise<void> {
+    const client = await pool.connect();
+    try {
+      await client.query('UPDATE users SET user_refferal_key = $1 WHERE id = $2', [userRefferalKey, userId]);
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getUserRefferalData(userId: number): Promise<UserRefferalData> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query('SELECT source_key, refferal_key_used FROM users WHERE id = $1', [userId]);
+      return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getUserIdByRefferalKey(refferalKey: string): Promise<number> {
+    const client = await pool.connect();
+    try { 
+      const result = await client.query('SELECT id FROM users WHERE user_refferal_key = $1', [refferalKey]);
+      return result.rows[0].id;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async setRefferalKeyUsed(userId: number): Promise<void> {
+    const client = await pool.connect();
+    try {
+      await client.query('UPDATE users SET refferal_key_used = true WHERE id = $1', [userId]);
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getUserPostcardsText(userId: number): Promise<any[]> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM generated_files
+         WHERE user_id = $1 AND file_type = 'postcard_text'
+         ORDER BY created_at DESC`,
+        [userId]
+      );
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getUserPostcardsPhoto(userId: number): Promise<any[]> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM generated_files
+         WHERE user_id = $1 AND file_type = 'postcard_photo'
+         ORDER BY created_at DESC`,
+        [userId]
+      );
+      return result.rows;
     } finally {
       client.release();
     }

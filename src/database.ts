@@ -300,7 +300,7 @@ export class Database {
       const result = await client.query(
         `SELECT * FROM generated_files 
          WHERE user_id = $1 AND file_type = 'photo' 
-         ORDER BY created_at DESC`,
+         ORDER BY created_at ASC`,
         [userId]
       );
       return result.rows;
@@ -315,7 +315,7 @@ export class Database {
       const result = await client.query(
         `SELECT * FROM generated_files 
          WHERE user_id = $1 AND file_type = 'music' 
-         ORDER BY created_at DESC`,
+         ORDER BY created_at ASC`,
         [userId]
       );
       return result.rows;
@@ -330,7 +330,7 @@ export class Database {
       const result = await client.query(
         `SELECT * FROM generated_files
          WHERE user_id = $1 AND file_type = 'restoration'
-         ORDER BY created_at DESC`,
+         ORDER BY created_at ASC`,
         [userId]
       );
       return result.rows;
@@ -345,7 +345,7 @@ export class Database {
       const result = await client.query(
         `SELECT * FROM generated_files
          WHERE user_id = $1 AND file_type = 'colorize'
-         ORDER BY created_at DESC`,
+         ORDER BY created_at ASC`,
         [userId]
       );
       return result.rows;
@@ -360,7 +360,7 @@ export class Database {
       const result = await client.query(
         `SELECT * FROM generated_files
          WHERE user_id = $1 AND file_type = 'dm_photo'
-         ORDER BY created_at DESC`,
+         ORDER BY created_at ASC`,
         [userId]
       );
       return result.rows;
@@ -375,7 +375,7 @@ export class Database {
       const result = await client.query(
         `SELECT * FROM generated_files
          WHERE user_id = $1 AND file_type = 'dm_video'
-         ORDER BY created_at DESC`,
+         ORDER BY created_at ASC`,
         [userId]
       );
       return result.rows;
@@ -460,6 +460,8 @@ export class Database {
       const restorationGenAll = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'restoration'`);
       const colorizeGenAll = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'colorize'`);
       const dmVideoGenAll = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'dm_video'`);
+      const postcardTextGenAll = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'postcard_text'`);
+      const postcardPhotoGenAll = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'postcard_photo'`);
 
       // За последние 7 дней
       const usersCount7d = await client.query('SELECT COUNT(*) as count FROM users WHERE created_at >= $1', [sevenDaysAgo]);
@@ -470,6 +472,8 @@ export class Database {
       const restorationGen7d = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'restoration' AND created_at >= $1`, [sevenDaysAgo]);
       const colorizeGen7d = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'colorize' AND created_at >= $1`, [sevenDaysAgo]);
       const dmVideoGen7d = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'dm_video' AND created_at >= $1`, [sevenDaysAgo]);
+      const postcardTextGen7d = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'postcard_text' AND created_at >= $1`, [sevenDaysAgo]);
+      const postcardPhotoGen7d = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'postcard_photo' AND created_at >= $1`, [sevenDaysAgo]);
 
       // За сегодня
       const usersCountToday = await client.query('SELECT COUNT(*) as count FROM users WHERE created_at >= $1', [startOfToday]);
@@ -480,6 +484,8 @@ export class Database {
       const restorationGenToday = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'restoration' AND created_at >= $1`, [startOfToday]);
       const colorizeGenToday = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'colorize' AND created_at >= $1`, [startOfToday]);
       const dmVideoGenToday = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'dm_video' AND created_at >= $1`, [startOfToday]);
+      const postcardTextGenToday = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'postcard_text' AND created_at >= $1`, [startOfToday]);
+      const postcardPhotoGenToday = await client.query(`SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'postcard_photo' AND created_at >= $1`, [startOfToday]);
 
       return {
         all: {
@@ -490,7 +496,9 @@ export class Database {
           musicGenerations: parseInt(musicGenAll.rows[0].count),
           restorationGenerations: parseInt(restorationGenAll.rows[0].count),
           colorizeGenerations: parseInt(colorizeGenAll.rows[0].count),
-          dmVideoGenerations: parseInt(dmVideoGenAll.rows[0].count)
+          dmVideoGenerations: parseInt(dmVideoGenAll.rows[0].count),
+          postcardTextGenerations: parseInt(postcardTextGenAll.rows[0].count),
+          postcardPhotoGenerations: parseInt(postcardPhotoGenAll.rows[0].count)
         },
         last7Days: {
           usersCount: parseInt(usersCount7d.rows[0].count),
@@ -500,7 +508,9 @@ export class Database {
           musicGenerations: parseInt(musicGen7d.rows[0].count),
           restorationGenerations: parseInt(restorationGen7d.rows[0].count),
           colorizeGenerations: parseInt(colorizeGen7d.rows[0].count),
-          dmVideoGenerations: parseInt(dmVideoGen7d.rows[0].count)
+          dmVideoGenerations: parseInt(dmVideoGen7d.rows[0].count),
+          postcardTextGenerations: parseInt(postcardTextGen7d.rows[0].count),
+          postcardPhotoGenerations: parseInt(postcardPhotoGen7d.rows[0].count)
         },
         today: {
           usersCount: parseInt(usersCountToday.rows[0].count),
@@ -510,7 +520,9 @@ export class Database {
           musicGenerations: parseInt(musicGenToday.rows[0].count),
           restorationGenerations: parseInt(restorationGenToday.rows[0].count),
           colorizeGenerations: parseInt(colorizeGenToday.rows[0].count),
-          dmVideoGenerations: parseInt(dmVideoGenToday.rows[0].count)
+          dmVideoGenerations: parseInt(dmVideoGenToday.rows[0].count),
+          postcardTextGenerations: parseInt(postcardTextGenToday.rows[0].count),
+          postcardPhotoGenerations: parseInt(postcardPhotoGenToday.rows[0].count)
         }
       };
     } finally {
@@ -1202,7 +1214,7 @@ export class Database {
       const result = await client.query(
         `SELECT * FROM generated_files
          WHERE user_id = $1 AND file_type = 'postcard_text'
-         ORDER BY created_at DESC`,
+         ORDER BY created_at ASC`,
         [userId]
       );
       return result.rows;
@@ -1217,7 +1229,7 @@ export class Database {
       const result = await client.query(
         `SELECT * FROM generated_files
          WHERE user_id = $1 AND file_type = 'postcard_photo'
-         ORDER BY created_at DESC`,
+         ORDER BY created_at ASC`,
         [userId]
       );
       return result.rows;

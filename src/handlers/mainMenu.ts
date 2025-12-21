@@ -2,7 +2,8 @@ import { Telegraf, Markup } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { sendTGTrackUserStart } from './index';
-import { mainMenuKeyboard } from '../constants';
+import { MAIN_MENU_MESSAGE, mainMenuKeyboard } from '../constants';
+import { parse } from 'path';
 
 export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.command('start', async (ctx) => {
@@ -33,17 +34,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
       const policyAccepted = await Database.hasPolicyAccepted(userId);
 
       if (policyAccepted) {
-        const mainMenuMessage = `
-Наш бот умеет:
-- <b><i>оживлять фото</i></b> 📸✨
-- создавать <b><i>крутые треки</i></b> 🎵🔥
-- <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
-- делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
-
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-        `.trim();
+        const mainMenuMessage = MAIN_MENU_MESSAGE;
 
         await ctx.reply(
           mainMenuMessage,
@@ -54,7 +45,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
         );
       } else {
         const welcomeMessage = `
-Чтобы мы могли дальше работать, закон требует подтверждения с вашей стороны следующего ⤵️
+Добро пожаловать! Перед началом работы нужно принять три важных документа ⤵️
 
 📌 <a href="https://docs.google.com/document/d/1xhYtLwGktBxqbVTGalJ0PnlKdRWxafZn/edit?usp=sharing&ouid=100123280935677219338&rtpof=true&sd=true">Политика конфиденциальности</a>
 
@@ -94,17 +85,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
 
     await Database.setPolicyAccepted(userId);
     
-    const mainMenuMessage = `
-Наш бот умеет:
-- <b><i>оживлять фото</i></b> 📸✨
-- создавать <b><i>крутые треки</i></b> 🎵🔥
-- <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
-- делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
-
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-    `.trim();
+    const mainMenuMessage = MAIN_MENU_MESSAGE;
 
     await ctx.editMessageText(
       mainMenuMessage,
@@ -141,17 +122,7 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
     const userState = userStates.get(userId);
     if (userState) userStates.delete(userId);
     
-    const mainMenuMessage = `
-Наш бот умеет:
-- <b><i>оживлять фото</i></b> 📸✨
-- создавать <b><i>крутые треки</i></b> 🎵🔥
-- <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
-- делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
-
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-    `.trim();
+    const mainMenuMessage = MAIN_MENU_MESSAGE;
 
     const keyboard = Markup.inlineKeyboard(mainMenuKeyboard);
 
@@ -178,18 +149,19 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
     }
     
     const supportMessage = `
-💬 Поддержка
+💬 <b>Поддержка</b>
 
 По всем вопросам обращайтесь:
 https://t.me/obrabotych_support
     `.trim();
     
-    await ctx.editMessageText(
-      supportMessage,
-      Markup.inlineKeyboard([
-        [Markup.button.callback('Главное меню', 'main_menu')]
+    await ctx.editMessageText(supportMessage, {
+      parse_mode: 'HTML',
+      ...Markup.inlineKeyboard([
+        Markup.button.callback('Главное меню', 'main_menu')
       ])
-    );
+    });
+      
   });
 
   // Команды для меню
@@ -200,17 +172,7 @@ https://t.me/obrabotych_support
     const userState = userStates.get(userId);
     if (userState) userStates.delete(userId);
     
-    const mainMenuMessage = `
-Наш бот умеет:
-- <b><i>оживлять фото</i></b> 📸✨
-- создавать <b><i>крутые треки</i></b> 🎵🔥
-- <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
-- делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
-
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-    `.trim();
+    const mainMenuMessage = MAIN_MENU_MESSAGE;
 
     await ctx.reply(
       mainMenuMessage,
@@ -247,6 +209,23 @@ https://t.me/obrabotych_support
     );
   });
 
+  bot.command('help', async (ctx) => {
+    const supportMessage = `
+💬 <b>Поддержка</b>
+
+По всем вопросам обращайтесь:
+https://t.me/obrabotych_support
+    `.trim();
+    
+    await ctx.reply(supportMessage, {
+      parse_mode: 'HTML',
+      ...Markup.inlineKeyboard([
+        Markup.button.callback('Главное меню', 'main_menu')
+      ])
+    });
+      
+  });
+
   bot.command('stats_all', async (ctx) => {
     try {
       const userId = ctx.from?.id;
@@ -273,6 +252,8 @@ https://t.me/obrabotych_support
 🏞 Количество генераций реставрации: <b>${stats.all.restorationGenerations}</b>
 🎨 Количество генерации ЧБ: <b>${stats.all.colorizeGenerations}</b>
 🎅 Количество генераций Д.Мороза: <b>${stats.all.dmVideoGenerations}</b>
+🏞 Количество генераций открыток из текста: <b>${stats.all.postcardTextGenerations}</b>
+🏞 Количество генераций открыток из фото: <b>${stats.all.postcardPhotoGenerations}</b>
 
 
 <b>За последние 7 дней</b>
@@ -284,6 +265,8 @@ https://t.me/obrabotych_support
 🏞 Количество генераций реставрации: <b>${stats.last7Days.restorationGenerations}</b>
 🎨 Количество генерации ЧБ: <b>${stats.last7Days.colorizeGenerations}</b>
 🎅 Количество генераций Д.Мороза: <b>${stats.last7Days.dmVideoGenerations}</b>
+🏞 Количество генераций открыток из текста: <b>${stats.last7Days.postcardTextGenerations}</b>
+🏞 Количество генераций открыток из фото: <b>${stats.last7Days.postcardPhotoGenerations}</b>
 
 <b>За сегодня ${todayStr}</b>
 👥 Количество пользователей: <b>${stats.today.usersCount}</b>
@@ -294,6 +277,8 @@ https://t.me/obrabotych_support
 🏞 Количество генераций реставрации: <b>${stats.today.restorationGenerations}</b>
 🎨 Количество генерации ЧБ: <b>${stats.today.colorizeGenerations}</b>
 🎅 Количество генераций Д.Мороза: <b>${stats.today.dmVideoGenerations}</b>
+🏞 Количество генераций открыток из текста: <b>${stats.today.postcardTextGenerations}</b>
+🏞 Количество генераций открыток из фото: <b>${stats.today.postcardPhotoGenerations}</b>
       `.trim();
       
       await ctx.reply(statsMessage, { parse_mode: 'HTML' });
@@ -567,5 +552,55 @@ https://t.me/obrabotych_support
       console.error('Ошибка получения статистики источника:', error);
       await ctx.reply('❌ Ошибка при получении статистики');
     }
+  });
+
+  bot.command('lk', async (ctx) => {
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const balance = await Database.getUserBalance(userId);
+
+    const profileMessage = `
+🌟 <b>Ваш личный кабинет</b>
+
+Здесь собрано всё, что связано с вашим аккаунтом:
+
+📁 <b>Мои файлы</b>
+• Ваши сгенерированные файлы 🔥
+
+👉 <b>Финансы:</b>
+• Пополнить баланс 🔄
+
+📄 <b>Документы</b>
+• Политика конфиденциальности; согласие на ОПД; договор оферты ☝🏻
+
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽</blockquote>
+    `.trim();
+
+    await ctx.editMessageText(
+      profileMessage,
+      {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
+          [Markup.button.callback('Получить 100₽ 💰', 'create_refferal')],
+          [
+            Markup.button.callback('Мои реставрации', 'my_restorations'),
+            Markup.button.callback('Мои цветные фото', 'my_colorize')
+          ],
+          [
+            Markup.button.callback('Мои видео', 'my_photos'),
+            Markup.button.callback('Мои треки', 'my_tracks')
+          ],
+          [
+            Markup.button.callback('Мои фото Д.Мороза', 'my_dm_photos'),
+            Markup.button.callback('Мои видео Д.Мороза', 'my_dm_videos')
+          ],
+          [Markup.button.callback('Мои открытки', 'my_postcards')],
+          [Markup.button.callback('💳 Пополнить баланс', 'refill_balance_from_profile')],
+          [Markup.button.callback('Документы', 'documents')],
+          [Markup.button.callback('Главное меню', 'main_menu')]
+        ])
+      }
+    );
   });
 }

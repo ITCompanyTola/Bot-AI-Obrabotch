@@ -3,7 +3,7 @@ import { Buffer } from 'buffer';
 import { Markup } from 'telegraf';
 import { config } from '../config';
 import { Database, UserRefferalData } from '../database';
-import { mainMenuKeyboard, PRICES } from '../constants';
+import { MAIN_MENU_MESSAGE, mainMenuKeyboard, PRICES } from '../constants';
 import { UserState } from '../types';
 import { userStates } from '../bot';
 import { axiosRetry } from '../utils/axiosRetry';
@@ -155,14 +155,14 @@ export async function processPhotoRestoration(ctx: any, userId: number, photoFil
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
 
-    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
+    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3-х минут.');
     
     const restoratedPhotoUrl = await generatePhotoWithBanana(photoUrl.href, prompt);
 
     const photoResponse = await axios.get(restoratedPhotoUrl, { responseType: 'arraybuffer' });
     const photoBuffer = Buffer.from(photoResponse.data);
 
-    const caption = `✅ Ваше отреставрированное фото готово!`.trim()
+    const caption = `✅ <b>Ваше фото готово!</b>`.trim()
     const sentMessage = await ctx.telegram.sendPhoto(userId, { source: photoBuffer }, {
       caption: caption,
       parse_mode: 'HTML',
@@ -174,17 +174,7 @@ export async function processPhotoRestoration(ctx: any, userId: number, photoFil
     console.log(`✅ Отреставрированная фотография сгенерирована и сохранена для пользователя ${userId}`);
     console.log(`📁 File ID: ${fileId}`);
 
-    const mainMenuMessage = `
-Наш бот умеет:
-- <b><i>оживлять фото</i></b> 📸✨
-- создавать <b><i>крутые треки</i></b> 🎵🔥
-- <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
-- делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
-
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-    `.trim();
+    const mainMenuMessage = MAIN_MENU_MESSAGE;
 
     await ctx.telegram.sendMessage(
       userId,
@@ -247,7 +237,7 @@ export async function processDMPhotoCreation(ctx: any, userId: number, userState
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
 
-    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
+    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3-х минут.');
     
     const DMPhotoUrl = await generateDMPhotoWithBanana(photoUrl.href, prompt);
 
@@ -259,30 +249,30 @@ export async function processDMPhotoCreation(ctx: any, userId: number, userState
 
     if (userState.freeGenerations == undefined) return;
     let caption = `
-✅ <b>Ваше фото с Дедом Морозом готово!</b> ❄️✨
+✅ <b>Ваше фото с Дедом Морозом готово!</b>
 
-1️⃣ Если Дед Мороз <b><i>понравился</i></b> — нажмите кнопку <b><i>подтвердить</i></b> и перейдём к волшебному видео для вашего ребёнка ❤️
-2️⃣ Если Дед Мороз <b><i>не устроил</i></b> — смело жмите кнопку <b><i>повторить</i></b>
+1️⃣ Если Дед Мороз <b><i>понравился</i></b> — нажмите кнопку <b><i>«Подтвердить»</i></b> и перейдём к волшебному видео для вашего ребёнка ❤️
+2️⃣ Если Дед Мороз <b><i>не устроил</i></b> — смело жмите кнопку <b><i>«Повторить»</i></b>
 
 Помните, у вас ещё ${userState.freeGenerations} бесплатные попытки 🙌`.trim()
 
     if (userState.freeGenerations === 1) {
       caption = `
-✅ <b>Ваше фото с Дедом Морозом готово!</b> ❄️✨
+✅ <b>Ваше фото с Дедом Морозом готово!</b> 
 
 Посмотрите, как он получился на этот раз🎅
 
-1️⃣ Если Дед Мороз <b><i>понравился</i></b> — нажмите кнопку <b><i>подтвердить</i></b> и перейдём к волшебному видео для вашего ребёнка ❤️
-2️⃣ Если Дед Мороз <b><i>не устроил</i></b> — смело жмите кнопку <b><i>повторить</i></b>
+1️⃣ Если Дед Мороз <b><i>понравился</i></b> — нажмите кнопку <b><i>«Подтвердить»</i></b> и перейдём к волшебному видео для вашего ребёнка ❤️
+2️⃣ Если Дед Мороз <b><i>не устроил</i></b> — смело жмите кнопку <b><i>«Повторить»</i></b>
 
-У вас осталась ещё 1 бесплатная попытка — давайте сделаем идеальное фото вместе! 🙌✨`
+У вас осталась ещё 1 бесплатная попытка — давайте сделаем идеальное фото вместе! 🙌`
     } else if (userState.freeGenerations === 0) {
       caption = `
-✅ <b>Ваше фото с Дедом Морозом готово!</b> ❄️✨
+✅ <b>Ваше фото с Дедом Морозом готово!</b>
 
-Мы уверены, он волшебно получился на этот раз ❤️
+Мы уверены, он волшебно получился на этот раз🎅
 
-Теперь можно только перейти к созданию поздравления — нажмите кнопку <b><i>подтвердить</i></b> 🙌🏻`
+Теперь можно только перейти к созданию поздравления — нажмите кнопку <b><i>«Подтвердить»</i></b> 🙌`
 
       const sentMessage = await ctx.telegram.sendPhoto(userId, { source: photoBuffer }, {
         caption: caption,
@@ -309,7 +299,7 @@ export async function processDMPhotoCreation(ctx: any, userId: number, userState
       reply_markup: {
         inline_keyboard: [
           [{ text: 'Подтвердить', callback_data: 'confirm_dm' }],
-          [{ text: `Сгенерировать ${4 - userState.freeGenerations}/3`, callback_data: 'repeat_dm' }]
+          [{ text: `Повторить ${4 - userState.freeGenerations}/3`, callback_data: 'repeat_dm' }]
         ]
       }
     });
@@ -381,7 +371,7 @@ export async function processPostcardCreationWithBanana(ctx: any, userId: number
       throw new Error('Не удалось загрузить фото');
     };
     const photoBuffer = Buffer.from(photoResponse.data);
-    const caption = `✅ Ваша открытка готова!`.trim()
+    const caption = `✅ <b>Ваша открытка готова!</b>`.trim()
     const sentMessage = await ctx.telegram.sendPhoto(userId, { source: photoBuffer }, {
       caption: caption,
       parse_mode: 'HTML',
@@ -393,17 +383,7 @@ export async function processPostcardCreationWithBanana(ctx: any, userId: number
     console.log(`✅ Открытка из фото сгенерирована и сохранена для пользователя ${userId}`);
     console.log(`📁 File ID: ${fileId}`);
 
-    const mainMenuMessage = `
-Наш бот умеет:
-- <b><i>оживлять фото</i></b> 📸✨
-- создавать <b><i>крутые треки</i></b> 🎵🔥
-- <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
-- делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
-
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-    `.trim();
+    const mainMenuMessage = MAIN_MENU_MESSAGE;
 
     await ctx.telegram.sendMessage(
       userId,

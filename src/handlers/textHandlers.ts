@@ -34,25 +34,23 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       });
     
       const descriptionMessage = `
-🖼 <b>Опишите, как должна ожить фотография</b>
+📝 <b>Опишите, как должна ожить фотография</b>
 
 Укажите, что именно должно происходить с каждым человеком на фото: отдельно или все вместе.
 
 <b>Например:</b>
-- Улыбается в камеру без видимых зубов;
-- Показывает язык на камеру;
+- Улыбается на камеру без видимых зубов;
 - Машет рукой в камеру;
 - Нежно обнимает человека и целует его;
 …и любые другие подобные действия ✨
 
 ❗️<b>Важно:</b>
 
+- <b><i>Не пишите слишком длинный и сложный запрос</i></b>, это всего лишь оживление фотографии до 5 секунд, а не сложный видеоролик
+
 - <b><i>Не присылайте 18+ контент</i></b> и описания соответствующих действий. Такие запросы не обрабатываются, и оплата за генерацию возвращена не будет.
 
-- <b><i>Допустимо</i></b> присылать фото в купальнике или белье с нейтральным описанием вроде "Позирует на камеру" — мы не звери 😅
-
-- <b><i>Не пишите слишком длинный и сложный запрос</i></b>, это всего лишь оживление фотографии до 5 секунд, а не сложный видеоролик
-    `.trim();
+- <b><i>Допустимо</i></b> присылать фото в купальнике или белье с нейтральным описанием вроде "Позирует на камеру"`.trim();
 
       await ctx.reply(descriptionMessage, { parse_mode: 'HTML' });
     }
@@ -71,6 +69,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       const prompt = 'Convert a black-and-white photo to color and improve the quality and clarity of the photo';
 
       processPhotoColorize(ctx, userId, photo.file_id, prompt);
+
+      userStates.delete(userId);
     }
 
 
@@ -312,8 +312,9 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       regenPromptAttempts: Number(userState.regenPromptAttempts) - 1,
     });
 
-    const message = `✅ Ваше описание улучшено:\n${updatedPromptMessage}`
+    const message = `✅ <b>Ваше описание улучшено:</b>\n\n${updatedPromptMessage}`
     await ctx.reply(message, {
+      parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
           [{text: 'Оставить описание', callback_data: 'confirm_ai_prompt'}],
@@ -335,6 +336,10 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     if (userState?.step !== 'waiting_broadcast_video') return;
 
     broadcastVideoHandler(ctx, userId, userState);
+  });
+
+  bot.on('audio', (ctx) => {
+    console.log('Аудио получено', ctx.message.audio.file_id);
   });
 
   bot.action('regenerate_prompt', async (ctx) => {
@@ -369,8 +374,9 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       regenPromptAttempts: Number(userState.regenPromptAttempts) - 1
     })
     if (userState.regenPromptAttempts == 0) {
-      const message = `✅ Ваше описание улучшено:\n${updatedPromptMessage}`
+      const message = `✅ <b>Ваше описание улучшено:</b>\n\n${updatedPromptMessage}`
       await ctx.reply(message, {
+        parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
             [{text: 'Оставить описание', callback_data: 'confirm_ai_prompt'}],
@@ -380,8 +386,9 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       });
       return;
     }
-    const message = `✅ Ваше описание улучшено:\n${updatedPromptMessage}`
+    const message = `✅ <b>Ваше описание улучшено:</b>\n\n${updatedPromptMessage}`
     await ctx.reply(message, {
+      parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
           [{text: 'Оставить описание', callback_data: 'confirm_ai_prompt'}],
@@ -425,7 +432,7 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       return;
     }
     
-    await ctx.reply('⏳ Начинаю генерацию... Это займет около 3 минут.');
+    await ctx.reply('⏳ Начинаю генерацию... Это займет около 3-х минут.');
     
     if (userState.photoFileId == undefined || userState.prompt == undefined) return;
     processVideoGeneration(ctx, userId, userState.photoFileId, userState.prompt);
@@ -466,7 +473,7 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       return;
     }
     
-    await ctx.reply('⏳ Начинаю генерацию... Это займет около 3 минут.');
+    await ctx.reply('⏳ Начинаю генерацию... Это займет около 3-х минут.');
     
     if (userState.photoFileId == undefined || userState.generatedPrompt == undefined) return;
     processVideoGeneration(ctx, userId, userState.photoFileId, userState.generatedPrompt);

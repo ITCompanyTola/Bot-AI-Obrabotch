@@ -5,6 +5,8 @@ import { PRICES } from '../constants';
 import { config } from '../config';
 import { processMusicGeneration } from '../services/sunoService';
 
+const HERO_AUDIO: string = 'CQACAgIAAxkBAAIPwmlIJBSubI7uSmzn94lg1D430qvOAAJulQACEpFBSo4zCOrLRUdHNgQ';
+const INSTRUCTION: string = 'BAACAgIAAxkBAAIPwWlII3xUN6LKlyyfcQNQ9PwLU8EjAAJWlQACEpFBSpbKvETx12RjNgQ';
 export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('music_creation', async (ctx) => {
     try {
@@ -21,47 +23,40 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
     const balance = await Database.getUserBalance(userId);
     
     const musicCreationMessage = `
-🎵 <b>Наш бот умеет создавать невероятную музыку!</b>
+🎶 <b>Наш бот умеет создавать невероятную музыку!</b>
 
-Вот как написать свою песню:
+Вот как создать свою музыку:
 
 1️⃣ <b><i>Отправьте сообщение</i></b> с описанием того, какую музыку хотите получить.
-Укажите тему, жанр, стиль, язык вокала, инструменты — любые детали, которые важны именно вам 🎼✨
-2️⃣ <b><i>Подождите немного</i></b> — в течение примерно 2 минут бот создаст и отправит вам готовый трек 🎧⚡️
+Укажите тему, жанр, язык вокала, инструменты — любые детали, которые важны именно вам 🎼
+2️⃣ Выберите стиль музыки
+3️⃣ <b><i>Подождите немного</i></b> — примерно через 3 минуты бот создаст и отправит вам готовый трек 🎧
 
 <blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽
-🎵 Создать 1 трек = ${PRICES.MUSIC_CREATION}₽</blockquote>
+🎶 Создать 1 трек = ${PRICES.MUSIC_CREATION}₽</blockquote>
     `.trim();
 
-    // Проверяем, является ли сообщение текстовым
-    if (ctx.callbackQuery && 'message' in ctx.callbackQuery && ctx.callbackQuery.message) {
-      const message = ctx.callbackQuery.message;
-      if ('text' in message) {
-        // Если это текстовое сообщение - редактируем
-        await ctx.editMessageText(
-          musicCreationMessage,
-          {
-            parse_mode: 'HTML',
-            ...Markup.inlineKeyboard([
-              [Markup.button.callback('🎶 Начать творить', 'start_music_creation')],
-              [Markup.button.callback('Видео-инструкция', 'music_video_instruction')],
-              [Markup.button.callback('💳 Пополнить баланс', 'refill_balance_from_music')],
-              [Markup.button.callback('Главное меню', 'main_menu')]
-            ])
-          }
-        );
-      } else {
-        // Если это медиа (фото/видео) - отправляем новое
-        await ctx.telegram.sendMessage(userId, musicCreationMessage, {
-          parse_mode: 'HTML',
-          ...Markup.inlineKeyboard([
-            [Markup.button.callback('🎶 Начать творить', 'start_music_creation')],
-            [Markup.button.callback('Видео-инструкция', 'music_video_instruction')],
-            [Markup.button.callback('💳 Пополнить баланс', 'refill_balance_from_music')],
-            [Markup.button.callback('Главное меню', 'main_menu')]
-          ])
-        });
-      }
+    try {
+      await ctx.telegram.sendAudio(userId, HERO_AUDIO, {
+        caption: musicCreationMessage,
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
+          [Markup.button.callback('🎶 Начать творить', 'start_music_creation')],
+          [Markup.button.callback('Видео-инструкция', 'music_video_instruction')],
+          [Markup.button.callback('💳 Пополнить баланс', 'refill_balance_from_music')],
+          [Markup.button.callback('Главное меню', 'main_menu')]
+        ])
+      });
+    } catch (error: any) {
+      await ctx.telegram.sendMessage(userId, musicCreationMessage, {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
+          [Markup.button.callback('🎶 Начать творить', 'start_music_creation')],
+          [Markup.button.callback('Видео-инструкция', 'music_video_instruction')],
+          [Markup.button.callback('💳 Пополнить баланс', 'refill_balance_from_music')],
+          [Markup.button.callback('Главное меню', 'main_menu')]
+        ])
+      });
     }
   });
   bot.action('start_music_creation', async (ctx) => {
@@ -78,8 +73,8 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
       userStates.set(userId, { step: 'waiting_music_text' });
     }
     
-    await ctx.editMessageText(
-      'Отправьте ниже <b><i>1–2 предложения</i></b> о том, какую музыку хотите создать, или напишите полный текст для будущего трека 🎵',
+    await ctx.reply(
+      'Отправьте ниже <b><i>1–2 предложения</i></b> о том, какую музыку хотите создать, или напишите <b><i>полный текст</i></b> для будущего трека 🎶',
       {
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
@@ -100,12 +95,12 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
     
     const userId = ctx.from?.id;
     if (!userId) return;
-    
-    await ctx.telegram.sendVideo(
+    try {
+      await ctx.telegram.sendVideo(
       userId,
-      config.musicInstructionFileId,
+      INSTRUCTION,
       {
-        caption: '🎬 <b>Видео-инструкция по созданию музыки</b>\n\nСмотрите короткое видео, чтобы легко и быстро понять, как написать песню, выбрать стиль и получить готовый трек 🎵✨',
+        caption: '📹 <b>Видео-инструкция по созданию музыки</b>\n\nСмотрите короткое видео, чтобы правильно и качественно выполнять шаги и получать потрясающие результаты 🔥',
         parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
@@ -114,6 +109,17 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
         }
       }
     );
+    } catch (error: any) {
+      console.log('Ошибка при отправке видео:', error.message);
+      await ctx.reply('Ошибка при воспроизведении видео', {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Назад', callback_data: 'music_creation' }]
+          ]
+        }
+      });
+    }
+    
   });
 
   bot.action('music_style_pop', async (ctx) => {
@@ -161,7 +167,7 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
       return;
     }
     
-    await ctx.editMessageText('⏳ Начинаю генерацию музыки... Это займет около 2 минут.');
+    await ctx.editMessageText('⏳ Начинаю генерацию... Это займет около 3-х минут.');
     
     processMusicGeneration(ctx, userId, userState.musicText, userState.musicStyle);
     
@@ -213,7 +219,7 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
       return;
     }
     
-    await ctx.editMessageText('⏳ Начинаю генерацию музыки... Это займет около 2 минут.');
+    await ctx.editMessageText('⏳ Начинаю генерацию... Это займет около 3-х минут.');
     
     processMusicGeneration(ctx, userId, userState.musicText, userState.musicStyle);
     
@@ -265,7 +271,7 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
       return;
     }
     
-    await ctx.editMessageText('⏳ Начинаю генерацию музыки... Это займет около 2 минут.');
+    await ctx.editMessageText('⏳ Начинаю генерацию... Это займет около 3-х минут.');
     
     processMusicGeneration(ctx, userId, userState.musicText, userState.musicStyle);
     
@@ -317,7 +323,7 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
       return;
     }
     
-    await ctx.editMessageText('⏳ Начинаю генерацию музыки... Это займет около 2 минут.');
+    await ctx.editMessageText('⏳ Начинаю генерацию... Это займет около 3-х минут.');
     
     processMusicGeneration(ctx, userId, userState.musicText, userState.musicStyle);
     
@@ -369,7 +375,7 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
       return;
     }
     
-    await ctx.editMessageText('⏳ Начинаю генерацию музыки... Это займет около 2 минут.');
+    await ctx.editMessageText('⏳ Начинаю генерацию... Это займет около 3-х минут.');
     
     processMusicGeneration(ctx, userId, userState.musicText, userState.musicStyle);
     
@@ -385,7 +391,7 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
       }
     }
     
-    const styleMessage = `— Выберите <b><i>музыкальный стиль</i></b> из предложенных вариантов`;
+    const styleMessage = `Выберите <b><i>музыкальный стиль</i></b> из предложенных вариантов`;
     
     await ctx.editMessageText(
       styleMessage,

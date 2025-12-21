@@ -3,8 +3,8 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { PRICES } from '../constants';
 
-
-const EXAMPLE_PHOTO_COLORIZE: string = 'AgACAgIAAxkBAAIGhGlAIs00mw5gM4m18PZee-1LvrC6AALHDmsb7dQAAUrwAZeP0-rZ7wEAAwIAA3kAAzYE'; // Загрузить и вставить свое фото
+const HERO_VIDEO: string = 'BAACAgIAAxkBAAIPamlIFJbfZ__uvrfL7CA7-18QI8dtAALWkwACEpFBSiuovmDGt3f_NgQ';
+const EXAMPLE_PHOTO_COLORIZE: string = 'AgACAgIAAxkBAAIPQGlIDicpxf_wu1_GyXj96YmgqYUxAAKXDWsbEpFBSkiTSuTQBueKAQADAgADeAADNgQ'; // Загрузить и вставить свое фото
 const PHOTO_COLORIZE_INSTRUCTION: string = 'BAACAgIAAxkBAAIG9WlAR7LsLK9GLF8DLSP5bFnv3rNmAAIgkQAC7dQAAUrFgnywbWW2dzYE'; // Загрузить и вставить свое видео
 
 export function registerPhotoColorizeHandlers(bot: Telegraf<BotContext>, userState: Map<number, UserState>) {
@@ -27,26 +27,40 @@ export function registerPhotoColorizeHandlers(bot: Telegraf<BotContext>, userSta
 
 Вот как сгенерировать цветное фото:
 
-1️⃣ Нажмите ниже кнопку -\n<b>«🎨 Сделать цветным фото»</b>
+1️⃣ Нажмите кнопку\n<b>«🎨 Создать цветное фото»</b>
 2️⃣ <i><b>Отправьте одну ч/б фотографию* в бот</b></i>
-3️⃣ <i><b>Немного подождите</b></i> — примерно через 3 минуты бот отправит вам готовое фото 🏞⚡️
+3️⃣ <i><b>Немного подождите</b></i> — примерно через 3 минуты бот отправит вам готовое фото 🎨
 
 <blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽
 🎨 Генерация 1 цветного фото = ${PRICES.PHOTO_COLORIZE}₽</blockquote>
 
 ❗️* - <b>бот генерирует только одно цветное фото за раз</b>☝🏻`.trim();
-
-    await ctx.telegram.sendMessage(userId, photoColorizeMessage, {
+    try {
+      await ctx.telegram.sendVideo(userId, HERO_VIDEO, {
+        parse_mode: 'HTML',
+        caption: photoColorizeMessage,
+        reply_markup: {
+          inline_keyboard: [
+            [{text: '🎨 Создать цветное фото', callback_data: 'photo_colorize_start'}],
+            [{text: 'Видео-инструкция', callback_data: 'photo_colorize_instruction'}],
+            [{text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_colorize'}],
+            [{text: 'Главное меню', callback_data: 'main_menu'}],
+          ]
+        }
+      })
+    } catch (error: any) {
+      await ctx.telegram.sendMessage(userId, photoColorizeMessage, {
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
           [{text: '🎨 Сделать цветным фото', callback_data: 'photo_colorize_start'}],
-          [{text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_colorize'}],
           [{text: 'Видео-инструкция', callback_data: 'photo_colorize_instruction'}],
+          [{text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_colorize'}],
           [{text: 'Главное меню', callback_data: 'main_menu'}],
         ]
       }
     });
+    }
   });
 
   bot.action('photo_colorize_start', async (ctx) => {
@@ -67,12 +81,12 @@ export function registerPhotoColorizeHandlers(bot: Telegraf<BotContext>, userSta
       userState.set(userId, {step: 'waiting_for_colorize_photo'});
 
     const photoColorizeWaitingMessage = `
-<b>📸 Пример ⤴️</b>
+<b>Пример ⤴️</b>
 
-Отправьте <b><i>ч/б фотографию</i></b> — бот создаст ее цветную версию ✨🏞
+Отправьте <b><i>ч/б фотографию</i></b> — бот создаст ее цветную версию 🎨
     `.trim();
     const colorizeMessageWithoutExample = `
-Отправьте <b><i>ч/б фотографию</i></b>, — бот создаст ее цветную версию ✨🏞
+Отправьте <b><i>ч/б фотографию</i></b>, — бот создаст ее цветную версию 🎨
     `.trim();
 
     if (EXAMPLE_PHOTO_COLORIZE && EXAMPLE_PHOTO_COLORIZE.trim() !== '') {
@@ -143,10 +157,9 @@ export function registerPhotoColorizeHandlers(bot: Telegraf<BotContext>, userSta
     if (!userId) return;
 
     const photoRestorationInstructionMessage = `
-<b>🎬 Видео-инструкция по добавлению цвета на фото</b>
+<b>📹 Видео-инструкция по добавлению цвета на фото</b>
 
-Смотрите короткое видео, чтобы легко и быстро понять, как добавить цвета на свои фотографии и получать потрясающие результаты ✨📸
-`.trim();
+Смотрите короткое видео, чтобы правильно и качественно выполнять шаги и получать потрясающие результаты 🔥`.trim();
 
     const sendErrorMessage = async (): Promise<void> => {
       const instructionErrorMessage = 'Ошибка загрузки видео. Пожалуйста вернитесь назад.'

@@ -3,6 +3,8 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { getPostcardMessage, getPostcardPhotoMessage, POSCTARD_MESSAGE, POSTCARD_MESSAGE_START, POSTCARD_PHOTO_START, POSTCARD_PHOTO_START_WIHOUT, PRICES } from '../constants';
 
+const HERO_PHOTO_TEXT: string = 'AgACAgIAAxkBAAIO-2lH_48Sj_RjySBPyMGS5Ste4-lyAAL_DGsbEpFBSpvj1uqCoPF0AQADAgADeQADNgQ';
+const HERO_PHOTO_PHOTO: string = 'AgACAgIAAxkBAAIO_GlIAa8n1--2o1RjAAGW0U2VXKQWQAACBw1rGxKRQUpT9V3teeilWAEAAwIAA3kAAzYE';
 const EXAMPLE_POSTCARD_PHOTO_ID: string = 'AgACAgIAAxkBAAIN1mlGxi4ldMTCegkyiPLhy4z_bv3bAALcDWsbVow5Sh52Q0nqCqtkAQADAgADeAADNgQ'; // Загрузить и вставить свое фото
 const POSTCARD_INSTRUCTION: string = ''; // Загрузить и вставить свое видео
 
@@ -22,13 +24,12 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
     const balance = await Database.getUserBalance(userId);
 
     const postcardMessage = POSCTARD_MESSAGE;
-
     await ctx.telegram.sendMessage(userId, postcardMessage, {
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
-          [{text: 'Открытка по тексту ✍️', callback_data: 'postcard_text'}],
-          [{text: 'Открытка из фото 🖼️', callback_data: 'postcard_photo'}],
+          [{text: '💌 Открытка из текста', callback_data: 'postcard_text'}],
+          [{text: '🏞 Открытка из фото', callback_data: 'postcard_photo'}],
           [{text: 'Главное меню', callback_data: 'main_menu'}],
         ]
       }
@@ -51,17 +52,34 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
 
     const message = getPostcardMessage(balance);
 
-    await ctx.reply(message, {
+    try {
+      await ctx.replyWithPhoto(HERO_PHOTO_TEXT, {
+        parse_mode: 'HTML',
+        caption: message,
+        reply_markup: {
+          inline_keyboard: [
+            [{text: '💌 Создать открытку', callback_data: 'postcard_text_start'}],
+            [{text: 'Видео-инструкция', callback_data: 'postcard_text_instruction'}],
+            [{text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_postcard_text'}],
+            [{text: 'Назад', callback_data: 'postcard'}]
+          ]
+        }
+
+      })
+    } catch (error: any) {
+      console.log(error);
+      await ctx.reply(message, {
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
-          [{text: 'Создать открытку из текста ✍️', callback_data: 'postcard_text_start'}],
+          [{text: '💌 Открытка из текста ', callback_data: 'postcard_text_start'}],
           [{text: 'Видео-инструкция', callback_data: 'postcard_text_instruction'}],
           [{text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_postcard_text'}],
           [{text: 'Назад', callback_data: 'postcard'}]
         ]
       }
     })
+    }
   });
 
   bot.action('postcard_text_start', async (ctx) => {
@@ -127,17 +145,33 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
     const balance = await Database.getUserBalance(userId);
 
     const message = getPostcardPhotoMessage(balance);
-    await ctx.reply(message, {
+    
+    try {
+      await ctx.replyWithPhoto(HERO_PHOTO_PHOTO, {
+        parse_mode: 'HTML',
+        caption: message,
+        reply_markup: {
+          inline_keyboard: [
+            [{text: '🏞 Создать открытку', callback_data: 'postcard_photo_start'}],
+            [{text: 'Видео-инструкция', callback_data: 'postcard_photo_instruction'}],
+            [{text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_postcard_photo'}],
+            [{text: 'Назад', callback_data: 'postcard'}]
+          ]
+        }
+      })
+    } catch(error: any) {
+      await ctx.reply(message, {
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
-          [{text: 'Создать открытку из фото 🖼️', callback_data: 'postcard_photo_start'}],
+          [{text: '💌 Создать открытку  ', callback_data: 'postcard_photo_start'}],
           [{text: 'Видео-инструкция', callback_data: 'postcard_photo_instruction'}],
           [{text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_postcard_photo'}],
           [{text: 'Назад', callback_data: 'postcard'}]
         ]
       }
     });
+    }
   })
 
   bot.action('postcard_photo_start', async (ctx) => {

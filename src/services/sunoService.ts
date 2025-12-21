@@ -3,7 +3,7 @@ import { Buffer } from 'buffer';
 import { Markup } from 'telegraf';
 import { config } from '../config';
 import { Database } from '../database';
-import { mainMenuKeyboard, PRICES } from '../constants';
+import { MAIN_MENU_MESSAGE, mainMenuKeyboard, PRICES } from '../constants';
 
 const API_URL = 'https://api.kie.ai/api/v1';
 const API_KEY = config.sunoApiKey;
@@ -185,7 +185,8 @@ export async function processMusicGeneration(
     const audioBuffer = Buffer.from(audioResponse.data);
 
     const sentMessage = await ctx.telegram.sendAudio(userId, { source: audioBuffer }, {
-      caption: `✅ Ваш трек готов!\n\nСтиль: ${musicStyle}\nТема: ${musicText}`
+      caption: `✅ <b>Ваш трек готов!</b>\n\nСтиль: ${musicStyle}\nОписание:\n<pre><code>${musicText}</code></pre>`,
+      parse_mode: 'HTML'
     });
 
     await Database.saveGeneratedFile(userId, 'music', sentMessage.audio.file_id, musicText);
@@ -193,17 +194,7 @@ export async function processMusicGeneration(
     console.log(`✅ Трек сгенерирован и сохранен для пользователя ${userId}`);
     console.log(`📁 File ID: ${sentMessage.audio.file_id}`);
 
-    const mainMenuMessage = `
-Наш бот умеет:
-- <b><i>оживлять фото</i></b> 📸✨
-- создавать <b><i>крутые треки</i></b> 🎵🔥
-- <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
-- делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
-
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-    `.trim();
+    const mainMenuMessage = MAIN_MENU_MESSAGE;
 
     await ctx.telegram.sendMessage(
       userId,

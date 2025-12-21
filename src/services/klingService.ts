@@ -3,7 +3,7 @@ import { Buffer } from 'buffer';
 import { Markup } from 'telegraf';
 import { config } from '../config';
 import { Database } from '../database';
-import { mainMenuKeyboard, PRICES } from '../constants';
+import { DED_MOROZ_INSTRUCTION, MAIN_MENU_MESSAGE, mainMenuKeyboard, PRICES } from '../constants';
 import { axiosRetry } from '../utils/axiosRetry';
 
 const API_URL = 'https://api.kie.ai/api/v1/jobs';
@@ -159,8 +159,8 @@ export async function processVideoGeneration(ctx: any, userId: number, photoFile
     const videoBuffer = Buffer.from(videoResponse.data);
 
     const caption = (`
-          ✅ Ваше видео готово!\n\nОписание: ${prompt}\n\n` +
-          'Если вам нужна помощь в создании полноценного видео из оживленных фотографий с музыкой, ' +
+          ✅ <b>Ваше видео готово!</b>\n\nОписание: <pre><code>${prompt}</code></pre>\n\n` +
+          'Если вам нужна помощь в создании <b><i>полноценного видео из оживленных фотографий с музыкой,</i></b> ' +
           'вы можете обратиться в нашу службу технической поддержки — ' +
           '<a href="https://t.me/obrabotych_support">@obrabotych_support</a>').trim()
     const sentMessage = await ctx.telegram.sendVideo(userId, { source: videoBuffer }, {
@@ -173,17 +173,7 @@ export async function processVideoGeneration(ctx: any, userId: number, photoFile
     console.log(`✅ Видео сгенерировано и сохранено для пользователя ${userId}`);
     console.log(`📁 File ID: ${sentMessage.video.file_id}`);
 
-    const mainMenuMessage = `
-Наш бот умеет:
-- <b><i>оживлять фото</i></b> 📸✨
-- создавать <b><i>крутые треки</i></b> 🎵🔥
-- <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
-- делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
-
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-        `.trim();
+    const mainMenuMessage = MAIN_MENU_MESSAGE;
 
   await ctx.telegram.sendMessage(
   userId,

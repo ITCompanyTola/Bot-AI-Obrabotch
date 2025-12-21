@@ -1,5 +1,5 @@
 import { Database } from "../database";
-import { mainMenuKeyboard, POSTCARD_GENERATION_PROMPT, PRICES } from "../constants";
+import { MAIN_MENU_MESSAGE, mainMenuKeyboard, POSTCARD_GENERATION_PROMPT, PRICES } from "../constants";
 import axios from "axios";
 import { Markup } from "telegraf";
 import { connect } from "http2";
@@ -36,7 +36,7 @@ export async function generatePostcard(ctx: any, userId: number, prompt: string,
     }
     }
 
-    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
+    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3-х минут.');
     
     const imageUrl = photoFileId ? await ctx.telegram.getFileLink(photoFileId) : null;
     const messages: any[] = [];
@@ -96,7 +96,7 @@ export async function generatePostcard(ctx: any, userId: number, prompt: string,
         userId,
         { source: buffer },
         {
-          caption: "✅ Ваша открытка готова!",
+          caption: "✅ <b>Ваша открытка готова!</b>",
           parse_mode: "HTML",
         }
       );
@@ -112,7 +112,7 @@ export async function generatePostcard(ctx: any, userId: number, prompt: string,
         userId,
         imageUrlFromModel,
         {
-          caption: "✅ Ваша открытка готова!",
+          caption: "✅ <b>Ваша открытка готова!</b>",
           parse_mode: "HTML",
         }
       );
@@ -125,17 +125,7 @@ export async function generatePostcard(ctx: any, userId: number, prompt: string,
       }
     }
 
-    const mainMenuMessage = `
-    Наш бот умеет:
-    - <b><i>оживлять фото</i></b> 📸✨
-    - создавать <b><i>крутые треки</i></b> 🎵🔥
-    - <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-    - переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
-    - делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
-    
-    Вы можете творить сами или доверить работу нам 🤝
-    В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-        `.trim();
+    const mainMenuMessage = MAIN_MENU_MESSAGE;
     
         await ctx.telegram.sendMessage(
           userId,

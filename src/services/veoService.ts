@@ -3,7 +3,7 @@ import { Buffer } from 'buffer';
 import { Markup } from 'telegraf';
 import { config } from '../config';
 import { Database } from '../database';
-import { mainMenuKeyboard, PRICES } from '../constants';
+import { MAIN_MENU_MESSAGE, mainMenuKeyboard, PRICES } from '../constants';
 import { userStates } from '../bot';
 import { axiosRetry } from '../utils/axiosRetry';
 
@@ -150,7 +150,7 @@ export async function processVideoDMGeneration(ctx: any, userId: number, photoFi
 
     console.log(`⏳ Начинается генерация видео для пользователя ${userId}...`);
 
-    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
+    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3-х минут.');
 
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
@@ -165,8 +165,8 @@ export async function processVideoDMGeneration(ctx: any, userId: number, photoFi
     }
     const videoBuffer = Buffer.from(videoResponse.data);
 
-    const caption = `✅ Ваше видео готово!\n\nОписание: ${prompt}`.trim()
-    const message = caption + `\n\nЕсли вам нужна помощь в создании полноценного новогоднего поздравления от Деда Мороза, вы можете обратиться в нашу службу технической поддержки — <a href="https://t.me/obrabotych_support">@obrabotych_support</a>`
+    const caption = `✅ <b>Ваше поздравление готово!</b>\n\nОписание:\n<pre><code>${prompt}</code></pre>`.trim()
+    const message = caption + `\n\nЕсли вам нужна помощь в создании <b><i>полноценного новогоднего поздравления от Деда Мороза</i></b>, вы можете обратиться в нашу службу технической поддержки — <a href="https://t.me/obrabotych_support">@obrabotych_support</a>`
     const sentMessage = await ctx.telegram.sendVideo(userId, { source: videoBuffer }, {
       caption: message,
       parse_mode: 'HTML',
@@ -180,17 +180,7 @@ export async function processVideoDMGeneration(ctx: any, userId: number, photoFi
 
     userStates.delete(userId);
 
-    const mainMenuMessage = `
-Наш бот умеет:
-- <b><i>оживлять фото</i></b> 📸✨
-- создавать <b><i>крутые треки</i></b> 🎵🔥
-- <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
-- делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
-
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-        `.trim();
+    const mainMenuMessage = MAIN_MENU_MESSAGE;
 
   await ctx.telegram.sendMessage(
   userId,

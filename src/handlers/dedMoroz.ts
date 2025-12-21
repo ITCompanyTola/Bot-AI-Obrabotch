@@ -4,9 +4,9 @@ import { Database } from '../database';
 import { DED_MOROZ_INSTRUCTION, dedMorozStartMessage, dedMorozStartMessageWithoutPhoto, getDedMorozMessage, PRICES } from '../constants';
 import { processDMPhotoCreation } from '../services/nanoBananaService';
 
-const PHOTO_GENERATION_EXAMPLE_ID: string = 'AgACAgIAAxkBAAIH0mlBg6y50IezM_kY_My77ebA96oMAAI9Emsb7dQISjIqf-2iAAHmGgEAAwIAA3kAAzYE';
+const PHOTO_GENERATION_EXAMPLE_ID: string = 'AgACAgIAAxkBAAIO-GlH_ovwet1GrvPaZ-_H9QM_64nKAALyDGsbEpFBSnvWGssMYeE8AQADAgADeQADNgQ';
 const VIDEO_EXAMPLE_ID: string = 'BAACAgIAAxkDAAIIAmlBjEHGqE6ISIeXUTxsODb5MlSBAALIlwACPZUQSqqFRol_8fhoNgQ';
-const VIDEO_INSTRUCTION_ID: string = 'BAACAgIAAxkBAAII5GlCrrE10M9OA4c_g16cPWvWJM5rAALYjAACzBkZSiWoTfr9I-2PNgQ';
+const VIDEO_INSTRUCTION_ID: string = 'BAACAgIAAxkBAAIPSGlIEKCnd0_ZsMtxc77zlyE9ma1qAAKUkwACEpFBSu_qcsBr3JfQNgQ';
 
 export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('ded_moroz', async (ctx) => {
@@ -181,10 +181,10 @@ export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<nu
     if (!userState || !userState.photoFileId) return;
 
     const message = `
-🖼 <b>Опишите, какое поздравление должно быть от Деда Мороза по нашему примеру</b>
+📝 <b>Опишите, какое поздравление должно быть от Деда Мороза по нашему примеру</b>
 
 Пример описания для поздравления:
-<pre><code>Привет, 'Имя ребенка'!\nПоздравляю тебя С Новым годом!\nПусть сбудутся все мечты, а чудеса и радость всегда будут рядом</code></pre>
+<pre><code>Привет,'Имя ребенка'!\nПоздравляю тебя С Новым годом!\nПусть сбудутся все мечты, а чудеса и радость всегда будут рядом</code></pre>
 
 ❗️<b>Важно:</b>
 

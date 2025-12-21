@@ -3,7 +3,7 @@ import { Buffer } from 'buffer';
 import { Markup } from 'telegraf';
 import { config } from '../config';
 import { Database } from '../database';
-import { mainMenuKeyboard, PRICES } from '../constants';
+import { MAIN_MENU_MESSAGE, mainMenuKeyboard, PRICES } from '../constants';
 import { axiosRetry } from '../utils/axiosRetry';
 
 const API_URL = 'https://api.kie.ai/api/v1/jobs';
@@ -152,7 +152,7 @@ export async function processPhotoColorize(ctx: any, userId: number, photoFileId
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
 
-    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
+    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3-х минут.');
     
     const colorizedPhotoUrl = await generatePhotoWithBanana(photoUrl.href, prompt);
 
@@ -162,7 +162,7 @@ export async function processPhotoColorize(ctx: any, userId: number, photoFileId
     }
     const photoBuffer = Buffer.from(photoResponse.data);
 
-    const caption = `✅ Ваше фото готово!`.trim()
+    const caption = `✅ <b>Ваше фото готово!</b>`.trim()
     const sentMessage = await ctx.telegram.sendPhoto(userId, { source: photoBuffer }, {
       caption: caption,
       parse_mode: 'HTML',
@@ -174,17 +174,7 @@ export async function processPhotoColorize(ctx: any, userId: number, photoFileId
     console.log(`✅ Окрашенная фотография сгенерирована и сохранена для пользователя ${userId}`);
     console.log(`📁 File ID: ${fileId}`);
 
-    const mainMenuMessage = `
-Наш бот умеет:
-- <b><i>оживлять фото</i></b> 📸✨
-- создавать <b><i>крутые треки</i></b> 🎵🔥
-- <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
-- делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
-
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-    `.trim();
+    const mainMenuMessage =MAIN_MENU_MESSAGE;
 
   await ctx.telegram.sendMessage(
   userId,
@@ -248,7 +238,7 @@ export async function processPostcardCreationWithBananaPro(ctx: any, userId: num
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
 
-    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
+    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3-х минут.');
     
     const colorizedPhotoUrl = await generatePostcardWithBananaPro(photoUrl.href, prompt);
 
@@ -258,7 +248,7 @@ export async function processPostcardCreationWithBananaPro(ctx: any, userId: num
     }
     const photoBuffer = Buffer.from(photoResponse.data);
 
-    const caption = `Ваша открытка готова ✅`.trim()
+    const caption = `✅ <b>Ваша открытка готова!</b>`.trim()
     const sentMessage = await ctx.telegram.sendPhoto(userId, { source: photoBuffer }, {
       caption: caption,
       parse_mode: 'HTML',
@@ -270,17 +260,7 @@ export async function processPostcardCreationWithBananaPro(ctx: any, userId: num
     console.log(`✅ Открытка из фото сгенерирована и сохранена для пользователя ${userId}`);
     console.log(`📁 File ID: ${fileId}`);
 
-    const mainMenuMessage = `
-Наш бот умеет:
-- <b><i>оживлять фото</i></b> 📸✨
-- создавать <b><i>крутые треки</i></b> 🎵🔥
-- <b><i>реставрировать</i></b> ваши старые <b><i>фотографии</i></b> 🏞
-- переводить ваши ч/б фото в <b><i>цветные</i></b> 🎨
-- делать волшебные <b><i>поздравления от Деда Мороза</i></b> 🎅🏠
-
-Вы можете творить сами или доверить работу нам 🤝
-В каждом разделе вас ждут простые и понятные инструкции 📘, чтобы ваш контент получился на ура!
-    `.trim();
+    const mainMenuMessage = MAIN_MENU_MESSAGE;
 
   await ctx.telegram.sendMessage(
   userId,

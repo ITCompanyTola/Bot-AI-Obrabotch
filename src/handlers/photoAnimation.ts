@@ -3,10 +3,11 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
-import { config } from '../config';
 
-const VIDEO_FILE_ID = config.videoFileId;
-const PHOTO_FILE_ID = config.photoFileId;
+const VIDEO_FILE_ID = 'BAACAgIAAxkBAAIPqGlIIFGblsoG_oWvPscoO4U0FldzAALvlAACEpFBSlyEQXJtTeZvNgQ';
+const PHOTO_FILE_ID = 'AgACAgIAAxkBAAIPp2lIICkqwYRMuchlxyGRlbrBzZ33AAKDDmsbEpFBSrrsB54jZTQOAQADAgADeQADNgQ';
+const ORDER_VIDEO_FILE_ID = 'BAACAgIAAxkBAAIPpmlIH3a-wDb0OvP5qhiKh-FecUFZAALSlAACEpFBSv9pTkoq47aaNgQ';
+const INTRUCTION_FILE_ID = 'BAACAgIAAxkBAAIPqWlIIMAkR1a24f-R-sHCfT4fa8BEAAL-lAACEpFBSrgX_8q_eilZNgQ';
 
 export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('photo_animation', async (ctx) => {
@@ -28,18 +29,18 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
 
 Вот как создать своё анимированное фото:
 
-1️⃣ Нажмите ниже кнопку - \n<b>«📸Оживить фото»</b>
+1️⃣ Нажмите кнопку\n<b>«📸Оживить фото»</b>
 2️⃣ <i><b>Отправьте одну фотографию* в бот.</b></i>
-3️⃣ <b><i>Опишите</i></b>, что именно должно произойти на изображении — движение, эмоции, детали, любые пожелания ✨
-4️⃣ <b><i>Немного подождите</i></b> — примерно через 3 минуты бот отправит вам готовое видео 🎬⚡️
+3️⃣ <b><i>Опишите</i></b>, что именно должно произойти на изображении — движение, эмоции, детали
+4️⃣ <b><i>Немного подождите</i></b> — примерно через 3 минуты бот отправит вам готовое видео 🎬
 
 🎁 <b>Хотите видео "под ключ"?</b>
 Нажмите кнопку <b><i>«Заказать видео под ключ»</i></b>, и мы создадим его полностью для вас!
 
-❗️* - <b>бот оживляет только одно фото за раз</b>☝🏻
-
 <blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽
-📹 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION}₽</blockquote>
+📸 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION}₽</blockquote>
+
+❗️* - <b>бот оживляет только одно фото за раз</b>☝🏻
     `.trim();
     
     // Проверяем, есть ли VIDEO_FILE_ID
@@ -109,7 +110,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
     if (PHOTO_FILE_ID && PHOTO_FILE_ID.trim() !== '') {
       try {
         await ctx.telegram.sendPhoto(userId, PHOTO_FILE_ID, {
-          caption: '📸 <b>Пример</b> ⤴️\n\nОтправьте <b><i>фотографию</i></b>, которую хотите оживить, и бот превратит её в волшебное видео ✨🎬',
+          caption: '<b>Пример</b> ⤴️\n\nОтправьте <b><i>фотографию</i></b>, которую хотите оживить, и бот превратит её в волшебное видео 🎬',
           parse_mode: 'HTML',
           reply_markup: {
             inline_keyboard: [
@@ -120,7 +121,8 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
       } catch (error) {
         console.error('Ошибка отправки фото:', error);
         // Если не удалось отправить фото, отправляем просто текст
-        await ctx.telegram.sendMessage(userId, '📸 Отправьте фотографию, которую хотите оживить, и бот превратит её в волшебное видео ✨🎬', {
+        await ctx.telegram.sendMessage(userId, '📸 Отправьте <b><i>фотографию</i></b>, которую хотите оживить, и бот превратит её в волшебное видео 🎬', {
+          parse_mode: 'HTML',
           reply_markup: {
             inline_keyboard: [
               [{ text: 'Назад', callback_data: 'photo_animation' }]
@@ -130,7 +132,8 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
       }
     } else {
       // Если PHOTO_FILE_ID не указан, просто отправляем текст
-      await ctx.telegram.sendMessage(userId, '📸 Отправьте фотографию, которую хотите оживить, и бот превратит её в волшебное видео ✨🎬', {
+      await ctx.telegram.sendMessage(userId, '📸 Отправьте <b><i>фотографию</i></b>, которую хотите оживить, и бот превратит её в волшебное видео 🎬', {
+        parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
             [{ text: 'Назад', callback_data: 'photo_animation' }]
@@ -151,12 +154,12 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
     
     const userId = ctx.from?.id;
     if (!userId) return;
-    
-    await ctx.telegram.sendVideo(
+    try {
+      await ctx.telegram.sendVideo(
       userId,
-      config.videoInstructionFileId,
+      INTRUCTION_FILE_ID,
       {
-        caption: '🎬 <b>Видео-инструкция по генерации фото</b>\n\nСмотрите короткое видео, чтобы легко и быстро понять, как оживлять свои фотографии и получать потрясающие результаты ✨📸',
+        caption: '📹 <b>Видео-инструкция по оживлению фото</b>\n\nСмотрите короткое видео, чтобы правильно и качественно выполнять шаги и получать потрясающие результаты 🔥',
         parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
@@ -165,6 +168,16 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
         }
       }
     );
+    } catch (error) {
+      await ctx.reply('Ошибка воспроизведения видео!', {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Назад', callback_data: 'photo_animation' }]
+          ]
+        }
+      })
+    }
+    
   });
 
   bot.action('order_video', async (ctx) => {
@@ -180,28 +193,38 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
   if (!userId) return;
   
   const orderVideoMessage = `
-😍 Каждая семья — это история, которую стоит сохранить
+😍 <b>Каждая семья — это история, которую стоит сохранить</b>
 
 Выполнили заказ для Светланы,  сделали настоящее чудо — вдохнули жизнь в старые фото и записали песню о семье 💞
 
 Теперь это не просто кадры, а целая история в музыке и образах.
 
-💌 Хочешь сохранить свои воспоминания так же красиво? Пиши @obrabotych_support
+💌 <b><i>Хотите сохранить свои воспоминания так же красиво?</i></b> Вы можете написать в нашу службу технической поддрежки — <a href="https://t.me/obrabotych_support">@obrabotych_support</a>
   `.trim();
-
-  await ctx.telegram.sendVideo(
+  try {
+    await ctx.telegram.sendVideo(
     userId,
-    config.orderVideoFileId,
+    ORDER_VIDEO_FILE_ID,
     {
       caption: orderVideoMessage,
+      parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
           [{ text: 'Главное меню', callback_data: 'main_menu' }]
         ]
       }
     }
-  );
-});
+  );  
+  } catch (error) {
+    await ctx.reply("Ошибка воспроизведения видео", {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: 'Назад', callback_data: 'photo_animation' }]
+        ]
+      }
+    });
+  }
+  });
 
   bot.action('order_video_gift', async (ctx) => {
     try {
@@ -281,7 +304,7 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
       return;
     }
     
-    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3 минут.');
+    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3-х минут.');
     
     processVideoGeneration(ctx, userId, photoFileId, prompt);
     

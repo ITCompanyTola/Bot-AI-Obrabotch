@@ -137,6 +137,9 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: 
     
     const userId = ctx.from?.id;
     if (!userId) return;
+
+    const userState = userStates.get(userId);
+    if (userState) userStates.delete(userId);
     
     const mainMenuMessage = `
 Наш бот умеет:
@@ -193,6 +196,9 @@ https://t.me/obrabotych_support
   bot.command('menu', async (ctx) => {
     const userId = ctx.from?.id;
     if (!userId) return;
+
+    const userState = userStates.get(userId);
+    if (userState) userStates.delete(userId);
     
     const mainMenuMessage = `
 Наш бот умеет:
@@ -492,7 +498,8 @@ https://t.me/obrabotych_support
 Реставрация: <code>photo_restoration</code>
 ЧБ: <code>photo_colorize</code>
 Дед мороз: <code>ded_moroz</code>
-Открытки: <code>postcard</code>`.trim()
+Открытки: <code>postcard</code>
+Пополнить баланс: <code>refill_balance_from_profile</code>`.trim()
 
     await ctx.reply(helpMessage, { parse_mode: 'HTML' });
   });

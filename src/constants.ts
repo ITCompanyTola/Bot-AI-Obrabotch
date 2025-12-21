@@ -128,6 +128,8 @@ export const POSTCARD_PHOTO_START = `
 
 Отправьте <b><i>фотографию</i></b> — и она станет готовой открыткой ✨`.trim()
 
+export const POSTCARD_PHOTO_START_WIHOUT = `Отправьте <b><i>фотографию</i></b> — и она станет готовой открыткой ✨`.trim()
+
 export const POSTCARD_PHOTO_PROMPT = `
 Create a vintage Soviet New Year postcard illustration
 based strictly on the uploaded photo.

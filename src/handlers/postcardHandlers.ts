@@ -1,7 +1,7 @@
 import { Telegraf } from 'telegraf';
 import { BotContext, UserState } from '../types';
 import { Database } from '../database';
-import { getPostcardMessage, getPostcardPhotoMessage, POSCTARD_MESSAGE, POSTCARD_MESSAGE_START, POSTCARD_PHOTO_START, PRICES } from '../constants';
+import { getPostcardMessage, getPostcardPhotoMessage, POSCTARD_MESSAGE, POSTCARD_MESSAGE_START, POSTCARD_PHOTO_START, POSTCARD_PHOTO_START_WIHOUT, PRICES } from '../constants';
 
 const EXAMPLE_POSTCARD_PHOTO_ID: string = 'AgACAgIAAxkBAAIN1mlGxi4ldMTCegkyiPLhy4z_bv3bAALcDWsbVow5Sh52Q0nqCqtkAQADAgADeAADNgQ'; // Загрузить и вставить свое фото
 const POSTCARD_INSTRUCTION: string = ''; // Загрузить и вставить свое видео
@@ -170,7 +170,8 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
           }
         });
         } catch (error: any) {
-          await ctx.reply(message, {
+          const messageWitoutExample = POSTCARD_PHOTO_START_WIHOUT;
+          await ctx.reply(messageWitoutExample, {
             parse_mode: 'HTML',
             reply_markup: {
               inline_keyboard: [

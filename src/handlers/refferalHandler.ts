@@ -39,7 +39,7 @@ export function registerRefferal(bot: Telegraf<BotContext>, userStates: Map<numb
     const isRefferalCreated = await Database.isRefferalCreated(userId);
 
     if (isRefferalCreated) {
-      const refferalLink = `https://t.me/Photograffunbot?start=${await Database.getRefferalLink(userId)}`.trim();
+      const refferalLink = `https://t.me/Obrabotych_bot?start=${await Database.getRefferalLink(userId)}`.trim();
       const qrBuffer = await createQRBuffer(refferalLink);
       if (qrBuffer === null) {
         await ctx.reply('Произошла ошибка при создании QR-кода', {
@@ -71,7 +71,7 @@ ${refferalLink}
 
 
       const refferalKey = uuidv4();
-      const refferalLink = `https://t.me/Photograffunbot?start=${refferalKey}`;
+      const refferalLink = `https://t.me/Obrabotych_bot?start=${refferalKey}`;
       const qrBuffer = await createQRBuffer(refferalLink);
       if (qrBuffer === null) {
         await ctx.reply('Произошла ошибка при создании QR-кода', {

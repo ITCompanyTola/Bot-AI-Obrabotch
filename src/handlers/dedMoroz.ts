@@ -26,7 +26,8 @@ export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<nu
     const dedMorozMessage = getDedMorozMessage(balance);
     
     if (VIDEO_EXAMPLE_ID && VIDEO_EXAMPLE_ID.length > 0) {
-      await ctx.telegram.sendVideo(userId, VIDEO_EXAMPLE_ID, {
+      try {
+        await ctx.telegram.sendVideo(userId, VIDEO_EXAMPLE_ID, {
         caption: dedMorozMessage,
         parse_mode: 'HTML',
         reply_markup: {
@@ -38,6 +39,20 @@ export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<nu
           ]
         }
       });
+      } catch (error: any) {
+        console.log(error);
+        await ctx.telegram.sendMessage(userId, dedMorozMessage, {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🎅 Поздравление Д.Мороза', callback_data: 'ded_moroz_start' }],
+            [{ text: 'Видео-инструкция', callback_data: 'ded_moroz_instruction' }],
+            [{ text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_dm' }],
+            [{ text: 'Главное меню', callback_data: 'main_menu' }]
+          ]
+        }
+      });
+      }
       return;
     }
     await ctx.telegram.sendMessage(userId, dedMorozMessage, {
@@ -75,7 +90,8 @@ export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<nu
         freeGenerations: 2
       });
       if (PHOTO_GENERATION_EXAMPLE_ID && PHOTO_GENERATION_EXAMPLE_ID.length > 0) {
-        await ctx.telegram.sendPhoto(userId, PHOTO_GENERATION_EXAMPLE_ID, {
+        try{ 
+          await ctx.telegram.sendPhoto(userId, PHOTO_GENERATION_EXAMPLE_ID, {
           caption: message,
           parse_mode: 'HTML',
           reply_markup: {
@@ -84,6 +100,19 @@ export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<nu
             ]
           }
         });
+        } catch (error: any) {
+          console.log(error);
+          const message = dedMorozStartMessageWithoutPhoto;
+          await ctx.telegram.sendMessage(userId, message, {
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: 'Назад', callback_data: 'ded_moroz' }]
+            ]
+          }
+        });
+        }
+        
       } else {
         const message = dedMorozStartMessageWithoutPhoto
         await ctx.telegram.sendMessage(userId, message, {
@@ -185,7 +214,8 @@ export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<nu
     const message = DED_MOROZ_INSTRUCTION;
     
     if (VIDEO_INSTRUCTION_ID && VIDEO_INSTRUCTION_ID.length > 0) {
-      await ctx.telegram.sendVideo(userId, VIDEO_INSTRUCTION_ID, {
+      try {
+        await ctx.telegram.sendVideo(userId, VIDEO_INSTRUCTION_ID, {
         caption: message,
         parse_mode: 'HTML',
         reply_markup: {
@@ -194,6 +224,18 @@ export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<nu
           ]
         }
       });
+      } catch (error: any) {
+        console.log(error);
+        await ctx.telegram.sendMessage(userId, message, {
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: 'Назад', callback_data: 'ded_moroz' }]
+            ]
+          }
+        });
+      }
+      return;
     } else {
       await ctx.telegram.sendMessage(userId,'Ошибка загрузки видео!', {
         parse_mode: 'HTML',

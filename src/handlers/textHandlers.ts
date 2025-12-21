@@ -293,8 +293,14 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     if (!userState.photoFileId || !prompt) return;
     const photoUrl = await ctx.telegram.getFileLink(userState.photoFileId);
     const photoUrlString = photoUrl.href;
-
-    const updatedPromptMessage = await updatePrompt(prompt, photoUrlString);
+    let updatedPromptMessage;
+    try {
+      updatedPromptMessage = await updatePrompt(prompt, photoUrlString);
+    } catch (error) {
+      await ctx.reply('❌ Произошла ошибка в генерации описания. Попробуйте снова позднее.');
+      return;
+    }
+    
     if (userState.regenPromptAttempts == undefined) {
       await ctx.reply('❌ Произошла ошибка. Попробуйте снова.');
       return;
@@ -345,7 +351,13 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     if (!userState.photoFileId) return;
     const photoUrl = await ctx.telegram.getFileLink(userState.photoFileId);
     const photoUrlString = photoUrl.href;
-    const updatedPromptMessage = await updatePrompt(userState.prompt, photoUrlString);
+    let updatedPromptMessage;
+    try {
+      updatedPromptMessage = await updatePrompt(userState.prompt, photoUrlString);
+    } catch (error) {
+      await ctx.reply('❌ Произошла ошибка в генерации описания. Попробуйте снова позднее.');
+      return;
+    }
     if (userState.regenPromptAttempts == undefined) {
       await ctx.reply('❌ Произошла ошибка. Попробуйте снова.');
       return;

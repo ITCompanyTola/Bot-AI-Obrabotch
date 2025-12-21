@@ -159,7 +159,8 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
         step: 'waiting_postcard_photo',
       });
       if (EXAMPLE_POSTCARD_PHOTO_ID && EXAMPLE_POSTCARD_PHOTO_ID.length > 0) {
-        await ctx.replyWithPhoto(EXAMPLE_POSTCARD_PHOTO_ID, {
+        try {
+          await ctx.replyWithPhoto(EXAMPLE_POSTCARD_PHOTO_ID, {
           caption: message,
           parse_mode: 'HTML',
           reply_markup: {
@@ -168,6 +169,16 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
             ]
           }
         });
+        } catch (error: any) {
+          await ctx.reply(message, {
+            parse_mode: 'HTML',
+            reply_markup: {
+              inline_keyboard: [
+                [{text: 'Назад', callback_data: 'postcard_photo'}]
+              ]
+            }
+          });
+        }
         return;
       }
       await ctx.reply(message, {

@@ -413,8 +413,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     
     if (!hasBalance) {
       const paymentMessage = `
-<blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽
-📹 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION}₽ / $1</blockquote>
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+📹 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION.toFixed(2)}₽ / $1</blockquote>
 
 Выберете способ оплаты ⤵️
       `.trim();
@@ -454,8 +454,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     
     if (!hasBalance) {
       const paymentMessage = `
-<blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽
-📹 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION}₽ / $1</blockquote>
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+📹 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION.toFixed(2)}₽ / $1</blockquote>
 
 Выберете способ оплаты ⤵️
       `.trim();

@@ -113,8 +113,8 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
       const balance = await Database.getUserBalance(userId);
 
     const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)} ₽
-📸 Создание 1 Открытки = ${PRICES.POSTCARD_TEXT}₽
+💰 Ваш баланс: ${balance.toFixed(2)}₽
+💌 Генерация 1 Открытки = ${PRICES.POSTCARD_TEXT.toFixed(2)}₽
     
 Выберете способ оплаты ⤵️`.trim();
     
@@ -228,8 +228,8 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
       const balance = await Database.getUserBalance(userId);
 
     const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)} ₽
-📸 Создание 1 Открытки = ${PRICES.POSTCARD_PHOTO}₽
+💰 Ваш баланс: ${balance.toFixed(2)}₽
+🏞 Создание 1 Открытки = ${PRICES.POSTCARD_PHOTO.toFixed(2)}₽
     
 Выберете способ оплаты ⤵️`.trim();
     

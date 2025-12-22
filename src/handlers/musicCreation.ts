@@ -31,8 +31,8 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
 2️⃣ Выберите стиль музыки
 3️⃣ <b><i>Подождите немного</i></b> — примерно через 3 минуты бот создаст и отправит вам готовый трек 🎧
 
-<blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽
-🎶 Создать 1 трек = ${PRICES.MUSIC_CREATION}₽</blockquote>
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+🎶 Создать 1 трек = ${PRICES.MUSIC_CREATION.toFixed(2)}₽</blockquote>
     `.trim();
 
     try {
@@ -150,8 +150,8 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
     
     if (!hasBalance) {
       const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)} ₽
-🎵 Создание 1 трека = ${PRICES.MUSIC_CREATION}₽
+💰 Ваш баланс: ${balance.toFixed(2)}₽
+🎵 Создание 1 трека = ${PRICES.MUSIC_CREATION.toFixed(2)}₽
 
 Выберете способ оплаты ⤵️
     `.trim();
@@ -202,8 +202,8 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
     
     if (!hasBalance) {
       const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)} ₽
-🎵 Создание 1 трека = ${PRICES.MUSIC_CREATION}₽
+💰 Ваш баланс: ${balance.toFixed(2)}₽
+🎵 Создание 1 трека = ${PRICES.MUSIC_CREATION.toFixed(2)}₽
 
 Выберете способ оплаты ⤵️
     `.trim();
@@ -254,8 +254,8 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
     
     if (!hasBalance) {
       const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)} ₽
-🎵 Создание 1 трека = ${PRICES.MUSIC_CREATION}₽
+💰 Ваш баланс: ${balance.toFixed(2)}₽
+🎵 Создание 1 трека = ${PRICES.MUSIC_CREATION.toFixed(2)}₽
 
 Выберете способ оплаты ⤵️
     `.trim();
@@ -306,8 +306,8 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
     
     if (!hasBalance) {
       const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)} ₽
-🎵 Создание 1 трека = ${PRICES.MUSIC_CREATION}₽
+💰 Ваш баланс: ${balance.toFixed(2)}₽
+🎵 Создание 1 трека = ${PRICES.MUSIC_CREATION.toFixed(2)}₽
 
 Выберете способ оплаты ⤵️
     `.trim();
@@ -358,8 +358,8 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
     
     if (!hasBalance) {
       const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)} ₽
-🎵 Создание 1 трека = ${PRICES.MUSIC_CREATION}₽
+💰 Ваш баланс: ${balance.toFixed(2)}₽
+🎵 Создание 1 трека = ${PRICES.MUSIC_CREATION.toFixed(2)}₽
 
 Выберете способ оплаты ⤵️
     `.trim();

@@ -129,8 +129,8 @@ export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<nu
     } else {
 
       const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)} ₽
-🎅 Поздравление Д.Мороза = ${PRICES.DED_MOROZ}₽
+💰 Ваш баланс: ${balance.toFixed(2)}₽
+🎅 Поздравление Д.Мороза = ${PRICES.DED_MOROZ.toFixed(2)}₽
     
 Выберете способ оплаты ⤵️`.trim();
     

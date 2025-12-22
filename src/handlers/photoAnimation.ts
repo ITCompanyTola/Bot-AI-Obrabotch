@@ -37,8 +37,8 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
 🎁 <b>Хотите видео "под ключ"?</b>
 Нажмите кнопку <b><i>«Заказать видео под ключ»</i></b>, и мы создадим его полностью для вас!
 
-<blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽
-📸 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION}₽</blockquote>
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+📸 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION.toFixed(2)}₽</blockquote>
 
 ❗️* - <b>бот оживляет только одно фото за раз</b>☝🏻
     `.trim();
@@ -279,8 +279,8 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userSt
       const balance = await Database.getUserBalance(userId);
       await ctx.telegram.sendMessage(
         userId,
-        `❌ Недостаточно средств!\n\n<blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽
-📹 Требуется: ${PRICES.PHOTO_ANIMATION} ₽</blockquote>`,
+        `❌ Недостаточно средств!\n\n<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+📹 Требуется: ${PRICES.PHOTO_ANIMATION}₽</blockquote>`,
         {
           parse_mode: 'HTML',
           ...Markup.inlineKeyboard([

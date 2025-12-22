@@ -573,7 +573,7 @@ https://t.me/obrabotych_support
 📄 <b>Документы</b>
 • Политика конфиденциальности; согласие на ОПД; договор оферты ☝🏻
 
-<blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽</blockquote>
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽</blockquote>
     `.trim();
 
     await ctx.reply(

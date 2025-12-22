@@ -31,8 +31,8 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
 2️⃣ <i><b>Отправьте одну фотографию* в бот</b></i>
 3️⃣ <i><b>Немного подождите</b></i> — примерно через 3 минуты бот отправит вам готовое фото ⚡️
 
-<blockquote>💰 Ваш баланс: ${balance.toFixed(2)} ₽
-✨ Реставрация 1 фото = ${PRICES.PHOTO_RESTORATION}₽</blockquote>
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+✨ Реставрация 1 фото = ${PRICES.PHOTO_RESTORATION.toFixed(2)}₽</blockquote>
 
 ❗️* - <b>бот восстанавливает только одно фото за раз</b>☝🏻`.trim();
 
@@ -129,8 +129,8 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
     const balance = await Database.getUserBalance(userId);
 
     const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)} ₽
-📸 Создание 1 Реставрации = ${PRICES.PHOTO_RESTORATION}₽
+💰 Ваш баланс: ${balance.toFixed(2)}₽
+✨ Создание 1 Реставрации = ${PRICES.PHOTO_RESTORATION.toFixed(2)}₽
     
 Выберете способ оплаты ⤵️`.trim();
     

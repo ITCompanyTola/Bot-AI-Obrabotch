@@ -39,7 +39,7 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
       {
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
-          [Markup.button.callback('Получить 100₽ 💰', 'create_refferal')],
+          [Markup.button.callback('💎 Получить 100₽', 'create_refferal')],
           [
             Markup.button.callback('Мои реставрации', 'my_restorations'),
             Markup.button.callback('Мои цветные фото', 'my_colorize')

@@ -4,7 +4,7 @@ import { Database } from '../database';
 import { PRICES } from '../constants';
 import { processMusicGeneration } from '../services/sunoService';
 
-const HERO_AUDIO: string = 'CQACAgIAAxkBAAIPwmlIJBSubI7uSmzn94lg1D430qvOAAJulQACEpFBSo4zCOrLRUdHNgQ';
+const HERO_AUDIO: string = 'CQACAgIAAxkBAAECYRBpSLNMTRdaHnocly1WciCK2IjllAAC45cAAr5EQUrEr1-izwc0vTYE';
 const INSTRUCTION: string = 'BAACAgIAAxkBAAECXi1pSEAcr6OIsFwQfDUn29_mof7M-gACZ5QAAr5EQUqbxwoSKkjDZjYE';
 export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('music_creation', async (ctx) => {

@@ -129,10 +129,14 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
     const balance = await Database.getUserBalance(userId);
 
     const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)}₽
-✨ Создание 1 Реставрации: ${PRICES.PHOTO_RESTORATION.toFixed(2)}₽
-    
-Выберете способ оплаты ⤵️`.trim();
+К сожалению, <b>на вашем балансе недостаточно средств</b> для создания генерации 😢
+
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+✨ Создание 1 Реставрации: ${PRICES.PHOTO_RESTORATION.toFixed(2)}₽</blockquote>
+
+Чтобы продолжить, <b>пополните баланс</b>
+
+Выберите способ оплаты ⤵️`.trim();
     
     await ctx.telegram.sendMessage(userId, paymentMessage, {
       parse_mode: 'HTML',

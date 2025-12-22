@@ -32,7 +32,7 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
 3️⃣ <b><i>Подождите немного</i></b> — примерно через 3 минуты бот создаст и отправит вам готовый трек 🎧
 
 <blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
-🎶 Создать 1 трек: ${PRICES.MUSIC_CREATION.toFixed(2)}₽</blockquote>
+🎶 Создание 1 трека: ${PRICES.MUSIC_CREATION.toFixed(2)}₽</blockquote>
     `.trim();
 
     try {
@@ -150,19 +150,22 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
     
     if (!hasBalance) {
       const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)}₽
-🎵 Создание 1 трека: ${PRICES.MUSIC_CREATION.toFixed(2)}₽
+К сожалению, <b>на вашем балансе недостаточно средств</b> для создания генерации 😢
 
-Выберете способ оплаты ⤵️
-    `.trim();
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+🎵 Создание 1 трека: ${PRICES.MUSIC_CREATION.toFixed(2)}₽</blockquote>
 
-      await ctx.editMessageText(
-        paymentMessage,
-        Markup.inlineKeyboard([
+Чтобы продолжить, <b>пополните баланс</b>
+
+Выберите способ оплаты ⤵️`.trim();
+
+      await ctx.reply(paymentMessage, {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
           [Markup.button.callback('Оплата картой', 'refill_balance_from_music')],
           [Markup.button.callback('Главное меню', 'main_menu')]
         ])
-      );
+      });
       return;
     }
     
@@ -202,19 +205,22 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
     
     if (!hasBalance) {
       const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)}₽
-🎵 Создание 1 трека: ${PRICES.MUSIC_CREATION.toFixed(2)}₽
+К сожалению, <b>на вашем балансе недостаточно средств</b> для создания генерации 😢
 
-Выберете способ оплаты ⤵️
-    `.trim();
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+🎵 Создание 1 трека: ${PRICES.MUSIC_CREATION.toFixed(2)}₽</blockquote>
 
-      await ctx.editMessageText(
-        paymentMessage,
-        Markup.inlineKeyboard([
+Чтобы продолжить, <b>пополните баланс</b>
+
+Выберите способ оплаты ⤵️`.trim();
+
+      await ctx.reply(paymentMessage, {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
           [Markup.button.callback('Оплата картой', 'refill_balance_from_music')],
           [Markup.button.callback('Главное меню', 'main_menu')]
         ])
-      );
+      });
       return;
     }
     
@@ -254,19 +260,22 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
     
     if (!hasBalance) {
       const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)}₽
-🎵 Создание 1 трека: ${PRICES.MUSIC_CREATION.toFixed(2)}₽
+К сожалению, <b>на вашем балансе недостаточно средств</b> для создания генерации 😢
 
-Выберете способ оплаты ⤵️
-    `.trim();
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+🎵 Создание 1 трека: ${PRICES.MUSIC_CREATION.toFixed(2)}₽</blockquote>
 
-      await ctx.editMessageText(
-        paymentMessage,
-        Markup.inlineKeyboard([
+Чтобы продолжить, <b>пополните баланс</b>
+
+Выберите способ оплаты ⤵️`.trim();
+
+      await ctx.reply(paymentMessage, {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
           [Markup.button.callback('Оплата картой', 'refill_balance_from_music')],
           [Markup.button.callback('Главное меню', 'main_menu')]
         ])
-      );
+      });
       return;
     }
     
@@ -306,19 +315,22 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
     
     if (!hasBalance) {
       const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)}₽
-🎵 Создание 1 трека: ${PRICES.MUSIC_CREATION.toFixed(2)}₽
+К сожалению, <b>на вашем балансе недостаточно средств</b> для создания генерации 😢
 
-Выберете способ оплаты ⤵️
-    `.trim();
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+🎵 Создание 1 трека: ${PRICES.MUSIC_CREATION.toFixed(2)}₽</blockquote>
 
-      await ctx.editMessageText(
-        paymentMessage,
-        Markup.inlineKeyboard([
+Чтобы продолжить, <b>пополните баланс</b>
+
+Выберите способ оплаты ⤵️`.trim();
+
+      await ctx.reply(paymentMessage, {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
           [Markup.button.callback('Оплата картой', 'refill_balance_from_music')],
           [Markup.button.callback('Главное меню', 'main_menu')]
         ])
-      );
+      });
       return;
     }
     
@@ -358,19 +370,22 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>, userSta
     
     if (!hasBalance) {
       const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)}₽
-🎵 Создание 1 трека: ${PRICES.MUSIC_CREATION.toFixed(2)}₽
+К сожалению, <b>на вашем балансе недостаточно средств</b> для создания генерации 😢
 
-Выберете способ оплаты ⤵️
-    `.trim();
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+🎵 Создание 1 трека: ${PRICES.MUSIC_CREATION.toFixed(2)}₽</blockquote>
 
-      await ctx.editMessageText(
-        paymentMessage,
-        Markup.inlineKeyboard([
+Чтобы продолжить, <b>пополните баланс</b>
+
+Выберите способ оплаты ⤵️`.trim();
+
+      await ctx.reply(paymentMessage, {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
           [Markup.button.callback('Оплата картой', 'refill_balance_from_music')],
           [Markup.button.callback('Главное меню', 'main_menu')]
         ])
-      );
+      });
       return;
     }
     

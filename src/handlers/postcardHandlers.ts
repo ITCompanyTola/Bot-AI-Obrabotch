@@ -111,11 +111,15 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
     } else {
       const balance = await Database.getUserBalance(userId);
 
-    const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)}₽
-💌 Генерация 1 Открытки: ${PRICES.POSTCARD_TEXT.toFixed(2)}₽
-    
-Выберете способ оплаты ⤵️`.trim();
+      const paymentMessage = `
+К сожалению, <b>на вашем балансе недостаточно средств</b> для создания генерации 😢
+
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+💌 Генерация 1 Открытки: ${PRICES.POSTCARD_TEXT.toFixed(2)}₽</blockquote>
+
+Чтобы продолжить, <b>пополните баланс</b>
+
+Выберите способ оплаты ⤵️`.trim();
     
     await ctx.telegram.sendMessage(userId, paymentMessage, {
       parse_mode: 'HTML',
@@ -163,7 +167,7 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [
-          [{text: '💌 Создать открытку  ', callback_data: 'postcard_photo_start'}],
+          [{text: '🏞 Создать открытку  ', callback_data: 'postcard_photo_start'}],
           [{text: 'Видео-инструкция', callback_data: 'postcard_photo_instruction'}],
           [{text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_postcard_photo'}],
           [{text: 'Назад', callback_data: 'postcard'}]
@@ -227,10 +231,14 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
       const balance = await Database.getUserBalance(userId);
 
     const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)}₽
-🏞 Создание 1 Открытки: ${PRICES.POSTCARD_PHOTO.toFixed(2)}₽
-    
-Выберете способ оплаты ⤵️`.trim();
+К сожалению, <b>на вашем балансе недостаточно средств</b> для создания генерации 😢
+
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+🏞 Генерация 1 Открытки: ${PRICES.POSTCARD_TEXT.toFixed(2)}₽</blockquote>
+
+Чтобы продолжить, <b>пополните баланс</b>
+
+Выберите способ оплаты ⤵️`.trim();
     
     await ctx.telegram.sendMessage(userId, paymentMessage, {
       parse_mode: 'HTML',

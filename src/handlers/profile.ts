@@ -111,7 +111,8 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
     for (const postcard of postcards_text) {
       try {
         await ctx.telegram.sendPhoto(userId, postcard.file_id, {
-          caption: postcard.prompt ? `Описание: ${postcard.prompt}` : undefined
+          caption: postcard.prompt ? `Описание: <blockquote><code>${postcard.prompt}</code></blockquote>` : undefined,
+          parse_mode: 'HTML'
         });
       } catch (error) {
         console.error('Ошибка отправки открытки с текстом:', error);
@@ -197,7 +198,8 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
     for (const photo of photos) {
       try {
         await ctx.telegram.sendVideo(userId, photo.file_id, {
-          caption: photo.prompt ? `Описание: ${photo.prompt}` : undefined
+          caption: photo.prompt ? `Описание:\n<blockquote><code>${photo.prompt}</code></blockquote>` : undefined,
+          parse_mode: 'HTML'
         });
       } catch (error) {
         console.error('Ошибка отправки видео:', error);
@@ -241,7 +243,8 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
     for (const track of tracks) {
       try {
         await ctx.telegram.sendAudio(userId, track.file_id, {
-          caption: track.prompt ? `Описание: ${track.prompt}` : undefined
+          caption: track.prompt ? `Описание:\n<blockquote><code>${track.prompt}</code></blockquote>` : undefined,
+          parse_mode: 'HTML'
         });
       } catch (error) {
         console.error('Ошибка отправки трека:', error);

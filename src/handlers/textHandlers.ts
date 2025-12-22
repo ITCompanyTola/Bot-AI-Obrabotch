@@ -409,11 +409,14 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     
     if (!hasBalance) {
       const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)}₽
-📹 Оживление 1 фото: ${PRICES.PHOTO_ANIMATION.toFixed(2)}₽
+К сожалению, <b>на вашем балансе недостаточно средств</b> для создания генерации 😢
 
-Выберете способ оплаты ⤵️
-      `.trim();
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+📹 Оживление 1 фото: ${PRICES.PHOTO_ANIMATION.toFixed(2)}₽</blockquote>
+
+Чтобы продолжить, <b>пополните баланс</b>
+
+Выберите способ оплаты ⤵️`.trim();
 
       await ctx.reply(
         paymentMessage,
@@ -450,11 +453,14 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     
     if (!hasBalance) {
       const paymentMessage = `
-💰 Ваш баланс: ${balance.toFixed(2)}₽
-📹 Оживление 1 фото: ${PRICES.PHOTO_ANIMATION.toFixed(2)}₽
+К сожалению, <b>на вашем балансе недостаточно средств</b> для создания генерации 😢
 
-Выберете способ оплаты ⤵️
-      `.trim();
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+📹 Оживление 1 фото: ${PRICES.PHOTO_ANIMATION.toFixed(2)}₽</blockquote>
+
+Чтобы продолжить, <b>пополните баланс</b>
+
+Выберите способ оплаты ⤵️`.trim();
 
       await ctx.reply(
         paymentMessage,

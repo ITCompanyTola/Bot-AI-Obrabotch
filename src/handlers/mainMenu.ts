@@ -191,7 +191,8 @@ https://t.me/obrabotych_support
     await ctx.reply(
       refillMessage,
       Markup.inlineKeyboard([
-        [Markup.button.callback('150₽', 'refill_150'), Markup.button.callback('300₽', 'refill_300'), Markup.button.callback('800₽', 'refill_800'), Markup.button.callback('1600₽', 'refill_1600'), Markup.button.callback('Главное меню', 'main_menu')]
+        [Markup.button.callback('150₽', 'refill_150'), Markup.button.callback('300₽', 'refill_300'), Markup.button.callback('800₽', 'refill_800'), Markup.button.callback('1600₽', 'refill_1600')],
+        [Markup.button.callback('Главное меню', 'main_menu')],
       ])
     );
   });

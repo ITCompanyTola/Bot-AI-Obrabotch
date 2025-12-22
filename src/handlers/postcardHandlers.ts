@@ -4,7 +4,7 @@ import { Database } from '../database';
 import { getPostcardMessage, getPostcardPhotoMessage, POSCTARD_MESSAGE, POSTCARD_MESSAGE_START, POSTCARD_PHOTO_START, POSTCARD_PHOTO_START_WIHOUT, PRICES } from '../constants';
 
 const HERO_PHOTO_TEXT: string = 'AgACAgIAAxkBAAECXcRpSD15nEGe6b_YhiiRMHgfGnhN-QACWw9rG75EQUorhT9YX3BGFwEAAwIAA3gAAzYE';
-const HERO_PHOTO_PHOTO: string = 'AgACAgIAAxkBAAECXcxpSD2lCtwsz4OKNYMAAS9QS85rjo4AAlwPaxu-REFKG3VdZFN36voBAAMCAAN5AAM2BA';
+const HERO_PHOTO_VIDEO_ID: string = 'BAACAgIAAxkBAAECaetpSXzBT3SjPpEi5XTEnSVVg5yXJwACU5EAAhKRSUrP-iMveUqEuzYE';
 const EXAMPLE_POSTCARD_PHOTO_ID: string = 'AgACAgIAAxkBAAECXdFpSD25-QLIejlyURmKIPm_QOBbwgACXQ9rG75EQUq_ZhrnMheB_wEAAwIAA3gAAzYE'; // Загрузить и вставить свое фото
 const POSTCARD_INSTRUCTION: string = ''; // Загрузить и вставить свое видео
 
@@ -22,7 +22,6 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
     if (!userId) return;
 
     const balance = await Database.getUserBalance(userId);
-
     const postcardMessage = POSCTARD_MESSAGE;
     await ctx.telegram.sendMessage(userId, postcardMessage, {
       parse_mode: 'HTML',
@@ -114,7 +113,7 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
 
     const paymentMessage = `
 💰 Ваш баланс: ${balance.toFixed(2)}₽
-💌 Генерация 1 Открытки = ${PRICES.POSTCARD_TEXT.toFixed(2)}₽
+💌 Генерация 1 Открытки: ${PRICES.POSTCARD_TEXT.toFixed(2)}₽
     
 Выберете способ оплаты ⤵️`.trim();
     
@@ -147,7 +146,7 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
     const message = getPostcardPhotoMessage(balance);
     
     try {
-      await ctx.replyWithPhoto(HERO_PHOTO_PHOTO, {
+      await ctx.replyWithVideo(HERO_PHOTO_VIDEO_ID, {
         parse_mode: 'HTML',
         caption: message,
         reply_markup: {
@@ -229,7 +228,7 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
 
     const paymentMessage = `
 💰 Ваш баланс: ${balance.toFixed(2)}₽
-🏞 Создание 1 Открытки = ${PRICES.POSTCARD_PHOTO.toFixed(2)}₽
+🏞 Создание 1 Открытки: ${PRICES.POSTCARD_PHOTO.toFixed(2)}₽
     
 Выберете способ оплаты ⤵️`.trim();
     

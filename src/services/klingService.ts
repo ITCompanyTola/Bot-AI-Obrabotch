@@ -159,7 +159,7 @@ export async function processVideoGeneration(ctx: any, userId: number, photoFile
     const videoBuffer = Buffer.from(videoResponse.data);
 
     const caption = (`
-          ✅ <b>Ваше видео готово!</b>\n\nОписание: <pre><code>${prompt}</code></pre>\n\n` +
+          ✅ <b>Ваше видео готово!</b>\n\nОписание: <blockquote><code>${prompt}</code></blockquote>\n\n` +
           'Если вам нужна помощь в создании <b><i>полноценного видео из оживленных фотографий с музыкой,</i></b> ' +
           'вы можете обратиться в нашу службу технической поддержки — ' +
           '<a href="https://t.me/obrabotych_support">@obrabotych_support</a>').trim()

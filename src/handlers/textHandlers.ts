@@ -338,10 +338,6 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     broadcastVideoHandler(ctx, userId, userState);
   });
 
-  bot.on('audio', (ctx) => {
-    console.log('Аудио получено', ctx.message.audio.file_id);
-  });
-
   bot.action('regenerate_prompt', async (ctx) => {
     await ctx.answerCbQuery();
     const userId = ctx.from?.id;
@@ -413,8 +409,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     
     if (!hasBalance) {
       const paymentMessage = `
-<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
-📹 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION.toFixed(2)}₽ / $1</blockquote>
+💰 Ваш баланс: ${balance.toFixed(2)}₽
+📹 Оживление 1 фото: ${PRICES.PHOTO_ANIMATION.toFixed(2)}₽
 
 Выберете способ оплаты ⤵️
       `.trim();
@@ -454,8 +450,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
     
     if (!hasBalance) {
       const paymentMessage = `
-<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
-📹 Оживление 1 фото = ${PRICES.PHOTO_ANIMATION.toFixed(2)}₽ / $1</blockquote>
+💰 Ваш баланс: ${balance.toFixed(2)}₽
+📹 Оживление 1 фото: ${PRICES.PHOTO_ANIMATION.toFixed(2)}₽
 
 Выберете способ оплаты ⤵️
       `.trim();

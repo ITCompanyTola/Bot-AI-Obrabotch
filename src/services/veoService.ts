@@ -165,7 +165,7 @@ export async function processVideoDMGeneration(ctx: any, userId: number, photoFi
     }
     const videoBuffer = Buffer.from(videoResponse.data);
 
-    const caption = `✅ <b>Ваше поздравление готово!</b>\n\nОписание:\n<pre><code>${prompt}</code></pre>`.trim()
+    const caption = `✅ <b>Ваше поздравление готово!</b>\n\nОписание:\n<blockquote><code>${prompt}</code></blockquote>`.trim()
     const message = caption + `\n\nЕсли вам нужна помощь в создании <b><i>полноценного новогоднего поздравления от Деда Мороза</i></b>, вы можете обратиться в нашу службу технической поддержки — <a href="https://t.me/obrabotych_support">@obrabotych_support</a>`
     const sentMessage = await ctx.telegram.sendVideo(userId, { source: videoBuffer }, {
       caption: message,

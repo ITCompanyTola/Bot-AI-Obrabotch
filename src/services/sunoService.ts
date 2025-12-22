@@ -185,7 +185,7 @@ export async function processMusicGeneration(
     const audioBuffer = Buffer.from(audioResponse.data);
 
     const sentMessage = await ctx.telegram.sendAudio(userId, { source: audioBuffer }, {
-      caption: `✅ <b>Ваш трек готов!</b>\n\nСтиль: ${musicStyle}\nОписание:\n<pre><code>${musicText}</code></pre>`,
+      caption: `✅ <b>Ваш трек готов!</b>\n\nСтиль: ${musicStyle}\nОписание:\n<blockquote><code>${musicText}</code></blockquote>`,
       parse_mode: 'HTML'
     });
 

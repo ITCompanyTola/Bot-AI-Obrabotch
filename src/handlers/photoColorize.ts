@@ -32,7 +32,7 @@ export function registerPhotoColorizeHandlers(bot: Telegraf<BotContext>, userSta
 3️⃣ <i><b>Немного подождите</b></i> — примерно через 3 минуты бот отправит вам готовое фото 🎨
 
 <blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
-🎨 Генерация 1 цветного фото = ${PRICES.PHOTO_COLORIZE.toFixed(2)}₽</blockquote>
+🎨 Генерация 1 цветного фото: ${PRICES.PHOTO_COLORIZE.toFixed(2)}₽</blockquote>
 
 ❗️* - <b>бот генерирует только одно цветное фото за раз</b>☝🏻`.trim();
     try {
@@ -129,7 +129,7 @@ export function registerPhotoColorizeHandlers(bot: Telegraf<BotContext>, userSta
 
     const paymentMessage = `
 💰 Ваш баланс: ${balance.toFixed(2)}₽
-🎨 Геренация 1 цветного фото = ${PRICES.PHOTO_COLORIZE.toFixed(2)}₽
+🎨 Геренация 1 цветного фото: ${PRICES.PHOTO_COLORIZE.toFixed(2)}₽
     
 Выберете способ оплаты ⤵️`.trim();
     

@@ -371,7 +371,10 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
 
     for (const dm_video of all_dm_videos) {
       try {
-        await ctx.telegram.sendVideo(userId, dm_video.file_id);
+        await ctx.telegram.sendVideo(userId, dm_video.file_id, {
+          caption: dm_video.prompt ? `Описание:\n<blockquote><code>${dm_video.prompt}</code></blockquote>` : undefined,
+          parse_mode: 'HTML'
+        });
       } catch (error) {
         console.error('Ошибка отправки видео Деда Мороза:', error);
         await ctx.telegram.sendMessage(userId, `❌ Видео Деда Мороза недоступно (ID: ${dm_video.id})`);

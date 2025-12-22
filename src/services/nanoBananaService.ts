@@ -219,19 +219,6 @@ async function generateDMPhotoWithBanana(imageUrl: string, prompt: string): Prom
 
 export async function processDMPhotoCreation(ctx: any, userId: number, userState: UserState, prompt: string) {
   try {
-    const deducted = await Database.deductBalance(
-      userId,
-      PRICES.DED_MOROZ,
-      'Создание Деда Мороза'
-    );
-
-    if (!deducted) {
-      await ctx.telegram.sendMessage(
-        userId,
-        '❌ Недостаточно средств для генерации'
-      );
-      return;
-    }
     console.log(`⏳ Начинается создание фото Деда Мороза для пользователя ${userId}...`);
     const photoFileId = userState.photoFileId;
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);

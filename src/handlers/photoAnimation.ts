@@ -4,10 +4,10 @@ import { Database } from '../database';
 import { PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
 
-const VIDEO_FILE_ID = 'BAACAgIAAxkBAAIPqGlIIFGblsoG_oWvPscoO4U0FldzAALvlAACEpFBSlyEQXJtTeZvNgQ';
-const PHOTO_FILE_ID = 'AgACAgIAAxkBAAIPp2lIICkqwYRMuchlxyGRlbrBzZ33AAKDDmsbEpFBSrrsB54jZTQOAQADAgADeQADNgQ';
-const ORDER_VIDEO_FILE_ID = 'BAACAgIAAxkBAAIPpmlIH3a-wDb0OvP5qhiKh-FecUFZAALSlAACEpFBSv9pTkoq47aaNgQ';
-const INTRUCTION_FILE_ID = 'BAACAgIAAxkBAAIPqWlIIMAkR1a24f-R-sHCfT4fa8BEAAL-lAACEpFBSrgX_8q_eilZNgQ';
+const VIDEO_FILE_ID = 'BAACAgIAAxkBAAECXWtpSDoDQQ-MSv3zGWfvxAQxJBoFzAACDpQAAr5EQUqE-gauHSVXMDYE';
+const PHOTO_FILE_ID = 'AgACAgIAAxkBAAECXXBpSDo5YWJeqApgvWJe7iBLwGqrOgACgw5rGxKRQUq7Bzgv4_64_gEAAwIAA3kAAzYE';
+const ORDER_VIDEO_FILE_ID = 'BAACAgIAAxkBAAECXXFpSDpbwZ-Ao9B-7AyK476dwfbj2gACFpQAAr5EQUri1qZWZw7PmDYE';
+const INTRUCTION_FILE_ID = 'BAACAgIAAxkBAAECXXRpSDqFzUlG-wEzLh0PKHxlXlNKIgACG5QAAr5EQUq2BbQiQ9CtSDYE';
 
 export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('photo_animation', async (ctx) => {

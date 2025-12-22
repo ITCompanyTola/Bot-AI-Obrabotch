@@ -3,9 +3,9 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { getPostcardMessage, getPostcardPhotoMessage, POSCTARD_MESSAGE, POSTCARD_MESSAGE_START, POSTCARD_PHOTO_START, POSTCARD_PHOTO_START_WIHOUT, PRICES } from '../constants';
 
-const HERO_PHOTO_TEXT: string = 'AgACAgIAAxkBAAIO-2lH_48Sj_RjySBPyMGS5Ste4-lyAAL_DGsbEpFBSpvj1uqCoPF0AQADAgADeQADNgQ';
-const HERO_PHOTO_PHOTO: string = 'AgACAgIAAxkBAAIO_GlIAa8n1--2o1RjAAGW0U2VXKQWQAACBw1rGxKRQUpT9V3teeilWAEAAwIAA3kAAzYE';
-const EXAMPLE_POSTCARD_PHOTO_ID: string = 'AgACAgIAAxkBAAIN1mlGxi4ldMTCegkyiPLhy4z_bv3bAALcDWsbVow5Sh52Q0nqCqtkAQADAgADeAADNgQ'; // Загрузить и вставить свое фото
+const HERO_PHOTO_TEXT: string = 'AgACAgIAAxkBAAECXcRpSD15nEGe6b_YhiiRMHgfGnhN-QACWw9rG75EQUorhT9YX3BGFwEAAwIAA3gAAzYE';
+const HERO_PHOTO_PHOTO: string = 'AgACAgIAAxkBAAECXcxpSD2lCtwsz4OKNYMAAS9QS85rjo4AAlwPaxu-REFKG3VdZFN36voBAAMCAAN5AAM2BA';
+const EXAMPLE_POSTCARD_PHOTO_ID: string = 'AgACAgIAAxkBAAECXdFpSD25-QLIejlyURmKIPm_QOBbwgACXQ9rG75EQUq_ZhrnMheB_wEAAwIAA3gAAzYE'; // Загрузить и вставить свое фото
 const POSTCARD_INSTRUCTION: string = ''; // Загрузить и вставить свое видео
 
 export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {

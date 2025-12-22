@@ -4,9 +4,9 @@ import { Database } from '../database';
 import { DED_MOROZ_INSTRUCTION, dedMorozStartMessage, dedMorozStartMessageWithoutPhoto, getDedMorozMessage, PRICES } from '../constants';
 import { processDMPhotoCreation } from '../services/nanoBananaService';
 
-const PHOTO_GENERATION_EXAMPLE_ID: string = 'AgACAgIAAxkBAAIO-GlH_ovwet1GrvPaZ-_H9QM_64nKAALyDGsbEpFBSnvWGssMYeE8AQADAgADeQADNgQ';
-const VIDEO_EXAMPLE_ID: string = 'BAACAgIAAxkDAAIIAmlBjEHGqE6ISIeXUTxsODb5MlSBAALIlwACPZUQSqqFRol_8fhoNgQ';
-const VIDEO_INSTRUCTION_ID: string = 'BAACAgIAAxkBAAIPSGlIEKCnd0_ZsMtxc77zlyE9ma1qAAKUkwACEpFBSu_qcsBr3JfQNgQ';
+const PHOTO_GENERATION_EXAMPLE_ID: string = 'AgACAgIAAxkBAAECXk1pSEENA6TKsTXdeFdTEEcheHjAaQACeg9rG75EQUqEuUJPG9v14AEAAwIAA3kAAzYE';
+const VIDEO_EXAMPLE_ID: string = 'BAACAgIAAxkBAAECXkVpSEDxom0P9I603C31cPtJRV-yKgACfJQAAr5EQUqdH0cc6lB24DYE';
+const VIDEO_INSTRUCTION_ID: string = 'BAACAgIAAxkBAAECXkBpSEDYIxL5ntIAAYN-zQOmD6hKr9oAAniUAAK-REFK21XYLr_4opY2BA';
 
 export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('ded_moroz', async (ctx) => {

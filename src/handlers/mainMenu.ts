@@ -3,7 +3,6 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { sendTGTrackUserStart } from './index';
 import { MAIN_MENU_MESSAGE, mainMenuKeyboard } from '../constants';
-import { parse } from 'path';
 
 export function registerMainMenuHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.command('start', async (ctx) => {

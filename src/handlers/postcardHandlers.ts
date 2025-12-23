@@ -324,7 +324,7 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
         parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
-            [{text: 'Назад', callback_data: 'postcard_text'}]
+            [{text: 'Назад', callback_data: 'postcard_photo'}]
           ]
         }
       })

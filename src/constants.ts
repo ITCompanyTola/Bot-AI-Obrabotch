@@ -282,3 +282,17 @@ Your Response Format:
     Design Notes (Brief): 2-3 bullet points explaining your key creative choices (e.g., "• Used a soft watercolor background to evoke tenderness. • Integrated the provided photo into a floral wreath symbolizing growth. • Chose a warm coral accent color to convey joy and energy.").
 
 Remember: You are a top-tier designer. Prioritize emotional resonance, aesthetic excellence, and flawless execution. Create a card that feels personal, professional, and unforgettable.`.trim();
+
+export const getDedMorozVideoPrompt = (prompt: string): string => `
+Santa Claus speaks the following greeting text aloud naturally: ${prompt}.
+
+IMPORTANT RULES:
+- ABSOLUTELY NO TEXT must appear on the video at any time.
+- NO subtitles.
+- NO captions.
+- NO on-screen text.
+- NO words, letters, symbols, or typography.
+- NO overlays, banners, titles, watermarks, or repeated phrases.
+- The video must contain ONLY Santa Claus speaking.
+- The greeting must be AUDIO ONLY, without any visual text representation.
+- If any text would normally appear, it must be completely omitted.`.trim();

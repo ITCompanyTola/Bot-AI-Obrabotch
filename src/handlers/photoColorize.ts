@@ -5,7 +5,7 @@ import { PRICES } from '../constants';
 
 const HERO_VIDEO: string = 'BAACAgIAAxkBAAECXYppSDs3MxJQd2pSP9XPaPVG1CObmQACLJQAAr5EQUpo42dA2uZkzzYE';
 const EXAMPLE_PHOTO_COLORIZE: string = 'AgACAgIAAxkBAAECXZppSDwQ4-Q49wLew7AH4b2wJmwTDQACSw9rG75EQUoovKY3-EbzmAEAAwIAA3gAAzYE'; // Загрузить и вставить свое фото
-const PHOTO_COLORIZE_INSTRUCTION: string = 'BAACAgIAAxkBAAECXZtpSDxjWP3LJvFUWOWz7vfOde6m8AACQ5QAAr5EQUopvkvGg3FzSDYE'; // Загрузить и вставить свое видео
+const PHOTO_COLORIZE_INSTRUCTION: string = 'BAACAgIAAxkBAAECdy9pSuFwRiLZKGbXAAHPRuUeIdpFan8AAvuVAAJyIFlKHldyfRcVPAM2BA'; // Загрузить и вставить свое видео
 
 export function registerPhotoColorizeHandlers(bot: Telegraf<BotContext>, userState: Map<number, UserState>) {
   bot.action('photo_colorize', async (ctx) => {

@@ -3,7 +3,7 @@ import { Buffer } from 'buffer';
 import { Markup } from 'telegraf';
 import { config } from '../config';
 import { Database } from '../database';
-import { MAIN_MENU_MESSAGE, mainMenuKeyboard, PRICES } from '../constants';
+import { getDedMorozVideoPrompt, MAIN_MENU_MESSAGE, mainMenuKeyboard, PRICES } from '../constants';
 import { userStates } from '../bot';
 import { axiosRetry } from '../utils/axiosRetry';
 
@@ -155,7 +155,7 @@ export async function processVideoDMGeneration(ctx: any, userId: number, photoFi
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
 
-    const newPrompt = `Santa Claus's text of the greeting: ${prompt} Do not add subtitles`;
+    const newPrompt = getDedMorozVideoPrompt(prompt);
     
     const videoUrl = await generateVideoWithVeo(photoUrl.href, newPrompt);
 

@@ -3,10 +3,11 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { getPostcardMessage, getPostcardPhotoMessage, POSCTARD_MESSAGE, POSTCARD_MESSAGE_START, POSTCARD_PHOTO_START, POSTCARD_PHOTO_START_WIHOUT, PRICES } from '../constants';
 
-const HERO_PHOTO_TEXT: string = 'AgACAgIAAxkBAAECXcRpSD15nEGe6b_YhiiRMHgfGnhN-QACWw9rG75EQUorhT9YX3BGFwEAAwIAA3gAAzYE';
+const HERO_VIDEO_TEXT: string = 'BAACAgIAAxkBAAECdzFpSuGnIPA7Q_WONIwAAZvKW74rJtkAA5YAAnIgWUomnSdhRwQ1VjYE';
 const HERO_PHOTO_VIDEO_ID: string = 'BAACAgIAAxkBAAECaetpSXzBT3SjPpEi5XTEnSVVg5yXJwACU5EAAhKRSUrP-iMveUqEuzYE';
 const EXAMPLE_POSTCARD_PHOTO_ID: string = 'AgACAgIAAxkBAAECXdFpSD25-QLIejlyURmKIPm_QOBbwgACXQ9rG75EQUq_ZhrnMheB_wEAAwIAA3gAAzYE'; // Загрузить и вставить свое фото
-const POSTCARD_INSTRUCTION: string = ''; // Загрузить и вставить свое видео
+const POSTCARD_PHOTO_INSTRUCTION: string = 'BAACAgIAAxkBAAECdvtpSuAbiBX3l0F_PXF48nyZA1-HcQAC0JUAAnIgWUrN8eIy-x0nKzYE'; // Загрузить и вставить свое видео
+const POSTCARD_TEXT_INSTRUCTION: string = 'BAACAgIAAxkBAAECdvhpSt_r7bS5WGoo7pw1oGNJ4dfUygACy5UAAnIgWUrMQ6MLuolkAzYE';
 
 export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('postcard', async (ctx) => {
@@ -52,7 +53,7 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
     const message = getPostcardMessage(balance);
 
     try {
-      await ctx.replyWithPhoto(HERO_PHOTO_TEXT, {
+      await ctx.replyWithVideo(HERO_VIDEO_TEXT, {
         parse_mode: 'HTML',
         caption: message,
         reply_markup: {
@@ -249,6 +250,84 @@ export function registerPostcardHandlers(bot: Telegraf<BotContext>, userStates: 
         ]
       }
     });
+    }
+  });
+
+  bot.action('postcard_text_instruction', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const messge = `
+📹 <b>Видео-инструкция по созданию открыток из текста</b>
+
+Смотрите короткое видео, чтобы правильно и качественно выполнять шаги и получать потрясающие результаты 🔥`.trim()
+
+    try {
+      await ctx.replyWithVideo(POSTCARD_TEXT_INSTRUCTION, {
+        caption: messge,
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [{text: 'Назад', callback_data: 'postcard_text'}]
+          ]
+        }
+      });
+    } catch (error: any) {
+      await ctx.reply('Ошибка воспроизведения видео!', {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [{text: 'Назад', callback_data: 'postcard_text'}]
+          ]
+        }
+      })
+    }
+  });
+
+  bot.action('postcard_photo_instruction', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const messge = `
+📹 <b>Видео-инструкция по созданию открыток из вашего фото</b>
+
+Смотрите короткое видео, чтобы правильно и качественно выполнять шаги и получать потрясающие результаты 🔥`.trim()
+
+    try {
+      await ctx.replyWithVideo(POSTCARD_PHOTO_INSTRUCTION, {
+        caption: messge,
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [{text: 'Назад', callback_data: 'postcard_text'}]
+          ]
+        }
+      });
+    } catch (error: any) {
+      await ctx.reply('Ошибка воспроизведения видео!', {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [{text: 'Назад', callback_data: 'postcard_text'}]
+          ]
+        }
+      })
     }
   });
 }

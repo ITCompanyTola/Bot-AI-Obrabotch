@@ -7,7 +7,7 @@ import { processVideoGeneration } from '../services/klingService';
 const VIDEO_FILE_ID = 'BAACAgIAAxkBAAECXWtpSDoDQQ-MSv3zGWfvxAQxJBoFzAACDpQAAr5EQUqE-gauHSVXMDYE';
 const PHOTO_FILE_ID = 'AgACAgIAAxkBAAECXXBpSDo5YWJeqApgvWJe7iBLwGqrOgACgw5rGxKRQUq7Bzgv4_64_gEAAwIAA3kAAzYE';
 const ORDER_VIDEO_FILE_ID = 'BAACAgIAAxkBAAECXXFpSDpbwZ-Ao9B-7AyK476dwfbj2gACFpQAAr5EQUri1qZWZw7PmDYE';
-const INTRUCTION_FILE_ID = 'BAACAgIAAxkBAAECXXRpSDqFzUlG-wEzLh0PKHxlXlNKIgACG5QAAr5EQUq2BbQiQ9CtSDYE';
+const INTRUCTION_FILE_ID = 'BAACAgIAAxkBAAECdxlpSuDEuFSmVp87Vy5NW8rMAUzLIQAC3pUAAnIgWUpp-RGgMQAB-eM2BA';
 
 export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
   bot.action('photo_animation', async (ctx) => {

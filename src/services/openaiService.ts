@@ -4,10 +4,12 @@ import { OPENROUTER_SERVICE_PROMPT } from '../constants';
 const TIMEOUT_MS = 45_000;
 
 // Агент создаём один раз (важно!)
-const proxyAgent = process.env.HTTPS_PROXY
-  ? new ProxyAgent(process.env.HTTPS_PROXY)
+
+const proxyAgent = process.env.HTTPS_PROXY_FOR_OPENAI
+  ? new ProxyAgent(process.env.HTTPS_PROXY_FOR_OPENAI)
   : undefined;
 
+console.log(proxyAgent);
 export async function updatePrompt(prompt: string, imageUrl?: string) {
   console.log('updatePrompt', prompt, imageUrl);
 

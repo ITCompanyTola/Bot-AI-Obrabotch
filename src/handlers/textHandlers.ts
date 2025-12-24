@@ -4,13 +4,12 @@ import { Database } from '../database';
 import { POSTCARD_PHOTO_PROMPT, PRICES } from '../constants';
 import { processVideoGeneration } from '../services/klingService';
 import { broadcast, logToFile } from '../bot';
-import { processPhotoRestoration, processDMPhotoCreation, processPostcardCreationWithBanana } from '../services/nanoBananaService';
+import { processPhotoRestoration, processDMPhotoCreation } from '../services/nanoBananaService';
 import { processPhotoColorize, processPostcardCreationWithBananaPro } from '../services/nanoBananaProService';
 import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler, sendBroadcastExample } from './broadcast';
 import { processVideoDMGeneration } from '../services/veoService';
 import { updatePrompt } from '../services/openaiService';
 import { processPostcardCreation } from '../services/fluxService';
-import { generatePostcard } from '../services/GPT5miniService';
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

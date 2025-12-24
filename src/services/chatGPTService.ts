@@ -2,12 +2,10 @@ import { Database } from "../database";
 import { MAIN_MENU_MESSAGE, mainMenuKeyboard, POSTCARD_GENERATION_PROMPT, PRICES } from "../constants";
 import axios from "axios";
 import { Markup } from "telegraf";
-import { connect } from "http2";
 
 export async function generatePostcard(ctx: any, userId: number, prompt: string, photoFileId?: string): Promise<void> {
   try {
-    if (photoFileId) {
-      const deducted = await Database.deductBalance(
+    const deducted = await Database.deductBalance(
       userId,
       PRICES.POSTCARD_PHOTO,
       'Создание открытки'
@@ -19,21 +17,6 @@ export async function generatePostcard(ctx: any, userId: number, prompt: string,
         '❌ Недостаточно средств для генерации'
       );
       return;
-    }
-    } else {
-      const deducted = await Database.deductBalance(
-      userId,
-      PRICES.POSTCARD_TEXT,
-      'Создание открытки'
-    );
-
-    if (!deducted) {
-      await ctx.telegram.sendMessage(
-        userId,
-        '❌ Недостаточно средств для генерации'
-      );
-      return;
-    }
     }
 
     await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3-х минут.');

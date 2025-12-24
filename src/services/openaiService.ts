@@ -1,48 +1,98 @@
-import { OPENROUTER_SERVICE_PROMPT } from "../constants";
+import { request, ProxyAgent } from 'undici';
+import { OPENROUTER_SERVICE_PROMPT } from '../constants';
 
-export async function updatePrompt(prompt: string, imageUrl?: string): Promise<string> {
+const TIMEOUT_MS = 45_000;
+
+// Агент создаём один раз (важно!)
+const proxyAgent = process.env.HTTPS_PROXY
+  ? new ProxyAgent(process.env.HTTPS_PROXY)
+  : undefined;
+
+export async function updatePrompt(prompt: string, imageUrl?: string) {
   console.log('updatePrompt', prompt, imageUrl);
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      "model": "openai/gpt-4o-mini",
-      "max_tokens": 8000,
-      "messages": [
+
+  try {
+    console.log('Sending request to OpenRouter via undici...');
+
+    const body = {
+      model: 'openai/gpt-4o-mini',
+      max_tokens: 8000,
+      messages: [
         {
-          "role": "system",
-          "content": OPENROUTER_SERVICE_PROMPT,
+          role: 'system',
+          content: OPENROUTER_SERVICE_PROMPT,
         },
         {
-          "role": "user",
-          "content": [
+          role: 'user',
+          content: [
             {
-              "type": "text",
-              "text": `Промпт пользователя: ${prompt}`
+              type: 'text',
+              text: `Промпт пользователя: ${prompt}`,
             },
-            {
-              "type": "image_url",
-              "image_url": {
-                "url": imageUrl,
-              }
-            }
-          ]
-        }
-      ]
-    })
-  });
+            ...(imageUrl
+              ? [
+                  {
+                    type: 'image_url',
+                    image_url: { url: imageUrl },
+                  },
+                ]
+              : []),
+          ],
+        },
+      ],
+    };
 
-  const data = await response.json() as any;
-  console.log(data);
-  
-  const messageContentResponse = data.choices?.[0]?.message?.content;
-  
-  if (!messageContentResponse) {
-    throw new Error("Ответ от модели пуст или имеет неожиданную структуру");
+    const check = await request('https://api.ipify.org', {
+      dispatcher: proxyAgent,
+    });
+
+    console.log('Checked IP:', await check.body.text());
+
+    const res = await request(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        method: 'POST',
+        dispatcher: proxyAgent,
+        headers: {
+          authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        headersTimeout: TIMEOUT_MS,
+        bodyTimeout: TIMEOUT_MS,
+      }
+    );
+
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      const errorText = await res.body.text();
+      throw new Error(
+        `OpenRouter error ${res.statusCode}: ${errorText}`
+      );
+    }
+
+    const data: any = await res.body.json();
+
+    const messageContentResponse =
+      data?.choices?.[0]?.message?.content;
+
+    if (!messageContentResponse) {
+      throw new Error('Ответ от модели пуст');
+    }
+
+    console.log('Response received');
+
+    return messageContentResponse;
+  } catch (error: any) {
+    console.error('Ошибка при запросе к OpenRouter (undici):');
+
+    if (error?.name === 'HeadersTimeoutError') {
+      throw new Error('Таймаут ожидания ответа от OpenRouter');
+    }
+
+    if (error?.name === 'BodyTimeoutError') {
+      throw new Error('Таймаут получения тела ответа от OpenRouter');
+    }
+
+    throw error;
   }
-  
-  return messageContentResponse;
 }

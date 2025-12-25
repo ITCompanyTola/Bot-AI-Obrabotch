@@ -1,147 +1,170 @@
-import { Database } from "../database";
-import { MAIN_MENU_MESSAGE, mainMenuKeyboard, POSTCARD_GENERATION_PROMPT, PRICES } from "../constants";
-import axios from "axios";
-import { Markup } from "telegraf";
+// import { Database } from "../database";
+// import {
+//   MAIN_MENU_MESSAGE,
+//   mainMenuKeyboard,
+//   POSTCARD_PHOTO_PROMPT,
+//   PRICES
+// } from "../constants";
 
-export async function generatePostcard(ctx: any, userId: number, prompt: string, photoFileId?: string): Promise<void> {
-  try {
-    const deducted = await Database.deductBalance(
-      userId,
-      PRICES.POSTCARD_PHOTO,
-      'Создание открытки'
-    );
+// import fs from "fs";
+// import path from "path";
+// import axios from "axios";
+// import OpenAI, { toFile } from "openai";
+// import { Markup } from "telegraf";
 
-    if (!deducted) {
-      await ctx.telegram.sendMessage(
-        userId,
-        '❌ Недостаточно средств для генерации'
-      );
-      return;
-    }
+// import { File } from "node:buffer";
+// (globalThis as any).File = File;
 
-    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3-х минут.');
-    
-    const imageUrl = photoFileId ? await ctx.telegram.getFileLink(photoFileId) : null;
-    const messages: any[] = [];
-    if (imageUrl) {
-      messages.push({
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: prompt,
-          },
-          {
-            type: "image_url",
-            image_url: {
-              url: imageUrl,
-            },
-          },
-        ],
-      });
-    } else {
-      messages.push({
-        role: "user",
-        content: prompt,
-      }, {
-        role: "system",
-        content: POSTCARD_GENERATION_PROMPT,
-      });
-    }
+// import { ProxyAgent } from "undici";
 
+// export const openAIProxyAgent = process.env.HTTPS_PROXY_FOR_OPENAI
+//   ? new ProxyAgent(process.env.HTTPS_PROXY_FOR_OPENAI)
+//   : undefined;
 
-    console.log(messages);
+// if (openAIProxyAgent) {
+//   console.log("🟢 OpenAI proxy enabled");
+// } else {
+//   console.log("🟡 OpenAI proxy NOT set");
+// }
 
-    const response = await axios.post(
-      "https://openrouter.ai/api/v1/chat/completions", 
-      {
-        model: "google/gemini-3-pro-image-preview",
-        messages: messages,
-        modalities: ['image', 'text'],
-      },
-      {
-        headers: {
-          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json"
-        }
-      }
-    );
-    console.log(response);
-    const message = response.data.choices[0].message;
+// export async function generatePostcard(
+//   ctx: any,
+//   userId: number,
+//   prompt: string,
+//   photoFileId?: string
+// ): Promise<void> {
+//   const tempImagePath = path.join(process.cwd(), `temp_${userId}.png`);
+//   const resultPath = path.join(process.cwd(), `postcard_${userId}.png`);
 
-    const imageUrlFromModel = message.images?.[0]?.image_url?.url;
+//   console.log("🟡 [1] generatePostcard START", { userId });
 
-    if (imageUrlFromModel.startsWith("data:image")) {
-      const base64Data = imageUrlFromModel.split(",")[1];
-      const buffer = Buffer.from(base64Data, "base64");
+//   try {
+//     console.log("🟡 [2] Deducting balance...");
+//     const deducted = await Database.deductBalance(
+//       userId,
+//       PRICES.POSTCARD_PHOTO,
+//       "Создание открытки"
+//     );
 
-      const sentMessage = await ctx.telegram.sendPhoto(
-        userId,
-        { source: buffer },
-        {
-          caption: "✅ <b>Ваша открытка готова!</b>",
-          parse_mode: "HTML",
-        }
-      );
-      const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
-      if (photoFileId) {
-        await Database.saveGeneratedFile(userId, 'postcard_photo', fileId, prompt);
-      } else {
-        await Database.saveGeneratedFile(userId, 'postcard_text', fileId, prompt);
-      }
-    } else {
-      // обычный https URL
-      const sentMessage = await ctx.telegram.sendPhoto(
-        userId,
-        imageUrlFromModel,
-        {
-          caption: "✅ <b>Ваша открытка готова!</b>",
-          parse_mode: "HTML",
-        }
-      );
+//     if (!deducted) {
+//       console.log("🔴 [2.1] Not enough balance");
+//       await ctx.telegram.sendMessage(userId, "❌ Недостаточно средств");
+//       return;
+//     }
 
-      const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
-      if (photoFileId) {
-        await Database.saveGeneratedFile(userId, 'postcard_photo', fileId, prompt);
-      } else {
-        await Database.saveGeneratedFile(userId, 'postcard_text', fileId, prompt);
-      }
-    }
+//     console.log("🟢 [3] Balance deducted");
 
-    const mainMenuMessage = MAIN_MENU_MESSAGE;
-    
-        await ctx.telegram.sendMessage(
-          userId,
-          mainMenuMessage,
-          {
-            parse_mode: 'HTML',
-            ...Markup.inlineKeyboard(mainMenuKeyboard)
-        });
-  } catch (error) {
-    console.error('❌ Ошибка генерации открытки:', error);
-    if (photoFileId) {
-      await Database.addBalance(
-      userId,
-      PRICES.POSTCARD_PHOTO,
-      'Возврат средств за ошибку генерации',
-      'bonus'
-    );
+//     await ctx.telegram.sendMessage(
+//       userId,
+//       "⏳ Начинаю генерацию... Это займет около 3-х минут."
+//     );
 
-    console.log(`💰 Возвращено ${PRICES.POSTCARD_PHOTO}₽ пользователю ${userId}`);
-    } else {
-      await Database.addBalance(
-      userId,
-      PRICES.POSTCARD_TEXT,
-      'Возврат средств за ошибку генерации',
-      'bonus'
-    );
+//     console.log("🟡 [4] Creating OpenAI client");
+//     const openai = new OpenAI({
+//       apiKey: process.env.OPENAI_API_KEY,
+//       fetch: (url, options) => {
+//         return fetch(url, {
+//           ...options,
+//           dispatcher: openAIProxyAgent, // 👈 ПРОКСИ
+//         });
+//       },
+//     });
 
-    console.log(`💰 Возвращено ${PRICES.POSTCARD_TEXT}₽ пользователю ${userId}`);
-    }
-    
-    await ctx.telegram.sendMessage(
-      userId,
-      '❌ Произошла ошибка при генерации. Средства возвращены на баланс.'
-    );
-  }
-}
+//     console.log("🟡 [5] Getting Telegram file link");
+//     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
+//     console.log("🟢 [5.1] Photo URL:", photoUrl.href);
+
+//     console.log("🟡 [6] Downloading image from Telegram");
+//     const imageResponse = await axios.get(photoUrl.href, {
+//       responseType: "arraybuffer",
+//       timeout: 30_000,
+//     });
+
+//     console.log("🟢 [6.1] Image downloaded, size:", imageResponse.data.byteLength);
+
+//     fs.writeFileSync(tempImagePath, imageResponse.data);
+//     console.log("🟢 [7] Temp image saved:", tempImagePath);
+
+//     console.log("🟡 [8] Sending image to OpenAI (images.edit)");
+//     console.time("🧠 OpenAI image edit");
+
+//     const response = await openai.images.edit({
+//       model: 'chatgpt-image-latest',
+//       image: await toFile(fs.createReadStream(tempImagePath), null, {
+//         type: "image/jpeg",
+//       }),
+//       prompt: POSTCARD_PHOTO_PROMPT + "\n" + prompt,
+//     });
+
+//     console.timeEnd("🧠 OpenAI image edit");
+//     console.log("🟢 [9] OpenAI responded");
+
+//     if (!response.data || response.data.length === 0) {
+//       throw new Error("OpenAI вернул пустой data[]");
+//     }
+
+//     const imageBase64 = response.data[0].b64_json;
+//     if (!imageBase64) {
+//       throw new Error("b64_json отсутствует");
+//     }
+
+//     console.log("🟢 [10] Decoding base64");
+//     const imageBuffer = Buffer.from(imageBase64, "base64");
+//     fs.writeFileSync(resultPath, imageBuffer);
+
+//     console.log("🟢 [11] Result image saved:", resultPath);
+
+//     console.log("🟡 [12] Sending photo to Telegram");
+//     const sentMessage = await ctx.telegram.sendPhoto(
+//       userId,
+//       { source: fs.createReadStream(resultPath) },
+//       {
+//         caption: "✅ <b>Ваша открытка готова!</b>",
+//         parse_mode: "HTML",
+//       }
+//     );
+
+//     console.log("🟢 [13] Photo sent");
+
+//     const fileId = sentMessage.photo.at(-1)?.file_id;
+//     console.log("🟢 [14] Telegram file_id:", fileId);
+
+//     await Database.saveGeneratedFile(
+//       userId,
+//       "postcard_photo",
+//       fileId,
+//       prompt
+//     );
+
+//     console.log("🟢 [15] Saved to DB");
+
+//     await ctx.telegram.sendMessage(
+//       userId,
+//       MAIN_MENU_MESSAGE,
+//       {
+//         parse_mode: "HTML",
+//         ...Markup.inlineKeyboard(mainMenuKeyboard),
+//       }
+//     );
+
+//     fs.unlinkSync(tempImagePath);
+//     fs.unlinkSync(resultPath);
+
+//     console.log("✅ [16] DONE");
+
+//   } catch (error) {
+//     console.error("❌ ERROR:", error);
+
+//     await Database.addBalance(
+//       userId,
+//       PRICES.POSTCARD_PHOTO,
+//       "Возврат средств за ошибку генерации",
+//       "bonus"
+//     );
+
+//     await ctx.telegram.sendMessage(
+//       userId,
+//       "❌ Произошла ошибка при генерации. Средства возвращены."
+//     );
+//   }
+// }

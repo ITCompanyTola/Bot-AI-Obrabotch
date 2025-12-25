@@ -3,6 +3,9 @@ import { BotContext, UserState } from '../types';
 import { Database } from '../database';
 import { createPayment, checkPaymentStatus } from '../services/paymentService';
 import { logToFile } from '../bot';
+import crypto from 'crypto';
+
+const {v4: uuidv4} = require('uuid');
 
 async function showPaymentMessage(ctx: any, amount: number, userStates: Map<number, UserState>, backAction: string, useReply: boolean = false) {
   const userId = ctx.from?.id;
@@ -44,6 +47,7 @@ ${payment.confirmationUrl}
 
     const keyboard = Markup.inlineKeyboard([
       [Markup.button.url(`💳 Оплатить ${amount}₽`, payment.confirmationUrl)],
+      // [Markup.button.callback('💳 Оплатить зарубежной картой', 'robokassa_pay')],
       [Markup.button.callback('Назад', backAction)]
     ]);
 
@@ -82,7 +86,18 @@ async function showRefillAmountSelection(
   const currentState = userStates.get(userId) || { step: null };
   userStates.set(userId, { ...currentState, refillSource, step: null, pendingPaymentAmount: undefined });
 
-  const refillMessage = `Выберете сумму для пополнения баланса ⤵️`;
+  const refillMessage = `
+🎉 <b>Акция!</b>
+
+💰 <b>Ваши выгоды:</b>
+• 150₽ → <b>+20%</b> (180₽ на балансе)
+• 300₽ → <b>+30%</b> (390₽ на балансе)
+• 800₽ → <b>+60%</b> (1.280₽ на балансе)
+• 1.600₽ → <b>+90%</b> (3.040₽ на балансе — удвоение!)
+
+⏳<b>Акция продлится до 31 декабря</b>
+  
+Выберите сумму для пополнения баланса ⤵️`;
 
   const backActions = {
     photo: 'photo_animation',
@@ -95,20 +110,30 @@ async function showRefillAmountSelection(
     postcardText: 'postcard_text'
   };
 
-  const keyboard = Markup.inlineKeyboard([
+  const keyboard = [
     [
-      Markup.button.callback('150₽', 'refill_150'),
-      Markup.button.callback('300₽', 'refill_300'),
-      Markup.button.callback('800₽', 'refill_800'),
-      Markup.button.callback('1600₽', 'refill_1600')
+      {text: '150₽', callback_data: 'refill_150'},
+      {text: '300₽', callback_data: 'refill_300'},
+      {text: '800₽', callback_data: 'refill_800'},
+      {text: '1600₽', callback_data: 'refill_1600'}
     ],
-    [Markup.button.callback('Назад', backActions[refillSource])]
-  ]);
+    [{text: 'Назад', callback_data: backActions[refillSource]}]
+  ];
 
   if (useEdit && refillSource !== 'dm') {
-    await ctx.editMessageText(refillMessage, keyboard);
+    await ctx.editMessageText(refillMessage, {
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: keyboard
+      }
+    });
   } else {
-    await ctx.telegram.sendMessage(userId, refillMessage, keyboard);
+    await ctx.telegram.sendMessage(userId, refillMessage, {
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: keyboard
+      }
+    });
   }
 }
 
@@ -421,6 +446,42 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     
     await requestEmailOrProceed(ctx, 1600, userStates, backAction);
   });
+
+  // bot.action('robokassa_pay', async (ctx) => {
+  //   try {
+  //     await ctx.answerCbQuery();
+  //   } catch (error: any) {
+  //     if (!error.description?.includes('query is too old')) {
+  //       console.error('Ошибка answerCbQuery:', error.message);
+  //     }
+  //   }
+    
+  //   const userId = ctx.from?.id;
+  //   if (!userId) return;
+    
+  //   logToFile(`📝 robokassa_pay вызван: userId=${userId}`);
+    
+  //   const userState = userStates.get(userId);
+  //   if (userState?.paymentAmount === undefined) {
+  //     return;
+  //   }
+  //   const amount = userState?.paymentAmount.toString();
+  //   const invoiceId = Date.now();
+
+  //   // ВАЖНО: Описание (Description) НЕ включается в строку для подписи!
+  //   const crcString = `${process.env.MERCHANT_LOGIN}:${amount}:${invoiceId}:${process.env.ROBOKASSA_PASS_1}`;
+  //   const crc = crypto.createHash('md5').update(crcString).digest('hex');
+  //   console.log(crc);
+
+  //   const desc = 'Пополнение баланса';
+
+  //   // Кодируем описание для корректной передачи в URL    
+  //   const encodedDesc = encodeURIComponent(desc);
+
+  //   const paymentUrl = `https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=${process.env.MERCHANT_LOGIN}&OutSum=${amount}&InvId=${invoiceId}&SignatureValue=${crc}&IsTest=1`;
+
+  //   await ctx.telegram.sendMessage(userId, `📝 Переходите по ссылке: ${paymentUrl}`);
+  // })
 }
 
 export { showPaymentMessage };

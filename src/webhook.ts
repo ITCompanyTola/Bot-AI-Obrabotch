@@ -45,10 +45,16 @@ app.post('/webhook/yookassa', async (req, res) => {
         res.status(200).send('OK');
         return;
       }
+      
+      let bonus: number = 30;
+      if (amount > 200) bonus = 90;
+      if (amount > 500) bonus = 480;
+      if (amount > 1000) bonus = 1440;
 
+      const finalAmount = amount + bonus;
       await Database.addBalance(
         userId,
-        amount,
+        finalAmount,
         `Пополнение баланса через ЮKassa (${paymentId})`,
         'refill'
       );

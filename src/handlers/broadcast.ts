@@ -352,4 +352,27 @@ export function registerBroadcastHandlers(bot: Telegraf<BotContext>, userStates:
       await ctx.reply(`❌ Ошибка создания рассылки: ${error.message}`);
     }
   });
+
+  // bot.action('special_50', async (ctx) => {
+  //   try {
+  //     await ctx.answerCbQuery();
+  //   } catch (error: any) {
+  //     if (!error.description?.includes('query is too old')) {
+  //       console.error('Ошибка answerCbQuery:', error.message);
+  //     }
+  //   }
+    
+  //   const userId = ctx.from?.id;
+  //   if (!userId) return;
+  //   try {
+  //     await Database.addBalance(userId, 50, 'Специальный подарок 50₽');
+  //   } catch (error: any) {
+  //     console.log('❌ Ошибка добавления баланса:', error);
+  //     await ctx.reply(`❌ Ошибка добавления баланса`);
+  //     return;
+  //   }
+    
+  //   await ctx.deleteMessage();
+  //   await ctx.sendMessage('✅ Баланс успешно пополнен!');
+  // });
 }

@@ -89,7 +89,7 @@ app.post('/webhook/yookassa', async (req, res) => {
         console.log('❌ Ошибка получения реферальных данных:', error);
       }
       
-      console.log(`✅ Баланс пополнен: +${amount}₽ для пользователя ${userId}`);
+      console.log(`✅ Баланс пополнен: +${(amount + bonus)}₽ для пользователя ${userId}`);
 
       const newBalance = await Database.getUserBalance(userId);
 

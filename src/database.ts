@@ -969,8 +969,8 @@ export class Database {
     
     const result = await client.query(
       `INSERT INTO mailing_data 
-       (admin_id, message, entities, photo_file_id, video_file_id, button_text, button_callback, total_users)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       (admin_id, message, entities, photo_file_id, video_file_id, button_text, button_callback, bonus_amount, total_users)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         data.admin_id,
@@ -978,8 +978,9 @@ export class Database {
         entitiesForDb,
         data.photo_file_id,
         data.video_file_id,
-        data.button_text || null,  // Добавляем button_text
-        data.button_callback || null, // Добавляем button_callback
+        data.button_text || null,
+        data.button_callback || null,
+        data.bonus_amount || 0,  // ДОБАВЛЕНО: бонус, по умолчанию 0
         data.total_users
       ]
     );
@@ -1038,9 +1039,9 @@ export class Database {
     return {
       ...row,
       entities,
-      // Убедимся, что поля определены
       button_text: row.button_text || undefined,
-      button_callback: row.button_callback || undefined
+      button_callback: row.button_callback || undefined,
+      bonus_amount: row.bonus_amount || 0  // ДОБАВЛЕНО: бонус
     };
   } finally {
     client.release();
@@ -1122,6 +1123,15 @@ export class Database {
       );
 
       return result.rows[0];
+    } finally {
+      client.release();
+    }
+  }
+
+  static async stopAllMailings(): Promise<void> {
+    const client = await pool.connect();
+    try {
+      await client.query('DELETE FROM mailings WHERE status = $1', ['processing']);
     } finally {
       client.release();
     }

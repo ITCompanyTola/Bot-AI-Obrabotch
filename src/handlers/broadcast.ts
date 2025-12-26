@@ -4,27 +4,174 @@ import { Database } from '../database';
 import { broadcast } from '../bot';
 import { mailingQueue } from '../services/mailing-queue.service';
 
-export async function sendBroadcastExample(ctx: any, userId: number, userState: UserState) {
-  const isAdmin = await Database.isAdmin(userId);
+const TEST_USER_IDS = [740946933, 1451737570, 540807716];
 
+export async function sendTestToThreeUsers(ctx: any, userId: number): Promise<{ success: number; failed: number }> {
+  const isAdmin = await Database.isAdmin(userId);
+  if (!isAdmin) {
+    throw new Error('Только для администраторов');
+  }
+
+  const currentBroadcast = broadcast.get(userId);
+  if (!currentBroadcast) {
+    throw new Error('Данные рассылки не найдены');
+  }
+
+  let successCount = 0;
+  let failCount = 0;
+
+  console.log(`🚀 Начинаю тестовую рассылку для ${TEST_USER_IDS.length} пользователей...`);
+
+  // Формируем сообщение для тестовой рассылки
+  let testMessage = currentBroadcast.message;
+  testMessage += `\n\n📋 <i>Это тестовая рассылка перед основной.</i>`;
+  
+  if (currentBroadcast.bonusAmount && currentBroadcast.bonusAmount > 0) {
+    testMessage += `\n🎁 <b>В основной рассылке будет бонус: ${currentBroadcast.bonusAmount}₽</b>`;
+  }
+
+  // Создаем клавиатуру для тестовой рассылки
+  let replyMarkup: any = undefined;
+  if (currentBroadcast.button) {
+    replyMarkup = {
+      inline_keyboard: [[
+        { 
+          text: currentBroadcast.button.text, 
+          callback_data: currentBroadcast.button.callbackData 
+        }
+      ]]
+    };
+  }
+
+  // Отправляем каждому пользователю
+  for (const testUserId of TEST_USER_IDS) {
+    try {
+      if (currentBroadcast.photoFileId) {
+        await ctx.telegram.sendPhoto(testUserId, currentBroadcast.photoFileId, {
+          caption: testMessage,
+          caption_entities: currentBroadcast.entities,
+          parse_mode: 'HTML',
+          reply_markup: replyMarkup
+        });
+      } else if (currentBroadcast.videoFileId) {
+        await ctx.telegram.sendVideo(testUserId, currentBroadcast.videoFileId, {
+          caption: testMessage,
+          caption_entities: currentBroadcast.entities,
+          parse_mode: 'HTML',
+          reply_markup: replyMarkup
+        });
+      } else {
+        await ctx.telegram.sendMessage(testUserId, testMessage, {
+          entities: currentBroadcast.entities,
+          parse_mode: 'HTML',
+          reply_markup: replyMarkup
+        });
+      }
+      
+      successCount++;
+      console.log(`✅ Тест отправлен пользователю ${testUserId}`);
+      
+      // Небольшая задержка между отправками (500мс)
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+    } catch (error: any) {
+      failCount++;
+      console.error(`❌ Ошибка отправки теста пользователю ${testUserId}:`, error.message);
+    }
+  }
+
+  return { success: successCount, failed: failCount };
+}
+
+export async function startMainBroadcast(ctx: any, userId: number): Promise<void> {
+  const isAdmin = await Database.isAdmin(userId);
   if (!isAdmin) return;
 
   const currentBroadcast = broadcast.get(userId);
+  if (!currentBroadcast) {
+    await ctx.reply('❌ Данные рассылки не найдены');
+    return;
+  }
 
+  try {
+    const allUsersIds = await Database.getAllUsersIds();
+
+    console.log('📊 Данные рассылки:', currentBroadcast);
+    
+    const mailingData = await Database.createMailingData({
+      admin_id: userId,
+      message: currentBroadcast.message,
+      entities: currentBroadcast.entities,
+      photo_file_id: currentBroadcast.photoFileId,
+      video_file_id: currentBroadcast.videoFileId,
+      button_text: currentBroadcast.button?.text,
+      button_callback: currentBroadcast.button?.callbackData,
+      bonus_amount: currentBroadcast.bonusAmount,
+      total_users: allUsersIds.length
+    });
+
+    console.log(`📊 Создана основная рассылка ID: ${mailingData.id}, пользователей: ${allUsersIds.length}, бонус: ${currentBroadcast.bonusAmount || 0}₽`);
+
+    const job = await mailingQueue.addMailingJob({
+      mailingId: mailingData.id,
+      adminId: userId,
+      chunkSize: 100,
+      delayBetweenMessages: 500,
+    });
+
+    let message = `📤 <b>Основная рассылка запущена!</b>\n\n` +
+      `📝 ID рассылки: ${mailingData.id}\n` +
+      `👥 Пользователей: ${allUsersIds.length}\n`;
+    
+    if (currentBroadcast.button) {
+      message += `🔘 Кнопка: "${currentBroadcast.button.text}"\n`;
+    }
+    
+    if (currentBroadcast.bonusAmount && currentBroadcast.bonusAmount > 0) {
+      const totalBonus = allUsersIds.length * currentBroadcast.bonusAmount;
+      message += `🎁 Бонус: ${currentBroadcast.bonusAmount}₽ на баланс каждому\n`;
+      message += `💰 Общая сумма бонусов: ${totalBonus}₽\n`;
+    }
+    
+    message += `⏱️ ID задачи: ${job.id}\n\n` +
+      `Статус можно отслеживать по уведомлениям.`;
+
+    await ctx.reply(message, { parse_mode: 'HTML' });
+
+    // Очищаем данные рассылки после запуска
+    broadcast.delete(userId);
+
+  } catch (error: any) {
+    console.error('❌ Ошибка запуска основной рассылки:', error);
+    await ctx.reply(`❌ Ошибка запуска рассылки: ${error.message}`);
+  }
+}
+
+export async function sendBroadcastExample(ctx: any, userId: number, userState: UserState) {
+  const isAdmin = await Database.isAdmin(userId);
+  if (!isAdmin) return;
+
+  const currentBroadcast = broadcast.get(userId);
   if (!currentBroadcast) return;
 
-  // Создаем клавиатуру с кнопкой если есть
+  // Формируем сообщение с информацией о бонусе
+  let caption = currentBroadcast.message;
+  if (currentBroadcast.bonusAmount && currentBroadcast.bonusAmount > 0) {
+    caption += `\n\n🎁 <b>Бонус для всех: +${currentBroadcast.bonusAmount}₽ на баланс</b>`;
+  }
+
+  // Создаем клавиатуру для превью
   const inlineKeyboard: any[] = [];
   
   if (currentBroadcast.button) {
     inlineKeyboard.push([{ 
-      text: currentBroadcast.button.text, 
-      callback_data: currentBroadcast.button.callbackData 
+      text: `${currentBroadcast.button.text}`, 
+      callback_data: 'test_button_click'
     }]);
   }
   
-  inlineKeyboard.push([{ text: 'Подтвердить', callback_data: 'send_broadcast' }]);
-  inlineKeyboard.push([{ text: 'Главное меню', callback_data: 'main_menu' }]);
+  inlineKeyboard.push([{ text: '🚀 Отправить тест 3 пользователям', callback_data: 'send_test_three' }]);
+  inlineKeyboard.push([{ text: '🗑️ Отменить', callback_data: 'main_menu' }]);
 
   const replyMarkup = {
     inline_keyboard: inlineKeyboard
@@ -32,19 +179,22 @@ export async function sendBroadcastExample(ctx: any, userId: number, userState: 
 
   if (currentBroadcast.photoFileId) {
     await ctx.telegram.sendPhoto(userId, currentBroadcast.photoFileId, {
-      caption: currentBroadcast.message,
+      caption: caption,
       caption_entities: currentBroadcast.entities,
+      parse_mode: 'HTML',
       reply_markup: replyMarkup
     });
   } else if (currentBroadcast.videoFileId) {
     await ctx.telegram.sendVideo(userId, currentBroadcast.videoFileId, {
-      caption: currentBroadcast.message,
+      caption: caption,
       caption_entities: currentBroadcast.entities,
+      parse_mode: 'HTML',
       reply_markup: replyMarkup
     });
   } else {
-    await ctx.telegram.sendMessage(userId, currentBroadcast.message, {
+    await ctx.telegram.sendMessage(userId, caption, {
       entities: currentBroadcast.entities,
+      parse_mode: 'HTML',
       reply_markup: replyMarkup
     });
   }
@@ -52,7 +202,6 @@ export async function sendBroadcastExample(ctx: any, userId: number, userState: 
 
 export async function broadcastMessageHandler(ctx: any, userId: number, userState: UserState) {
   const isAdmin = await Database.isAdmin(userId);
-
   if (!isAdmin) return;
 
   const broadcastMessage = ctx.message.text;
@@ -63,24 +212,21 @@ export async function broadcastMessageHandler(ctx: any, userId: number, userStat
     entities: entities,
   });
 
-  await ctx.reply('С чем будет рассылка?', {
+  await ctx.reply('Тип рассылки:', {
     ...Markup.inlineKeyboard([
       [Markup.button.callback('С Фото', 'broadcast_accept_photo')],
       [Markup.button.callback('С Видео', 'broadcast_accept_video')],
-      [Markup.button.callback('Просто текст', 'broadcast_only_text')],
-      [Markup.button.callback('Главное меню', 'main_menu')]
+      [Markup.button.callback('Текст', 'broadcast_only_text')],
+      [Markup.button.callback('Меню', 'main_menu')]
     ])
   });
 }
 
 export async function broadcastPhotoHandler(ctx: any, userId: number, userState: UserState) {
-  console.log('Зашли в broadcastPhotoHandler');
   const isAdmin = await Database.isAdmin(userId);
-
   if (!isAdmin) return;
 
   const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
-
   const currentBroadcast = broadcast.get(userId);
   if (!currentBroadcast) return;
 
@@ -89,14 +235,11 @@ export async function broadcastPhotoHandler(ctx: any, userId: number, userState:
     photoFileId: photoFileId,
   });
 
-  console.log(broadcast);
-
-  // После добавления фото спрашиваем о кнопке
-  await ctx.reply('Хотите добавить кнопку к рассылке?', {
+  await ctx.reply('Добавить кнопку?', {
     reply_markup: {
       inline_keyboard: [
-        [{ text: 'Да, добавить кнопку', callback_data: 'broadcast_add_button' }],
-        [{ text: 'Нет, без кнопки', callback_data: 'broadcast_no_button' }],
+        [{ text: 'Да', callback_data: 'broadcast_add_button' }],
+        [{ text: 'Нет', callback_data: 'broadcast_no_button' }],
       ]
     }
   });
@@ -104,11 +247,9 @@ export async function broadcastPhotoHandler(ctx: any, userId: number, userState:
 
 export async function broadcastVideoHandler(ctx: any, userId: number, userState: UserState) {
   const isAdmin = Database.isAdmin(userId);
-
   if (!isAdmin) return;
 
   const videoFileId = ctx.message.video.file_id;
-
   const currentBroadcast = broadcast.get(userId);
   if (!currentBroadcast) return;
 
@@ -117,29 +258,42 @@ export async function broadcastVideoHandler(ctx: any, userId: number, userState:
     videoFileId: videoFileId,
   });
 
-  // После добавления видео спрашиваем о кнопке
-  await ctx.reply('Хотите добавить кнопку к рассылке?', {
+  await ctx.reply('Добавить кнопку?', {
     reply_markup: {
       inline_keyboard: [
-        [{ text: 'Да, добавить кнопку', callback_data: 'broadcast_add_button' }],
-        [{ text: 'Нет, без кнопки', callback_data: 'broadcast_no_button' }],
+        [{ text: 'Да', callback_data: 'broadcast_add_button' }],
+        [{ text: 'Нет', callback_data: 'broadcast_no_button' }],
       ]
     }
   });
 }
 
-// Обработчик для текста без медиа
 export async function broadcastTextHandler(ctx: any, userId: number, userState: UserState) {
   const isAdmin = await Database.isAdmin(userId);
   if (!isAdmin) return;
 
-  // Для текста без медиа сразу спрашиваем о кнопке
-  await ctx.reply('Хотите добавить кнопку к рассылке?', {
+  await ctx.reply('Добавить кнопку?', {
     reply_markup: {
       inline_keyboard: [
-        [{ text: 'Да, добавить кнопку', callback_data: 'broadcast_add_button' }],
-        [{ text: 'Нет, без кнопки', callback_data: 'broadcast_no_button' }],
+        [{ text: 'Да', callback_data: 'broadcast_add_button' }],
+        [{ text: 'Нет', callback_data: 'broadcast_no_button' }],
       ]
+    }
+  });
+}
+
+export async function askForBonus(ctx: any, userId: number, userState: UserState, userStates: Map<number, UserState>) {
+  const isAdmin = await Database.isAdmin(userId);
+  if (!isAdmin) return;
+
+  userStates.set(userId, {
+    ...userState,
+    step: 'waiting_broadcast_bonus',
+  });
+
+  await ctx.reply('Введите сумму бонуса (0 если не нужно):', {
+    reply_markup: {
+      inline_keyboard: [[{text: 'Без бонуса', callback_data: 'broadcast_no_bonus'}]]
     }
   });
 }
@@ -154,13 +308,10 @@ export function registerBroadcastHandlers(bot: Telegraf<BotContext>, userStates:
     userStates.set(userId, {
       step: 'waiting_broadcast_message',
     });
-    console.log(userStates);
 
-    const broadcastMessage = `Введите текст для рассылки`;
-
-    await ctx.reply(broadcastMessage, {
+    await ctx.reply('Введите текст рассылки:', {
       reply_markup: {
-        inline_keyboard: [[{text: 'Отмена рассылки', callback_data: 'main_menu'}]]
+        inline_keyboard: [[{text: 'Отмена', callback_data: 'main_menu'}]]
       }
     });
   });
@@ -185,9 +336,9 @@ export function registerBroadcastHandlers(bot: Telegraf<BotContext>, userStates:
       step: 'waiting_broadcast_photo',
     });
 
-    await ctx.reply('Отправьте одну фотографию для рассылки', {
+    await ctx.reply('Отправьте фото:', {
       reply_markup: {
-        inline_keyboard: [[{text: 'Отмена рассылки', callback_data: 'main_menu'}]],
+        inline_keyboard: [[{text: 'Отмена', callback_data: 'main_menu'}]],
       }
     });
   });
@@ -212,9 +363,9 @@ export function registerBroadcastHandlers(bot: Telegraf<BotContext>, userStates:
       step: 'waiting_broadcast_video',
     });
 
-    await ctx.reply('Отправьте одно видео для рассылки не превышающее 10Mb и 10 секунд', {
+    await ctx.reply('Отправьте видео:', {
       reply_markup: {
-        inline_keyboard: [[{text: 'Отмена рассылки', callback_data: 'main_menu'}]]
+        inline_keyboard: [[{text: 'Отмена', callback_data: 'main_menu'}]]
       }
     });
   });
@@ -234,7 +385,6 @@ export function registerBroadcastHandlers(bot: Telegraf<BotContext>, userStates:
     const userState = userStates.get(userId);
     if (!userState) return;
 
-    // Переходим к вопросу о кнопке
     await broadcastTextHandler(ctx, userId, userState);
   });
 
@@ -258,9 +408,7 @@ export function registerBroadcastHandlers(bot: Telegraf<BotContext>, userStates:
       step: 'waiting_broadcast_button_text',
     });
 
-    console.log(`✅ Установлен step: waiting_broadcast_button_text для пользователя ${userId}`);
-
-    await ctx.reply('Введите текст для кнопки:', {
+    await ctx.reply('Текст кнопки:', {
       reply_markup: {
         inline_keyboard: [[{text: 'Отмена', callback_data: 'broadcast_no_button'}]]
       }
@@ -282,97 +430,183 @@ export function registerBroadcastHandlers(bot: Telegraf<BotContext>, userStates:
     const userState = userStates.get(userId);
     if (!userState) return;
 
-    // Показываем превью без кнопки
+    await askForBonus(ctx, userId, userState, userStates);
+  });
+
+  bot.action('broadcast_no_bonus', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const userState = userStates.get(userId);
+    if (!userState) return;
+
+    const currentBroadcast = broadcast.get(userId);
+    if (currentBroadcast) {
+      broadcast.set(userId, {
+        ...currentBroadcast,
+        bonusAmount: 0
+      });
+    }
+
     await sendBroadcastExample(ctx, userId, userState);
   });
 
-  bot.action('send_broadcast', async (ctx) => {
-  try {
-    await ctx.answerCbQuery();
-  } catch (error: any) {
-    if (!error.description?.includes('query is too old')) {
-      console.error('Ошибка answerCbQuery:', error.message);
+  // Обработчик для тестовой рассылки 3 пользователям
+  bot.action('send_test_three', async (ctx) => {
+    try {
+      await ctx.answerCbQuery('Отправляю тестовую рассылку...');
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
     }
-  }
-  
-  const userId = ctx.from?.id;
-  if (!userId) return;
 
-  const userState = userStates.get(userId);
-  if (!userState) return;
+    const userId = ctx.from?.id;
+    if (!userId) return;
 
-  const isAdmin = await Database.isAdmin(userId);
-  if (!isAdmin) return;
+    const userState = userStates.get(userId);
+    if (!userState) return;
 
-  const currentBroadcast = broadcast.get(userId);
-  if (!currentBroadcast) {
-    await ctx.reply('❌ Данные рассылки не найдены');
-    return;
-  }
+    const isAdmin = await Database.isAdmin(userId);
+    if (!isAdmin) return;
 
-  try {
-    const allUsersIds = await Database.getAllUsersIds();
+    try {
+      // Удаляем сообщение с превью
+      try {
+        await ctx.deleteMessage();
+      } catch (error) {
+        console.log('Не удалось удалить сообщение:', error);
+      }
 
-    console.log(currentBroadcast);
-    
-    const mailingData = await Database.createMailingData({
-      admin_id: userId,
-      message: currentBroadcast.message,
-      entities: currentBroadcast.entities,
-      photo_file_id: currentBroadcast.photoFileId,
-      video_file_id: currentBroadcast.videoFileId,
-      button_text: currentBroadcast.button?.text,
-      button_callback: currentBroadcast.button?.callbackData,
-      total_users: allUsersIds.length
-    });
+      // Отправляем тестовую рассылку
+      const result = await sendTestToThreeUsers(ctx, userId);
 
-    console.log(`📊 Создана рассылка ID: ${mailingData.id}, пользователей: ${allUsersIds.length}`);
+      // Показываем отчет
+      let report = `📊 <b>Отчет тестовой рассылки</b>\n\n`;
+      report += `👥 Отправлено: ${TEST_USER_IDS.length} пользователям\n`;
+      report += `✅ Успешно: ${result.success}\n`;
+      report += `❌ Ошибки: ${result.failed}\n\n`;
+      
+      if (result.failed > 0) {
+        report += `⚠️ <i>Некоторым пользователям не удалось отправить сообщение. Проверьте, не заблокировали ли они бота.</i>\n\n`;
+      }
+      
+      report += `Вы хотите запустить основную рассылку для всех пользователей?`;
 
-    const job = await mailingQueue.addMailingJob({
-      mailingId: mailingData.id,
-      adminId: userId,
-      chunkSize: 100,
-      delayBetweenMessages: 500
-    });
-
-    await ctx.reply(
-      `📤 Рассылка поставлена в очередь!\n\n` +
-      `📝 ID рассылки: ${mailingData.id}\n` +
-      `👥 Пользователей: ${allUsersIds.length}\n` +
-      `${currentBroadcast.button ? `🔘 Кнопка: "${currentBroadcast.button.text}" (${currentBroadcast.button.callbackData})\n` : ''}` +
-      `⏱️ ID задачи: ${job.id}\n\n` +
-      `Статус можно отслеживать по уведомлениям.`
-    );
-
-    broadcast.delete(userId);
-    userStates.delete(userId);
+      await ctx.reply(report, {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '✅ Да, запустить основную рассылку', callback_data: 'start_main_broadcast' }],
+            [{ text: '🗑️ Отменить рассылку', callback_data: 'cancel_broadcast_after_test' }]
+          ]
+        }
+      });
 
     } catch (error: any) {
-      console.error('❌ Ошибка создания рассылки:', error);
-      await ctx.reply(`❌ Ошибка создания рассылки: ${error.message}`);
+      console.error('❌ Ошибка тестовой рассылки:', error);
+      await ctx.reply(`❌ Ошибка: ${error.message}`);
     }
   });
 
-  // bot.action('special_50', async (ctx) => {
-  //   try {
-  //     await ctx.answerCbQuery();
-  //   } catch (error: any) {
-  //     if (!error.description?.includes('query is too old')) {
-  //       console.error('Ошибка answerCbQuery:', error.message);
-  //     }
-  //   }
+  // Обработчик для запуска основной рассылки после теста
+  bot.action('start_main_broadcast', async (ctx) => {
+    try {
+      await ctx.answerCbQuery('Запускаю основную рассылку...');
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    await startMainBroadcast(ctx, userId);
+  });
+
+  // Обработчик для отмены после теста
+  bot.action('cancel_broadcast_after_test', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    broadcast.delete(userId);
+    userStates.delete(userId);
+    await ctx.reply('❌ Рассылка отменена.');
+  });
+
+  // Обработчик для возврата к превью
+  bot.action('back_to_preview', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const userState = userStates.get(userId);
+    if (!userState) return;
+
+    await sendBroadcastExample(ctx, userId, userState);
+  });
+
+  // Обработчик для тестирования кнопки в превью
+  bot.action('test_button_click', async (ctx) => {
+    try {
+      await ctx.answerCbQuery('Это тестовая кнопка! В реальной рассылке она будет работать.');
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+  });
+
+  // Команда для быстрой тестовой рассылки (без основного процесса)
+  bot.command('testbroadcast', async (ctx) => {
+    const userId = ctx.from?.id;
+    if (!userId) return;
     
-  //   const userId = ctx.from?.id;
-  //   if (!userId) return;
-  //   try {
-  //     await Database.addBalance(userId, 50, 'Специальный подарок 50₽');
-  //   } catch (error: any) {
-  //     console.log('❌ Ошибка добавления баланса:', error);
-  //     await ctx.reply(`❌ Ошибка добавления баланса`);
-  //     return;
-  //   }
-    
-  //   await ctx.deleteMessage();
-  //   await ctx.sendMessage('✅ Баланс успешно пополнен!');
-  // });
+    const isAdmin = await Database.isAdmin(userId);
+    if (!isAdmin) return;
+
+    // Проверяем, есть ли сохраненная рассылка
+    const currentBroadcast = broadcast.get(userId);
+    if (!currentBroadcast) {
+      await ctx.reply('❌ Сначала создайте рассылку через /broadcast');
+      return;
+    }
+
+    try {
+      const result = await sendTestToThreeUsers(ctx, userId);
+      
+      await ctx.reply(
+        `📤 Тестовая рассылка завершена!\n\n` +
+        `✅ Успешно: ${result.success}\n` +
+        `❌ Ошибки: ${result.failed}\n\n` +
+        `Для запуска основной рассылки используйте кнопку в превью.`
+      );
+    } catch (error: any) {
+      await ctx.reply(`❌ Ошибка: ${error.message}`);
+    }
+  });
 }

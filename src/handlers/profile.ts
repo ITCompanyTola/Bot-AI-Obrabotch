@@ -34,7 +34,7 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>, userStates: M
 <blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽</blockquote>
     `.trim();
 
-    await ctx.editMessageText(
+    await ctx.reply(
       profileMessage,
       {
         parse_mode: 'HTML',

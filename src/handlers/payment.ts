@@ -447,41 +447,51 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     await requestEmailOrProceed(ctx, 1600, userStates, backAction);
   });
 
-  // bot.action('robokassa_pay', async (ctx) => {
-  //   try {
-  //     await ctx.answerCbQuery();
-  //   } catch (error: any) {
-  //     if (!error.description?.includes('query is too old')) {
-  //       console.error('Ошибка answerCbQuery:', error.message);
-  //     }
-  //   }
+  bot.command('robokassa_pay', async (ctx) => {
+    console.log('📝 robokassa_pay вызван');
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
     
-  //   const userId = ctx.from?.id;
-  //   if (!userId) return;
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const isAdmin = await Database.isAdmin(userId);
+    if (!isAdmin) return;
     
-  //   logToFile(`📝 robokassa_pay вызван: userId=${userId}`);
+    console.log(`📝 robokassa_pay вызван: userId=${userId}`);
     
-  //   const userState = userStates.get(userId);
-  //   if (userState?.paymentAmount === undefined) {
-  //     return;
-  //   }
-  //   const amount = userState?.paymentAmount.toString();
-  //   const invoiceId = Date.now();
+    const userState = userStates.get(userId);
+    // if (userState?.paymentAmount === undefined) {
+    //   return;
+    // }
 
-  //   // ВАЖНО: Описание (Description) НЕ включается в строку для подписи!
-  //   const crcString = `${process.env.MERCHANT_LOGIN}:${amount}:${invoiceId}:${process.env.ROBOKASSA_PASS_1}`;
-  //   const crc = crypto.createHash('md5').update(crcString).digest('hex');
-  //   console.log(crc);
+    const invoiceId = Date.now();
+    const amount = '5'
 
-  //   const desc = 'Пополнение баланса';
+    const crcString = `${process.env.MERCHANT_LOGIN}:${amount}:${invoiceId}:${process.env.ROBOKASSA_PASS_1}:Shp_user_id=${userId}`;
+    const crc = crypto.createHash('md5').update(crcString).digest('hex');
 
-  //   // Кодируем описание для корректной передачи в URL    
-  //   const encodedDesc = encodeURIComponent(desc);
+    const paymentUrl =
+      `https://auth.robokassa.ru/Merchant/Index.aspx` +
+      `?MerchantLogin=${process.env.MERCHANT_LOGIN}` +
+      `&OutSum=${amount}` +
+      `&InvId=${invoiceId}` +
+      `&SignatureValue=${crc}` +
+      `&Shp_user_id=${userId}` +
+      `&IsTest=1`;
 
-  //   const paymentUrl = `https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=${process.env.MERCHANT_LOGIN}&OutSum=${amount}&InvId=${invoiceId}&SignatureValue=${crc}&IsTest=1`;
+    await Database.savePendingPayment(userId, String(invoiceId), Number(amount));
 
-  //   await ctx.telegram.sendMessage(userId, `📝 Переходите по ссылке: ${paymentUrl}`);
-  // })
+    await ctx.telegram.sendMessage(
+      userId,
+      `💳 Оплата через Robokassa:\n${paymentUrl}`
+    );
+  });
 }
 
 export { showPaymentMessage };

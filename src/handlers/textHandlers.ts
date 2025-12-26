@@ -6,7 +6,7 @@ import { processVideoGeneration } from '../services/klingService';
 import { broadcast, logToFile } from '../bot';
 import { processPhotoRestoration, processDMPhotoCreation } from '../services/nanoBananaService';
 import { processPhotoColorize, processPostcardCreationWithBananaPro } from '../services/nanoBananaProService';
-import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler, sendBroadcastExample } from './broadcast';
+import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler, sendBroadcastExample, askForBonus } from './broadcast';
 import { processVideoDMGeneration } from '../services/veoService';
 import { updatePrompt } from '../services/openaiService';
 import { processPostcardCreation } from '../services/fluxService';
@@ -73,8 +73,6 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       userStates.delete(userId);
     }
 
-
-    // Выполняется один раз
     if (userState?.step === 'waiting_DM_photo_generation') {
       const photo = ctx.message.photo[ctx.message.photo.length - 1];
       const prompt = 'Russian Father Frost, long red coat down to the floor, thick white fur trim, gold braid, red belt, tall red hat with fur and gold trim, very long curly white beard down to his waist, red mittens with fur, majestic posture, photorealistic, premium class. Santa Claus should be approximately 165 cm tall and fit well into the loaded image';
@@ -96,7 +94,6 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
       const postcardPrompt = POSTCARD_PHOTO_PROMPT;
 
-      // generatePostcard(ctx, userId, postcardPrompt, photoFileId);
       processPostcardCreationWithBananaPro(ctx, userId, photoFileId, postcardPrompt);
 
       userStates.delete(userId);
@@ -114,13 +111,11 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       return;
     }
 
-    // Обработка текста кнопки для рассылки
     if (userState?.step === 'waiting_broadcast_button_text') {
       const buttonText = ctx.message.text;
       
       console.log(`✅ Получен текст кнопки от ${userId}: "${buttonText}"`);
       
-      // Сохраняем текст кнопки в userState
       userStates.set(userId, {
         ...userState,
         step: 'waiting_broadcast_button_callback',
@@ -135,21 +130,19 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       return;
     }
 
-    // Обработка callback_data для кнопки рассылки
     if (userState?.step === 'waiting_broadcast_button_callback') {
       const callbackData = ctx.message.text;
       
-      console.log(`✅ Получен callback_data от ${userId}: "${callbackData}"`);
+      console.log(`Callback_data: "${callbackData}"`);
       
-      // Валидация длины callback_data
       if (callbackData.length > 64) {
-        await ctx.reply('❌ Ошибка: callback_data не должен превышать 64 символа. Введите еще раз:');
+        await ctx.reply('Слишком длинный (max 64):');
         return;
       }
 
       const currentBroadcast = broadcast.get(userId);
       if (!currentBroadcast) {
-        await ctx.reply('❌ Данные рассылки не найдены. Начните заново.');
+        await ctx.reply('Ошибка');
         userStates.delete(userId);
         return;
       }
@@ -163,16 +156,40 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
         }
       });
 
-      // Показываем превью с кнопкой
-      await sendBroadcastExample(ctx, userId, userState);
+      await askForBonus(ctx, userId, userState, userStates);
+      return;
+    }
+
+    if (userState?.step === 'waiting_broadcast_bonus') {
+      const bonusText = ctx.message.text.trim();
+      const bonusAmount = parseFloat(bonusText);
+
+      console.log(`Бонус: ${bonusAmount}`);
       
-      // Очищаем временные данные из userState
+      if (isNaN(bonusAmount)) {
+        await ctx.reply('Введите число:');
+        return;
+      }
+      
+      if (bonusAmount < 0) {
+        await ctx.reply('Число должно быть ≥ 0:');
+        return;
+      }
+      
+      const currentBroadcast = broadcast.get(userId);
+      if (currentBroadcast) {
+        broadcast.set(userId, {
+          ...currentBroadcast,
+          bonusAmount: bonusAmount
+        });
+      }
+      
       userStates.set(userId, {
         ...userState,
-        step: null,
-        broadcastButtonText: undefined,
-        broadcastButtonCallback: undefined
+        step: null
       });
+      
+      await sendBroadcastExample(ctx, userId, userState);
       return;
     }
 

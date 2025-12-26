@@ -476,6 +476,7 @@ https://t.me/obrabotych_support
 
 <b>Рассылка</b>
 * /broadcast - Рассылка сообщений пользователям
+* /stop_mailings - Завершить все активные рассылки
 
 <b><i>Callback команды для кнопки:</i></b>
 Оживить фото: <code>photo_animation</code>
@@ -603,4 +604,30 @@ https://t.me/obrabotych_support
       }
     );
   });
+
+  bot.command('stop_mailings', async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes('query is too old')) {
+        console.error('Ошибка answerCbQuery:', error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const isAdmin = await Database.isAdmin(userId);
+    if (!isAdmin) return;
+
+    try {
+      await Database.stopAllMailings();
+    } catch (error: any) {
+      console.log('Ошибка:', error);
+      await ctx.reply(`Ошибка: ${error.message}`);
+    }
+    
+    await ctx.reply('Рассылки остановлены');
+  });
 }
+

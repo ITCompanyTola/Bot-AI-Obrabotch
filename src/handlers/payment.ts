@@ -470,8 +470,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
     //   return;
     // }
 
-    const invoiceId = Date.now();
-    const amount = '5'
+    const invoiceId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    const amount = '5.00';
 
     const crcString = `${process.env.MERCHANT_LOGIN}:${amount}:${invoiceId}:${process.env.ROBOKASSA_PASS_1}:Shp_user_id=${userId}`;
     const crc = crypto.createHash('md5').update(crcString).digest('hex');
@@ -482,8 +482,7 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>, userStates: M
       `&OutSum=${amount}` +
       `&InvId=${invoiceId}` +
       `&SignatureValue=${crc}` +
-      `&Shp_user_id=${userId}` +
-      `&IsTest=1`;
+      `&Shp_user_id=${userId}`;
 
     await Database.savePendingPayment(userId, String(invoiceId), Number(amount));
 

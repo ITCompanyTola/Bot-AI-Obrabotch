@@ -13,7 +13,6 @@ export class MailingWorker {
   private readonly PROGRESS_UPDATE_INTERVAL = 1000;
 
   constructor() {
-    // Создаем отдельный экземпляр бота для воркера
     this.bot = new Telegraf(config.botToken);
     this.setupQueue();
     this.setupWorker();
@@ -104,22 +103,22 @@ export class MailingWorker {
     let processed = 0;
     let progress: MailingProgress = { sent: 0, failed: 0, blocked: 0 };
 
-    // Обновляем общее количество пользователей
     await Database.updateMailingStats(mailingId, {
       total_users: totalUsers,
     });
 
-    // Отправляем начальное уведомление
+    let bonusInfo = '';
+    if (mailing.bonus_amount && mailing.bonus_amount > 0) {
+      bonusInfo = `Бонус: ${mailing.bonus_amount}₽\n`;
+    }
+    
     await this.notifyAdmin(
       adminId,
       `Начата рассылка #${mailingId}\n` +
-        `👥 Всего пользователей: ${totalUsers}\n` +
-        `💬 Сообщение: ${mailing.message.substring(0, 50)}${
-          mailing.message.length > 50 ? "..." : ""
-        }`
+      `${bonusInfo}` +
+      `Пользователей: ${totalUsers}`
     );
 
-    // Обрабатываем пользователей порциями
     while (processed < totalUsers) {
       const users = await Database.getUsersBatch(processed, chunkSize);
 
@@ -127,6 +126,20 @@ export class MailingWorker {
         try {
           await this.sendMessageToUser(userId, mailing);
           progress.sent++;
+          
+          if (mailing.bonus_amount && mailing.bonus_amount > 0) {
+            try {
+              await Database.addBalance(
+                userId, 
+                mailing.bonus_amount, 
+                `Бонус из рассылки #${mailingId}`,
+                'bonus'
+              );
+              console.log(`Начислен бонус ${mailing.bonus_amount}₽ пользователю ${userId}`);
+            } catch (bonusError) {
+              console.error(`Ошибка начисления бонуса пользователю ${userId}:`, bonusError);
+            }
+          }
 
           await Database.createMailingTask({
             mailing_id: mailingId,
@@ -145,14 +158,12 @@ export class MailingWorker {
           });
         }
 
-        // Задержка между сообщениями
         if (delayBetweenMessages > 0) {
           await this.delay(delayBetweenMessages);
         }
 
         processed++;
 
-        // Обновляем счетчики каждые 1000 сообщений
         if (processed % this.PROGRESS_UPDATE_INTERVAL === 0) {
           await this.updateProgress(
             adminId,
@@ -164,7 +175,6 @@ export class MailingWorker {
         }
       }
 
-      // Обновляем счетчики в БД после каждой порции
       await Database.updateMailingStats(mailingId, {
         sent_count: progress.sent,
         failed_count: progress.failed,
@@ -172,7 +182,6 @@ export class MailingWorker {
       });
     }
 
-    // Завершаем рассылку
     await Database.updateMailingStats(mailingId, {
       sent_count: progress.sent,
       failed_count: progress.failed,
@@ -180,15 +189,13 @@ export class MailingWorker {
       status: "completed",
     });
 
-    // Отправляем итоговое уведомление
-    await this.sendFinalReport(adminId, mailingId, progress, totalUsers);
+    await this.sendFinalReport(adminId, mailingId, progress, totalUsers, mailing.bonus_amount);
 
     console.log(`✅ Рассылка ${mailingId} завершена`);
   }
 
   private async sendMessageToUser(userId: number, mailing: any): Promise<void> {
     try {
-      // Создаем клавиатуру с кнопкой если есть
       let replyMarkup: any = undefined;
       
       if (mailing.button_text && mailing.button_callback) {
@@ -240,9 +247,7 @@ export class MailingWorker {
 
   private determineErrorStatus(error: any): "failed" | "blocked" {
     const errorMessage = error.message || "";
-
     if (errorMessage.includes("bot was blocked")) return "blocked";
-
     return 'failed';
   }
 
@@ -257,10 +262,10 @@ export class MailingWorker {
 
     await this.notifyAdmin(
       adminId,
-      `📊 Прогресс рассылки #${mailingId}: ${percentage}%\n` +
-        `✅ Отправлено: ${progress.sent}\n` +
-        `❌ Ошибки: ${progress.failed}\n` +
-        `🚫 Заблокировано: ${progress.blocked}`
+      `Прогресс рассылки #${mailingId}: ${percentage}%\n` +
+        `Отправлено: ${progress.sent}\n` +
+        `Ошибки: ${progress.failed}\n` +
+        `Заблокировано: ${progress.blocked}`
     );
   }
 
@@ -268,19 +273,27 @@ export class MailingWorker {
     adminId: number,
     mailingId: number,
     progress: MailingProgress,
-    totalUsers: number
+    totalUsers: number,
+    bonusAmount?: number
   ): Promise<void> {
     const successRate =
       totalUsers > 0 ? Math.round((progress.sent / totalUsers) * 100) : 0;
 
+    let bonusInfo = '';
+    if (bonusAmount && bonusAmount > 0) {
+      const totalBonus = progress.sent * bonusAmount;
+      bonusInfo = `Всего бонусов: ${totalBonus}₽ (${bonusAmount}₽ × ${progress.sent})\n`;
+    }
+
     await this.notifyAdmin(
       adminId,
-      `Рассылка #${mailingId} завершена!\n\n` +
+      `Рассылка #${mailingId} завершена\n\n` +
         `Итоги:\n` +
-        `👥 Всего пользователей: ${totalUsers}\n` +
-        `✅ Успешно отправлено: ${progress.sent} (${successRate}%)\n` +
-        `❌ Ошибки отправки: ${progress.failed}\n` +
-        `🚫 Заблокировали бота: ${progress.blocked}`
+        `Пользователей: ${totalUsers}\n` +
+        `Отправлено: ${progress.sent} (${successRate}%)\n` +
+        `Ошибки: ${progress.failed}\n` +
+        `Заблокировали: ${progress.blocked}\n` +
+        `${bonusInfo}`
     );
   }
 

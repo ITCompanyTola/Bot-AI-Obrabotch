@@ -10,7 +10,7 @@ import { broadcastMessageHandler, broadcastPhotoHandler, broadcastVideoHandler, 
 import { processVideoDMGeneration } from '../services/veoService';
 import { updatePrompt } from '../services/openaiService';
 import { processPostcardCreation } from '../services/fluxService';
-// import { generatePostcard } from '../services/chatGPTService';
+import { generatePostcard } from '../services/chatGPTService';
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -94,7 +94,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>, userStates: Map<
       const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
       const postcardPrompt = POSTCARD_PHOTO_PROMPT;
 
-      processPostcardCreationWithBananaPro(ctx, userId, photoFileId, postcardPrompt);
+      generatePostcard(ctx, userId, postcardPrompt, photoFileId);
+      // processPostcardCreationWithBananaPro(ctx, userId, photoFileId, postcardPrompt);
 
       userStates.delete(userId);
     }

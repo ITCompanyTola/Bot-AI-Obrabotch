@@ -8,7 +8,7 @@ export const PRICES = {
   PHOTO_COLORIZE: 35,
   DED_MOROZ: 195,
   POSTCARD_TEXT: 45,
-  POSTCARD_PHOTO: 60
+  POSTCARD_PHOTO: 85
 };
 
 export const mainMenuKeyboard = [
@@ -303,3 +303,19 @@ IMPORTANT RULES:
 - The video must contain ONLY Santa Claus speaking.
 - The greeting must be AUDIO ONLY, without any visual text representation.
 - If any text would normally appear, it must be completely omitted.`.trim();
+
+export const getRobokassaReceipt = (amount: number) => {
+  return {
+    "sno": "usn_income",
+    "items": [
+      {
+        "name": "Автоматизированное создание мультимедийных рекламных материалов",
+        "quantity": 1,
+        "sum": amount,
+        "payment_method": "full_prepayment",
+        "payment_object": "service",
+        "tax": "vat7"
+      }
+    ]
+  }
+}

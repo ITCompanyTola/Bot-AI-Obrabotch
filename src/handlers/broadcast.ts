@@ -24,10 +24,10 @@ export async function sendTestToThreeUsers(ctx: any, userId: number): Promise<{ 
 
   // Формируем сообщение для тестовой рассылки
   let testMessage = currentBroadcast.message;
-  testMessage += `\n\n📋 <i>Это тестовая рассылка перед основной.</i>`;
+  testMessage += `\n\n📋 Это тестовая рассылка перед основной.`;
   
   if (currentBroadcast.bonusAmount && currentBroadcast.bonusAmount > 0) {
-    testMessage += `\n🎁 <b>В основной рассылке будет бонус: ${currentBroadcast.bonusAmount}₽</b>`;
+    testMessage += `\n🎁 В основной рассылке будет бонус: ${currentBroadcast.bonusAmount}₽`;
   }
 
   // Создаем клавиатуру для тестовой рассылки
@@ -50,20 +50,17 @@ export async function sendTestToThreeUsers(ctx: any, userId: number): Promise<{ 
         await ctx.telegram.sendPhoto(testUserId, currentBroadcast.photoFileId, {
           caption: testMessage,
           caption_entities: currentBroadcast.entities,
-          parse_mode: 'HTML',
           reply_markup: replyMarkup
         });
       } else if (currentBroadcast.videoFileId) {
         await ctx.telegram.sendVideo(testUserId, currentBroadcast.videoFileId, {
           caption: testMessage,
           caption_entities: currentBroadcast.entities,
-          parse_mode: 'HTML',
           reply_markup: replyMarkup
         });
       } else {
         await ctx.telegram.sendMessage(testUserId, testMessage, {
           entities: currentBroadcast.entities,
-          parse_mode: 'HTML',
           reply_markup: replyMarkup
         });
       }
@@ -153,11 +150,12 @@ export async function sendBroadcastExample(ctx: any, userId: number, userState: 
 
   const currentBroadcast = broadcast.get(userId);
   if (!currentBroadcast) return;
+  console.log(currentBroadcast);
 
   // Формируем сообщение с информацией о бонусе
   let caption = currentBroadcast.message;
   if (currentBroadcast.bonusAmount && currentBroadcast.bonusAmount > 0) {
-    caption += `\n\n🎁 <b>Бонус для всех: +${currentBroadcast.bonusAmount}₽ на баланс</b>`;
+    caption += `\n\n🎁 Бонус для всех: +${currentBroadcast.bonusAmount}₽ на баланс`;
   }
 
   // Создаем клавиатуру для превью
@@ -181,20 +179,17 @@ export async function sendBroadcastExample(ctx: any, userId: number, userState: 
     await ctx.telegram.sendPhoto(userId, currentBroadcast.photoFileId, {
       caption: caption,
       caption_entities: currentBroadcast.entities,
-      parse_mode: 'HTML',
       reply_markup: replyMarkup
     });
   } else if (currentBroadcast.videoFileId) {
     await ctx.telegram.sendVideo(userId, currentBroadcast.videoFileId, {
       caption: caption,
       caption_entities: currentBroadcast.entities,
-      parse_mode: 'HTML',
       reply_markup: replyMarkup
     });
   } else {
     await ctx.telegram.sendMessage(userId, caption, {
       entities: currentBroadcast.entities,
-      parse_mode: 'HTML',
       reply_markup: replyMarkup
     });
   }

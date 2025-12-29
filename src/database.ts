@@ -563,6 +563,36 @@ export class Database {
          WHERE u.source_key = $1 AND g.file_type = 'music'`,
         [keySubstring]
       );
+      const dmGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g
+         JOIN users u ON g.user_id = u.id
+         WHERE u.source_key = $1 AND g.file_type = 'dm_video'`,
+        [keySubstring]
+      );
+      const colorizeGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'colorize'`,
+        [keySubstring]
+      );
+      const restorationGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'restoration'`,
+        [keySubstring]
+      );
+      const postcardTextGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'postcard_text'`,
+        [keySubstring]
+      );
+      const postcardPhotoGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'postcard_photo'`,
+        [keySubstring]
+      );
 
       // За последние 7 дней
       const usersCount7d = await client.query(
@@ -591,6 +621,36 @@ export class Database {
         `SELECT COUNT(*) as count FROM generated_files g 
          JOIN users u ON g.user_id = u.id 
          WHERE u.source_key = $1 AND g.file_type = 'music' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const dmGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g
+         JOIN users u ON g.user_id = u.id
+         WHERE u.source_key = $1 AND g.file_type = 'dm_video' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const colorizeGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'colorize' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const restorationGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'restoration' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const postcardTextGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'postcard_text' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const postcardPhotoGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'postcard_photo' AND g.created_at >= $2`,
         [keySubstring, sevenDaysAgo]
       );
 
@@ -623,6 +683,36 @@ export class Database {
          WHERE u.source_key = $1 AND g.file_type = 'music' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
       );
+      const dmGenToday = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g
+         JOIN users u ON g.user_id = u.id
+         WHERE u.source_key = $1 AND g.file_type = 'dm_video' AND g.created_at >= $2`,
+        [keySubstring, startOfToday]
+      );
+      const colorizeGenToday = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'colorize' AND g.created_at >= $2`,
+        [keySubstring, startOfToday]
+      );
+      const restorationGenToday = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'restoration' AND g.created_at >= $2`,
+        [keySubstring, startOfToday]
+      );
+      const postcardTextGenToday = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'postcard_text' AND g.created_at >= $2`,
+        [keySubstring, startOfToday]
+      );
+      const postcardPhotoGenToday = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+         JOIN users u ON g.user_id = u.id 
+         WHERE u.source_key = $1 AND g.file_type = 'postcard_photo' AND g.created_at >= $2`,
+        [keySubstring, startOfToday]
+      );
 
       return {
         all: {
@@ -630,21 +720,36 @@ export class Database {
           successfulPayments: parseInt(paymentsCountAll.rows[0].count),
           totalPaymentsAmount: parseFloat(paymentsSumAll.rows[0].total),
           photoGenerations: parseInt(photoGenAll.rows[0].count),
-          musicGenerations: parseInt(musicGenAll.rows[0].count)
+          musicGenerations: parseInt(musicGenAll.rows[0].count),
+          dmVideoGenerations: parseInt(dmGenAll.rows[0].count),
+          colorizeGenerations: parseInt(colorizeGenAll.rows[0].count),
+          restorationGenerations: parseInt(restorationGenAll.rows[0].count),
+          postcardTextGenerations: parseInt(postcardTextGenAll.rows[0].count),
+          postcardPhotoGenerations: parseInt(postcardPhotoGenAll.rows[0].count)
         },
         last7Days: {
           usersCount: parseInt(usersCount7d.rows[0].count),
           successfulPayments: parseInt(paymentsCount7d.rows[0].count),
           totalPaymentsAmount: parseFloat(paymentsSum7d.rows[0].total),
           photoGenerations: parseInt(photoGen7d.rows[0].count),
-          musicGenerations: parseInt(musicGen7d.rows[0].count)
+          musicGenerations: parseInt(musicGen7d.rows[0].count),
+          dmVideoGenerations: parseInt(dmGen7d.rows[0].count),
+          colorizeGenerations: parseInt(colorizeGen7d.rows[0].count),
+          restorationGenerations: parseInt(restorationGen7d.rows[0].count),
+          postcardTextGenerations: parseInt(postcardTextGen7d.rows[0].count),
+          postcardPhotoGenerations: parseInt(postcardPhotoGen7d.rows[0].count)
         },
         today: {
           usersCount: parseInt(usersCountToday.rows[0].count),
           successfulPayments: parseInt(paymentsCountToday.rows[0].count),
           totalPaymentsAmount: parseFloat(paymentsSumToday.rows[0].total),
           photoGenerations: parseInt(photoGenToday.rows[0].count),
-          musicGenerations: parseInt(musicGenToday.rows[0].count)
+          musicGenerations: parseInt(musicGenToday.rows[0].count),
+          dmVideoGenerations: parseInt(dmGenToday.rows[0].count),
+          colorizeGenerations: parseInt(colorizeGenToday.rows[0].count),
+          restorationGenerations: parseInt(restorationGenToday.rows[0].count),
+          postcardTextGenerations: parseInt(postcardTextGenToday.rows[0].count),
+          postcardPhotoGenerations: parseInt(postcardPhotoGenToday.rows[0].count)
         }
       };
     } finally {

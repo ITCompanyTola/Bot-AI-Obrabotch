@@ -494,6 +494,10 @@ export class Database {
         `SELECT 
          COALESCE(SUM(
            CASE amount
+             WHEN 150 THEN 150
+             WHEN 300 THEN 300
+             WHEN 800 THEN 800
+             WHEN 1600 THEN 1600
              WHEN 180 THEN 150
              WHEN 390 THEN 300
              WHEN 1280 THEN 800
@@ -518,6 +522,10 @@ export class Database {
         `SELECT 
          COALESCE(SUM(
            CASE amount
+             WHEN 150 THEN 150
+             WHEN 300 THEN 300
+             WHEN 800 THEN 800
+             WHEN 1600 THEN 1600 
              WHEN 180 THEN 150
              WHEN 390 THEN 300
              WHEN 1280 THEN 800
@@ -543,6 +551,10 @@ export class Database {
         `SELECT 
          COALESCE(SUM(
            CASE amount
+             WHEN 150 THEN 150
+             WHEN 300 THEN 300
+             WHEN 800 THEN 800
+             WHEN 1600 THEN 1600
              WHEN 180 THEN 150
              WHEN 390 THEN 300
              WHEN 1280 THEN 800
@@ -707,6 +719,10 @@ export class Database {
         `SELECT 
          COALESCE(SUM(
            CASE t.amount
+             WHEN 150 THEN 150
+             WHEN 300 THEN 300
+             WHEN 800 THEN 800
+             WHEN 1600 THEN 1600
              WHEN 180 THEN 150
              WHEN 390 THEN 300
              WHEN 1280 THEN 800
@@ -735,6 +751,10 @@ export class Database {
         `SELECT 
          COALESCE(SUM(
            CASE t.amount
+             WHEN 150 THEN 150
+             WHEN 300 THEN 300
+             WHEN 800 THEN 800
+             WHEN 1600 THEN 1600
              WHEN 180 THEN 150
              WHEN 390 THEN 300
              WHEN 1280 THEN 800
@@ -763,6 +783,10 @@ export class Database {
         `SELECT 
          COALESCE(SUM(
            CASE t.amount
+             WHEN 150 THEN 150
+             WHEN 300 THEN 300
+             WHEN 800 THEN 800
+             WHEN 1600 THEN 1600
              WHEN 180 THEN 150
              WHEN 390 THEN 300
              WHEN 1280 THEN 800

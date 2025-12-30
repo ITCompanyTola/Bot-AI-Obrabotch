@@ -1,6 +1,5 @@
 import { Markup } from "telegraf";
 
-
 export const PRICES = {
   PHOTO_ANIMATION: 80,
   MUSIC_CREATION: 195,
@@ -8,23 +7,23 @@ export const PRICES = {
   PHOTO_COLORIZE: 35,
   DED_MOROZ: 195,
   POSTCARD_TEXT: 45,
-  POSTCARD_PHOTO: 85
+  POSTCARD_PHOTO: 85,
 };
 
 export const mainMenuKeyboard = [
-  [Markup.button.callback('🎅 Поздравление Д.Мороза', 'ded_moroz')],
-  [Markup.button.callback('🏞 Создать открытку', 'postcard')],
+  [Markup.button.callback("🎅 Поздравление Д.Мороза", "ded_moroz")],
+  [Markup.button.callback("🏞 Создать открытку", "postcard")],
   [
-    Markup.button.callback('📸 Оживить фото', 'photo_animation'),
-    Markup.button.callback('🎶 Создать музыку', 'music_creation')
+    Markup.button.callback("📸 Оживить фото", "photo_animation"),
+    Markup.button.callback("🎶 Создать музыку", "music_creation"),
   ],
   [
-    Markup.button.callback('✨ Реставрировать фото', 'photo_restoration'),
-    Markup.button.callback('🎨 ч/б в цветное фото', 'photo_colorize')
+    Markup.button.callback("✨ Реставрировать фото", "photo_restoration"),
+    Markup.button.callback("🎨 ч/б в цветное фото", "photo_colorize"),
   ],
-  [Markup.button.callback('Написать в поддержку', 'support')],
-  [Markup.button.callback('Личный кабинет', 'profile')]
-]
+  [Markup.button.callback("Написать в поддержку", "support")],
+  [Markup.button.callback("Личный кабинет", "profile")],
+];
 
 export const MAIN_MENU_MESSAGE = `
 💎 <b>Наш бот умеет:</b>
@@ -46,7 +45,8 @@ export const MAIN_MENU_MESSAGE = `
 
 ⏳<b>Акция продлится до 31 декабря</b>`.trim();
 
-export const getDedMorozMessage = (balance: number) => `
+export const getDedMorozMessage = (balance: number) =>
+  `
 <b>🎅 Хотите личное видео-поздравление от Деда Мороза на своём фото?</b>
 
 Вот как подарить самые тёплые новогодние пожелания:
@@ -63,21 +63,23 @@ export const getDedMorozMessage = (balance: number) => `
 <blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
 🎅 Генерация 1 поздравления: ${PRICES.DED_MOROZ.toFixed(2)}₽</blockquote>
 
-❗️<b>* - бот генерирует только одно фото и видео за раз</b>☝🏻`.trim()
+❗️<b>* - бот генерирует только одно фото и видео за раз</b>☝🏻`.trim();
 
-export const dedMorozStartMessage =`
+export const dedMorozStartMessage = `
 <b>Пример</b> ⤴️
 
-Отправьте <b><i>фотографию</i></b> — бот добавит на нее Деда Мороза 🎅`.trim()
+Отправьте <b><i>фотографию</i></b> — бот добавит на нее Деда Мороза 🎅`.trim();
 
-export const dedMorozStartMessageWithoutPhoto =`Отправьте <b><i>фотографию</i></b> — бот добавит на нее Деда Мороза 🎅`.trim()
+export const dedMorozStartMessageWithoutPhoto =
+  `Отправьте <b><i>фотографию</i></b> — бот добавит на нее Деда Мороза 🎅`.trim();
 
 export const DED_MOROZ_INSTRUCTION = `
 <b>📹 Видео-инструкция по генерации поздравления с Дедом Морозом</b>
 
-Смотрите короткое видео, чтобы правильно и качественно выполнять шаги и получать потрясающие результаты 🔥`.trim()
+Смотрите короткое видео, чтобы правильно и качественно выполнять шаги и получать потрясающие результаты 🔥`.trim();
 
-export const OPENROUTER_SERVICE_PROMPT = `Ты — эксперт по созданию точных и эффективных промптов для анимации фотографий (photo-to-video / live photos).
+export const OPENROUTER_SERVICE_PROMPT =
+  `Ты — эксперт по созданию точных и эффективных промптов для анимации фотографий (photo-to-video / live photos).
 
 Твоя задача: взять описание пользователя и переписать его в чёткий, однозначный промпт, который идеально подойдёт для ИИ-генератора анимации.
 
@@ -110,7 +112,8 @@ export const POSCTARD_MESSAGE = `
 
 Выберите нужную кнопку и создайте открытку, которая <b>подарит эмоции</b> и <b>запомнится надолго</b> 🔥`.trim();
 
-export const getPostcardMessage = (balance: number) => `
+export const getPostcardMessage = (balance: number) =>
+  `
 💌 <b>Хотите создать красивую персональную открытку для любого повода?</b>
 
 Это очень просто:
@@ -128,9 +131,10 @@ export const getPostcardMessage = (balance: number) => `
 export const POSTCARD_MESSAGE_START = `
 Отправьте <b><i>текст</i></b> для открытки по примеру ниже ⤵️
 
-<blockquote><code>Задача: Сгенерируй картинку с надписью "С Новым годом". Стиль картинки: новогодний, праздничный, радостный</code></blockquote>`.trim()
+<blockquote><code>Задача: Сгенерируй картинку с надписью "С Новым годом". Стиль картинки: новогодний, праздничный, радостный</code></blockquote>`.trim();
 
-export const getPostcardPhotoMessage = (balance: number) => `
+export const getPostcardPhotoMessage = (balance: number) =>
+  `
 🏞 <b>Создайте новогоднюю персональную открытку из вашего фото</b>
 
 Это очень просто:
@@ -145,14 +149,15 @@ export const getPostcardPhotoMessage = (balance: number) => `
 
 ❗️<b>* - бот генерирует только одну открытку за раз</b>☝🏻
 
-❗️<b>- отправляйте фото в хорошем качестве для лучшего результата</b>`.trim()
+❗️<b>- отправляйте фото в хорошем качестве для лучшего результата</b>`.trim();
 
 export const POSTCARD_PHOTO_START = `
 <b>Пример</b> ⤴️
 
-Отправьте <b><i>фотографию</i></b> — и она станет готовой открыткой 🏞`.trim()
+Отправьте <b><i>фотографию</i></b> — и она станет готовой открыткой 🏞`.trim();
 
-export const POSTCARD_PHOTO_START_WIHOUT = `Отправьте <b><i>фотографию</i></b> — и она станет готовой открыткой 🏞`.trim()
+export const POSTCARD_PHOTO_START_WIHOUT =
+  `Отправьте <b><i>фотографию</i></b> — и она станет готовой открыткой 🏞`.trim();
 
 export const POSTCARD_PHOTO_PROMPT = `
 Create a vintage Soviet New Year postcard illustration
@@ -201,7 +206,7 @@ Russian text: “С новым годом”.
 The inscription must be fully visible,
 placed in the reserved empty space,
 not overlapping faces or figures.
-`.trim()
+`.trim();
 
 export const POSTCARD_GENERATION_PROMPT = `
 You are a professional digital artist and graphic designer specializing in creating exquisite, high-impact greeting cards for all occasions. Your expertise spans photo-manipulation, typography, layout, and symbolic visual storytelling.
@@ -290,7 +295,8 @@ Your Response Format:
 
 Remember: You are a top-tier designer. Prioritize emotional resonance, aesthetic excellence, and flawless execution. Create a card that feels personal, professional, and unforgettable.`.trim();
 
-export const getDedMorozVideoPrompt = (prompt: string): string => `
+export const getDedMorozVideoPrompt = (prompt: string): string =>
+  `
 Santa Claus speaks the following greeting text aloud naturally: ${prompt}.
 
 IMPORTANT RULES:
@@ -306,16 +312,16 @@ IMPORTANT RULES:
 
 export const getRobokassaReceipt = (amount: number) => {
   return {
-    "sno": "usn_income",
-    "items": [
+    sno: "usn_income",
+    items: [
       {
-        "name": "Автоматизированное создание мультимедийных рекламных материалов",
-        "quantity": 1,
-        "sum": amount,
-        "payment_method": "full_prepayment",
-        "payment_object": "service",
-        "tax": "vat7"
-      }
-    ]
-  }
-}
+        name: "Автоматизированное создание мультимедийных рекламных материалов",
+        quantity: 1,
+        sum: amount,
+        payment_method: "full_prepayment",
+        payment_object: "service",
+        tax: "", // поменять на нет НДС
+      },
+    ],
+  };
+};

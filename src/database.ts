@@ -491,8 +491,71 @@ export class Database {
         `SELECT COUNT(*) as count FROM transactions WHERE type = 'refill'`
       );
       const paymentsSumAll = await client.query(
-        `SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'refill'`
+        `SELECT 
+         COALESCE(SUM(
+           CASE amount
+             WHEN 180 THEN 150
+             WHEN 390 THEN 300
+             WHEN 1280 THEN 800
+             WHEN 3040 THEN 1600
+             ELSE 0
+           END
+         ), 0) as total_rub 
+       FROM transactions 
+       WHERE type = 'refill'`
       );
+
+      // За последние 7 дней
+      const usersCount7d = await client.query(
+        "SELECT COUNT(*) as count FROM users WHERE created_at >= $1",
+        [sevenDaysAgo]
+      );
+      const paymentsCount7d = await client.query(
+        `SELECT COUNT(*) as count FROM transactions WHERE type = 'refill' AND created_at >= $1`,
+        [sevenDaysAgo]
+      );
+      const paymentsSum7d = await client.query(
+        `SELECT 
+         COALESCE(SUM(
+           CASE amount
+             WHEN 180 THEN 150
+             WHEN 390 THEN 300
+             WHEN 1280 THEN 800
+             WHEN 3040 THEN 1600
+             ELSE 0
+           END
+         ), 0) as total_rub 
+       FROM transactions 
+       WHERE type = 'refill' AND created_at >= $1`,
+        [sevenDaysAgo]
+      );
+
+      // За сегодня
+      const usersCountToday = await client.query(
+        "SELECT COUNT(*) as count FROM users WHERE created_at >= $1",
+        [startOfToday]
+      );
+      const paymentsCountToday = await client.query(
+        `SELECT COUNT(*) as count FROM transactions WHERE type = 'refill' AND created_at >= $1`,
+        [startOfToday]
+      );
+      const paymentsSumToday = await client.query(
+        `SELECT 
+         COALESCE(SUM(
+           CASE amount
+             WHEN 180 THEN 150
+             WHEN 390 THEN 300
+             WHEN 1280 THEN 800
+             WHEN 3040 THEN 1600
+             ELSE 0
+           END
+         ), 0) as total_rub 
+       FROM transactions 
+       WHERE type = 'refill' AND created_at >= $1`,
+        [startOfToday]
+      );
+
+      // Другие статистики остаются без изменений
       const photoGenAll = await client.query(
         `SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'photo'`
       );
@@ -515,19 +578,6 @@ export class Database {
         `SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'postcard_photo'`
       );
 
-      // За последние 7 дней
-      const usersCount7d = await client.query(
-        "SELECT COUNT(*) as count FROM users WHERE created_at >= $1",
-        [sevenDaysAgo]
-      );
-      const paymentsCount7d = await client.query(
-        `SELECT COUNT(*) as count FROM transactions WHERE type = 'refill' AND created_at >= $1`,
-        [sevenDaysAgo]
-      );
-      const paymentsSum7d = await client.query(
-        `SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'refill' AND created_at >= $1`,
-        [sevenDaysAgo]
-      );
       const photoGen7d = await client.query(
         `SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'photo' AND created_at >= $1`,
         [sevenDaysAgo]
@@ -557,19 +607,6 @@ export class Database {
         [sevenDaysAgo]
       );
 
-      // За сегодня
-      const usersCountToday = await client.query(
-        "SELECT COUNT(*) as count FROM users WHERE created_at >= $1",
-        [startOfToday]
-      );
-      const paymentsCountToday = await client.query(
-        `SELECT COUNT(*) as count FROM transactions WHERE type = 'refill' AND created_at >= $1`,
-        [startOfToday]
-      );
-      const paymentsSumToday = await client.query(
-        `SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'refill' AND created_at >= $1`,
-        [startOfToday]
-      );
       const photoGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'photo' AND created_at >= $1`,
         [startOfToday]
@@ -603,7 +640,7 @@ export class Database {
         all: {
           usersCount: parseInt(usersCountAll.rows[0].count),
           successfulPayments: parseInt(paymentsCountAll.rows[0].count),
-          totalPaymentsAmount: parseFloat(paymentsSumAll.rows[0].total),
+          totalPaymentsAmount: parseFloat(paymentsSumAll.rows[0].total_rub),
           photoGenerations: parseInt(photoGenAll.rows[0].count),
           musicGenerations: parseInt(musicGenAll.rows[0].count),
           restorationGenerations: parseInt(restorationGenAll.rows[0].count),
@@ -615,7 +652,7 @@ export class Database {
         last7Days: {
           usersCount: parseInt(usersCount7d.rows[0].count),
           successfulPayments: parseInt(paymentsCount7d.rows[0].count),
-          totalPaymentsAmount: parseFloat(paymentsSum7d.rows[0].total),
+          totalPaymentsAmount: parseFloat(paymentsSum7d.rows[0].total_rub),
           photoGenerations: parseInt(photoGen7d.rows[0].count),
           musicGenerations: parseInt(musicGen7d.rows[0].count),
           restorationGenerations: parseInt(restorationGen7d.rows[0].count),
@@ -627,7 +664,7 @@ export class Database {
         today: {
           usersCount: parseInt(usersCountToday.rows[0].count),
           successfulPayments: parseInt(paymentsCountToday.rows[0].count),
-          totalPaymentsAmount: parseFloat(paymentsSumToday.rows[0].total),
+          totalPaymentsAmount: parseFloat(paymentsSumToday.rows[0].total_rub),
           photoGenerations: parseInt(photoGenToday.rows[0].count),
           musicGenerations: parseInt(musicGenToday.rows[0].count),
           restorationGenerations: parseInt(restorationGenToday.rows[0].count),
@@ -662,56 +699,24 @@ export class Database {
       );
       const paymentsCountAll = await client.query(
         `SELECT COUNT(*) as count FROM transactions t 
-         JOIN users u ON t.user_id = u.id 
-         WHERE u.source_key = $1 AND t.type = 'refill'`,
+       JOIN users u ON t.user_id = u.id 
+       WHERE u.source_key = $1 AND t.type = 'refill'`,
         [keySubstring]
       );
       const paymentsSumAll = await client.query(
-        `SELECT COALESCE(SUM(t.amount), 0) as total FROM transactions t 
-         JOIN users u ON t.user_id = u.id 
-         WHERE u.source_key = $1 AND t.type = 'refill'`,
-        [keySubstring]
-      );
-      const photoGenAll = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'photo'`,
-        [keySubstring]
-      );
-      const musicGenAll = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'music'`,
-        [keySubstring]
-      );
-      const dmGenAll = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files g
-         JOIN users u ON g.user_id = u.id
-         WHERE u.source_key = $1 AND g.file_type = 'dm_video'`,
-        [keySubstring]
-      );
-      const colorizeGenAll = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'colorize'`,
-        [keySubstring]
-      );
-      const restorationGenAll = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'restoration'`,
-        [keySubstring]
-      );
-      const postcardTextGenAll = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'postcard_text'`,
-        [keySubstring]
-      );
-      const postcardPhotoGenAll = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'postcard_photo'`,
+        `SELECT 
+         COALESCE(SUM(
+           CASE t.amount
+             WHEN 180 THEN 150
+             WHEN 390 THEN 300
+             WHEN 1280 THEN 800
+             WHEN 3040 THEN 1600
+             ELSE 0
+           END
+         ), 0) as total_rub 
+       FROM transactions t 
+       JOIN users u ON t.user_id = u.id 
+       WHERE u.source_key = $1 AND t.type = 'refill'`,
         [keySubstring]
       );
 
@@ -722,56 +727,24 @@ export class Database {
       );
       const paymentsCount7d = await client.query(
         `SELECT COUNT(*) as count FROM transactions t 
-         JOIN users u ON t.user_id = u.id 
-         WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
+       JOIN users u ON t.user_id = u.id 
+       WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
         [keySubstring, sevenDaysAgo]
       );
       const paymentsSum7d = await client.query(
-        `SELECT COALESCE(SUM(t.amount), 0) as total FROM transactions t 
-         JOIN users u ON t.user_id = u.id 
-         WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
-        [keySubstring, sevenDaysAgo]
-      );
-      const photoGen7d = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'photo' AND g.created_at >= $2`,
-        [keySubstring, sevenDaysAgo]
-      );
-      const musicGen7d = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'music' AND g.created_at >= $2`,
-        [keySubstring, sevenDaysAgo]
-      );
-      const dmGen7d = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files g
-         JOIN users u ON g.user_id = u.id
-         WHERE u.source_key = $1 AND g.file_type = 'dm_video' AND g.created_at >= $2`,
-        [keySubstring, sevenDaysAgo]
-      );
-      const colorizeGen7d = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'colorize' AND g.created_at >= $2`,
-        [keySubstring, sevenDaysAgo]
-      );
-      const restorationGen7d = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'restoration' AND g.created_at >= $2`,
-        [keySubstring, sevenDaysAgo]
-      );
-      const postcardTextGen7d = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'postcard_text' AND g.created_at >= $2`,
-        [keySubstring, sevenDaysAgo]
-      );
-      const postcardPhotoGen7d = await client.query(
-        `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'postcard_photo' AND g.created_at >= $2`,
+        `SELECT 
+         COALESCE(SUM(
+           CASE t.amount
+             WHEN 180 THEN 150
+             WHEN 390 THEN 300
+             WHEN 1280 THEN 800
+             WHEN 3040 THEN 1600
+             ELSE 0
+           END
+         ), 0) as total_rub 
+       FROM transactions t 
+       JOIN users u ON t.user_id = u.id 
+       WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
         [keySubstring, sevenDaysAgo]
       );
 
@@ -782,56 +755,154 @@ export class Database {
       );
       const paymentsCountToday = await client.query(
         `SELECT COUNT(*) as count FROM transactions t 
-         JOIN users u ON t.user_id = u.id 
-         WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
+       JOIN users u ON t.user_id = u.id 
+       WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
         [keySubstring, startOfToday]
       );
       const paymentsSumToday = await client.query(
-        `SELECT COALESCE(SUM(t.amount), 0) as total FROM transactions t 
-         JOIN users u ON t.user_id = u.id 
-         WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
+        `SELECT 
+         COALESCE(SUM(
+           CASE t.amount
+             WHEN 180 THEN 150
+             WHEN 390 THEN 300
+             WHEN 1280 THEN 800
+             WHEN 3040 THEN 1600
+             ELSE 0
+           END
+         ), 0) as total_rub 
+       FROM transactions t 
+       JOIN users u ON t.user_id = u.id 
+       WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
         [keySubstring, startOfToday]
       );
+
+      // Другие статистики остаются без изменений
+      const photoGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'photo'`,
+        [keySubstring]
+      );
+      const musicGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'music'`,
+        [keySubstring]
+      );
+      const dmGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g
+       JOIN users u ON g.user_id = u.id
+       WHERE u.source_key = $1 AND g.file_type = 'dm_video'`,
+        [keySubstring]
+      );
+      const colorizeGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'colorize'`,
+        [keySubstring]
+      );
+      const restorationGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'restoration'`,
+        [keySubstring]
+      );
+      const postcardTextGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_text'`,
+        [keySubstring]
+      );
+      const postcardPhotoGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_photo'`,
+        [keySubstring]
+      );
+
+      const photoGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'photo' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const musicGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'music' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const dmGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g
+       JOIN users u ON g.user_id = u.id
+       WHERE u.source_key = $1 AND g.file_type = 'dm_video' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const colorizeGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'colorize' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const restorationGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'restoration' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const postcardTextGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_text' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const postcardPhotoGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_photo' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+
       const photoGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'photo' AND g.created_at >= $2`,
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'photo' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
       );
       const musicGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'music' AND g.created_at >= $2`,
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'music' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
       );
       const dmGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g
-         JOIN users u ON g.user_id = u.id
-         WHERE u.source_key = $1 AND g.file_type = 'dm_video' AND g.created_at >= $2`,
+       JOIN users u ON g.user_id = u.id
+       WHERE u.source_key = $1 AND g.file_type = 'dm_video' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
       );
       const colorizeGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'colorize' AND g.created_at >= $2`,
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'colorize' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
       );
       const restorationGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'restoration' AND g.created_at >= $2`,
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'restoration' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
       );
       const postcardTextGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'postcard_text' AND g.created_at >= $2`,
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_text' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
       );
       const postcardPhotoGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
-         JOIN users u ON g.user_id = u.id 
-         WHERE u.source_key = $1 AND g.file_type = 'postcard_photo' AND g.created_at >= $2`,
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_photo' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
       );
 
@@ -839,7 +910,7 @@ export class Database {
         all: {
           usersCount: parseInt(usersCountAll.rows[0].count),
           successfulPayments: parseInt(paymentsCountAll.rows[0].count),
-          totalPaymentsAmount: parseFloat(paymentsSumAll.rows[0].total),
+          totalPaymentsAmount: parseFloat(paymentsSumAll.rows[0].total_rub),
           photoGenerations: parseInt(photoGenAll.rows[0].count),
           musicGenerations: parseInt(musicGenAll.rows[0].count),
           dmVideoGenerations: parseInt(dmGenAll.rows[0].count),
@@ -851,7 +922,7 @@ export class Database {
         last7Days: {
           usersCount: parseInt(usersCount7d.rows[0].count),
           successfulPayments: parseInt(paymentsCount7d.rows[0].count),
-          totalPaymentsAmount: parseFloat(paymentsSum7d.rows[0].total),
+          totalPaymentsAmount: parseFloat(paymentsSum7d.rows[0].total_rub),
           photoGenerations: parseInt(photoGen7d.rows[0].count),
           musicGenerations: parseInt(musicGen7d.rows[0].count),
           dmVideoGenerations: parseInt(dmGen7d.rows[0].count),
@@ -863,7 +934,7 @@ export class Database {
         today: {
           usersCount: parseInt(usersCountToday.rows[0].count),
           successfulPayments: parseInt(paymentsCountToday.rows[0].count),
-          totalPaymentsAmount: parseFloat(paymentsSumToday.rows[0].total),
+          totalPaymentsAmount: parseFloat(paymentsSumToday.rows[0].total_rub),
           photoGenerations: parseInt(photoGenToday.rows[0].count),
           musicGenerations: parseInt(musicGenToday.rows[0].count),
           dmVideoGenerations: parseInt(dmGenToday.rows[0].count),

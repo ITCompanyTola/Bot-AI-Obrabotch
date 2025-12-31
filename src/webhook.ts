@@ -169,15 +169,9 @@ app.post("/webhook/robokassa", async (req, res) => {
       return res.send(`OK${InvId}`);
     }
 
-    let bonus: number = 30;
-    if (amount > 200) bonus = 90;
-    if (amount > 500) bonus = 480;
-    if (amount > 1000) bonus = 1440;
-
-    const finalAmount = amount + bonus;
     await Database.addBalance(
       userId,
-      finalAmount,
+      amount,
       `Пополнение баланса через Robokassa (${InvId})`,
       "refill"
     );
@@ -224,9 +218,7 @@ app.post("/webhook/robokassa", async (req, res) => {
       console.log("❌ Ошибка получения реферальных данных:", error);
     }
 
-    console.log(
-      `✅ Баланс пополнен: +${amount + bonus}₽ для пользователя ${userId}`
-    );
+    console.log(`✅ Баланс пополнен: +${amount}₽ для пользователя ${userId}`);
 
     const newBalance = await Database.getUserBalance(userId);
 

@@ -7,7 +7,7 @@ export const PRICES = {
   PHOTO_COLORIZE: 35,
   DED_MOROZ: 195,
   POSTCARD_TEXT: 45,
-  POSTCARD_PHOTO: 95,
+  POSTCARD_PHOTO: 119,
 };
 
 export const mainMenuKeyboard = [

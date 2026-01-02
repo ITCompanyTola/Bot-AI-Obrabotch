@@ -549,6 +549,8 @@ https://t.me/obrabotych_support
 ЧБ: <code>photo_colorize</code>
 Дед мороз: <code>ded_moroz</code>
 Открытки: <code>postcard</code>
+Открытка по фото: <code>postcard_photo</code>
+Открытка по тексту: <code>postcard_text</code>
 Пополнить баланс: <code>refill_balance_from_profile</code>`.trim();
 
     await ctx.reply(helpMessage, { parse_mode: "HTML" });

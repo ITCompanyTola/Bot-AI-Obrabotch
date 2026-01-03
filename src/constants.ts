@@ -8,6 +8,7 @@ export const PRICES = {
   DED_MOROZ: 195,
   POSTCARD_TEXT: 45,
   POSTCARD_PHOTO: 119,
+  POSTCARD_CHRISTMAS: 109,
 };
 
 export const mainMenuKeyboard = [
@@ -92,7 +93,7 @@ export const OPENROUTER_SERVICE_PROMPT =
 Максимальная длина — 500 символов.`.trim();
 
 export const POSCTARD_MESSAGE = `
-<b>🏞 Волшебная открытка для особенного момента!</b>
+🏞 <b>Волшебная открытка для особенного момента!</b>
 
 Создайте уникальную открытку всего за пару шагов — <b><i>для поздравления, сюрприза или тёплого знака внимания</i></b> ❤️
 
@@ -100,7 +101,7 @@ export const POSCTARD_MESSAGE = `
 Слово за словом превращается в красивую открытку, идеально подходящую для <b><i>поздравлений, сюрпризов</i></b> и самых <b><i>тёплых пожеланий</i></b> 🌷
 
 🏞  <b>Открытка из фото</b>
-Ваше фото превращается в персональную открытку с <b><i>новогодней атмосферой и настроением.</i></b> Стильно, трогательно и полностью готово к подарку 🎁
+Ваше фото превращается в персональную открытку с <b><i>новогодней и рождественской атмосферой и настроением.</i></b> Стильно, трогательно и полностью готово к подарку 🎁
 
 Выберите нужную кнопку и создайте открытку, которая <b>подарит эмоции</b> и <b>запомнится надолго</b> 🔥`.trim();
 
@@ -317,3 +318,80 @@ export const getRobokassaReceipt = (amount: number) => {
     ],
   };
 };
+
+export const getChristmasPostcardMessage = (balance: number) => `
+🎄<b>Создайте рождественскую персональную открытку из вашего фото</b>
+
+Это очень просто:
+
+1️⃣ Нажмите кнопку
+<b><i>«🎄 Создать открытку»</i></b>
+2️⃣ <b><i>Отправьте одну фотографию* в бот</i></b> (В ХОРОШЕМ КАЧЕСТВЕ)
+3️⃣ <b><i>Немного подождите</i></b> — примерно через 3 минуты вы получите готовую открытку 🎄
+
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+🎄 Генерация 1 открытки: ${PRICES.POSTCARD_CHRISTMAS.toFixed(2)}₽</blockquote>
+
+❗️<b>* - бот генерирует только одну открытку за раз</b>☝🏻
+
+❗️<b>- отправляйте фото в хорошем качестве для лучшего результата</b>`;
+
+export const POSTCARD_CHRISTMAS_START = `
+Пример ⤴️
+
+Отправьте фотографию — и она станет готовой открыткой 🎄`.trim();
+
+export const POSTCARD_CHRISTMAS_PROMPT = `
+Task:
+Create a vintage Christmas card based strictly on the uploaded photo.
+
+CRITICAL RULE — PEOPLE:
+The image must contain ONLY the people present in the uploaded photo.
+Do NOT add any new people, characters, silhouettes, background figures, faces, bodies, shadows, reflections, angels, children, adults, or decorative human figures.
+No additional people in the background, distance, reflections, windows, mirrors, ornaments, illustrations, or patterns.
+The total number of people in the final image must be exactly the same as in the uploaded photo.
+Any violation of this rule is unacceptable.
+
+Style and era:
+Vintage Christmas illustration.
+Soft, picturesque, hand-drawn illustration with warmth, comfort, and nostalgic holiday charm.
+Not cartoonish, not modern, not digital art.
+Keep the exact arrangement of all people from the photo.
+Do not change poses, body positions, or relative distances between people.
+Camera at eye level.
+Classic postcard-style family composition.
+The background is neat and wintery, with Christmas decorations and a Christmas tree placed strictly to the side or behind the people, never in the center and never overlapping or obscuring them.
+
+Faces:
+Use faces strictly from the uploaded photo (one-to-one likeness).
+Preserve facial proportions, age, emotions, and expressions exactly.
+No rejuvenation, aging, beautification, exaggeration, cartoon effects, or replacement of facial features.
+No face blending or face substitution.
+Only gentle artistic stylization is allowed.
+
+Clothing and appearance:
+Festive Christmas clothing in a vintage style.
+All people are dressed in red Christmas sweaters and knitwear with traditional holiday patterns:
+reindeer, Christmas trees, snowmen, snowflakes, Nordic ornaments.
+Clothing looks cozy, warm, and handmade.
+No heavy outerwear, no coats, no jackets.
+No modern fashion elements.
+No additional accessories that introduce new characters or faces.
+
+Background and decor:
+Winter indoor or outdoor Christmas setting.
+Fir tree, garlands, ornaments, candles, soft lights.
+Light snow or frosty patterns may be present.
+No human-like decorative elements in the background.
+If illustrative elements are used, they must be non-human and minimal, and must not resemble people in any way.
+The background supports the festive mood without altering the composition or adding visual focus away from the people.
+
+Color and atmosphere:
+Warm winter palette with emphasis on reds, creams, soft greens, and muted gold.
+Subtle old paper texture, gentle grain.
+Soft warm lighting, calm and joyful Christmas atmosphere.
+
+Inscription:
+“С Рождеством!”
+Handwritten fairy-tale font in the style of vintage Christmas postcards.
+The inscription is placed carefully and does not cover faces or bodies.`.trim();

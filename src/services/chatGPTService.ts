@@ -2,8 +2,9 @@ import { Database } from "../database";
 import {
   MAIN_MENU_MESSAGE,
   mainMenuKeyboard,
+  POSTCARD_CHRISTMAS_PROMPT,
   POSTCARD_PHOTO_PROMPT,
-  PRICES
+  PRICES,
 } from "../constants";
 
 import fs from "fs";
@@ -30,8 +31,8 @@ if (openAIProxyAgent) {
 export async function generatePostcard(
   ctx: any,
   userId: number,
-  prompt: string,
-  photoFileId?: string
+  photoFileId: string,
+  postcardType: "photo" | "christmas"
 ): Promise<void> {
   const tempImagePath = path.join(process.cwd(), `temp_${userId}.png`);
   const resultPath = path.join(process.cwd(), `postcard_${userId}.png`);
@@ -40,9 +41,14 @@ export async function generatePostcard(
 
   try {
     console.log("🟡 [2] Deducting balance...");
+    const deductedBalance =
+      postcardType === "photo"
+        ? PRICES.POSTCARD_PHOTO
+        : PRICES.POSTCARD_CHRISTMAS;
+
     const deducted = await Database.deductBalance(
       userId,
-      PRICES.POSTCARD_PHOTO,
+      deductedBalance,
       "Создание открытки"
     );
 
@@ -80,7 +86,10 @@ export async function generatePostcard(
       timeout: 30_000,
     });
 
-    console.log("🟢 [6.1] Image downloaded, size:", imageResponse.data.byteLength);
+    console.log(
+      "🟢 [6.1] Image downloaded, size:",
+      imageResponse.data.byteLength
+    );
 
     fs.writeFileSync(tempImagePath, imageResponse.data);
     console.log("🟢 [7] Temp image saved:", tempImagePath);
@@ -88,12 +97,17 @@ export async function generatePostcard(
     console.log("🟡 [8] Sending image to OpenAI (images.edit)");
     console.time("🧠 OpenAI image edit");
 
+    const usedPrompt =
+      postcardType === "photo"
+        ? POSTCARD_PHOTO_PROMPT
+        : POSTCARD_CHRISTMAS_PROMPT;
+
     const response = await openai.images.edit({
-      model: 'chatgpt-image-latest',
+      model: "chatgpt-image-latest",
       image: await toFile(fs.createReadStream(tempImagePath), null, {
         type: "image/jpeg",
       }),
-      prompt: POSTCARD_PHOTO_PROMPT + "\n" + prompt,
+      prompt: usedPrompt,
     });
 
     console.timeEnd("🧠 OpenAI image edit");
@@ -128,36 +142,44 @@ export async function generatePostcard(
 
     const fileId = sentMessage.photo.at(-1)?.file_id;
     console.log("🟢 [14] Telegram file_id:", fileId);
-
-    await Database.saveGeneratedFile(
-      userId,
-      "postcard_photo",
-      fileId,
-      prompt
-    );
+    if (postcardType === "photo") {
+      await Database.saveGeneratedFile(
+        userId,
+        "postcard_photo",
+        fileId,
+        usedPrompt
+      );
+    } else {
+      await Database.saveGeneratedFile(
+        userId,
+        "postcard_christmas",
+        fileId,
+        usedPrompt
+      );
+    }
 
     console.log("🟢 [15] Saved to DB");
 
-    await ctx.telegram.sendMessage(
-      userId,
-      MAIN_MENU_MESSAGE,
-      {
-        parse_mode: "HTML",
-        ...Markup.inlineKeyboard(mainMenuKeyboard),
-      }
-    );
+    await ctx.telegram.sendMessage(userId, MAIN_MENU_MESSAGE, {
+      parse_mode: "HTML",
+      ...Markup.inlineKeyboard(mainMenuKeyboard),
+    });
 
     fs.unlinkSync(tempImagePath);
     fs.unlinkSync(resultPath);
 
     console.log("✅ [16] DONE");
-
   } catch (error) {
     console.error("❌ ERROR:", error);
 
+    const addedBalance =
+      postcardType === "photo"
+        ? PRICES.POSTCARD_PHOTO
+        : PRICES.POSTCARD_CHRISTMAS;
+
     await Database.addBalance(
       userId,
-      PRICES.POSTCARD_PHOTO,
+      addedBalance,
       "Возврат средств за ошибку генерации",
       "bonus"
     );

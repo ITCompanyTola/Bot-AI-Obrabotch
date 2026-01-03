@@ -103,6 +103,7 @@ async function showRefillAmountSelection(
     | "colorize"
     | "dm"
     | "postcardPhoto"
+    | "postcardChristmas"
     | "postcardText",
   useEdit: boolean = false
 ) {
@@ -128,6 +129,7 @@ async function showRefillAmountSelection(
     dm: "ded_moroz",
     postcardPhoto: "postcard_photo",
     postcardText: "postcard_text",
+    postcardChristmas: "postcard_christmas",
   };
 
   const keyboard = [
@@ -226,6 +228,30 @@ export function registerPaymentHandlers(
     logToFile(`📝 refill_balance_from_profile вызван: userId=${userId}`);
 
     await showRefillAmountSelection(ctx, userStates, "profile", false);
+  });
+
+  bot.action("refill_balance_from_postcard_christmas", async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes("query is too old")) {
+        console.error("Ошибка answerCbQuery:", error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    logToFile(
+      `📝 refill_balance_from_postcard_christmas вызван: userId=${userId}`
+    );
+
+    await showRefillAmountSelection(
+      ctx,
+      userStates,
+      "postcardChristmas",
+      false
+    );
   });
 
   bot.action("refill_balance_from_postcard_text", async (ctx) => {
@@ -361,6 +387,8 @@ export function registerPaymentHandlers(
       backAction = "refill_balance_from_postcard_text";
     } else if (userState?.refillSource === "postcardPhoto") {
       backAction = "refill_balance_from_postcard_photo";
+    } else if (userState?.refillSource === "postcardChristmas") {
+      backAction = "refill_balance_from_postcard_christmas";
     }
     await requestEmailOrProceed(ctx, 150, userStates, backAction);
   });
@@ -396,6 +424,8 @@ export function registerPaymentHandlers(
       backAction = "refill_balance_from_postcard_text";
     } else if (userState?.refillSource === "postcardPhoto") {
       backAction = "refill_balance_from_postcard_photo";
+    } else if (userState?.refillSource === "postcardChristmas") {
+      backAction = "refill_balance_from_postcard_christmas";
     }
 
     await requestEmailOrProceed(ctx, 300, userStates, backAction);
@@ -432,6 +462,8 @@ export function registerPaymentHandlers(
       backAction = "refill_balance_from_postcard_text";
     } else if (userState?.refillSource === "postcardPhoto") {
       backAction = "refill_balance_from_postcard_photo";
+    } else if (userState?.refillSource === "postcardChristmas") {
+      backAction = "refill_balance_from_postcard_christmas";
     }
 
     await requestEmailOrProceed(ctx, 800, userStates, backAction);
@@ -468,6 +500,8 @@ export function registerPaymentHandlers(
       backAction = "refill_balance_from_postcard_text";
     } else if (userState?.refillSource === "postcardPhoto") {
       backAction = "refill_balance_from_postcard_photo";
+    } else if (userState?.refillSource === "postcardChristmas") {
+      backAction = "refill_balance_from_postcard_christmas";
     }
 
     await requestEmailOrProceed(ctx, 1600, userStates, backAction);

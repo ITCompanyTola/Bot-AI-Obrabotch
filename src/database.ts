@@ -299,6 +299,7 @@ export class Database {
       | "dm_photo"
       | "dm_video"
       | "postcard_photo"
+      | "postcard_christmas"
       | "postcard_text",
     fileId: string,
     prompt?: string
@@ -1600,6 +1601,21 @@ export class Database {
         "UPDATE users SET refferal_key_used = true WHERE id = $1",
         [userId]
       );
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getUserChristmasPostcards(userId: number): Promise<any[]> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM generated_files
+         WHERE user_id = $1 AND file_type = 'postcard_christmas'
+         ORDER BY created_at ASC`,
+        [userId]
+      );
+      return result.rows;
     } finally {
       client.release();
     }

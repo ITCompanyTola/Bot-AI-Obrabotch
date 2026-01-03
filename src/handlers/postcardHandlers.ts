@@ -2,9 +2,11 @@ import { Telegraf } from "telegraf";
 import { BotContext, UserState } from "../types";
 import { Database } from "../database";
 import {
+  getChristmasPostcardMessage,
   getPostcardMessage,
   getPostcardPhotoMessage,
   POSCTARD_MESSAGE,
+  POSTCARD_CHRISTMAS_START,
   POSTCARD_MESSAGE_START,
   POSTCARD_PHOTO_START,
   POSTCARD_PHOTO_START_WIHOUT,
@@ -21,6 +23,10 @@ const POSTCARD_PHOTO_INSTRUCTION: string =
   "BAACAgIAAxkBAAECdvtpSuAbiBX3l0F_PXF48nyZA1-HcQAC0JUAAnIgWUrN8eIy-x0nKzYE"; // Загрузить и вставить свое видео
 const POSTCARD_TEXT_INSTRUCTION: string =
   "BAACAgIAAxkBAAECdvhpSt_r7bS5WGoo7pw1oGNJ4dfUygACy5UAAnIgWUrMQ6MLuolkAzYE";
+const POSTCARD_CHRISTMAS_HERO_VIDEO: string =
+  "BAACAgIAAxkBAAEMVqNpWUloy6FwaqHrg7RVUuj8Yv-atgACdIYAArafyEpMjeI0hhn_QDgE";
+const POSTCARD_CHRISTMAS_PHOTO: string =
+  "AgACAgIAAxkBAAEMVkVpWUkXeDUu7cW1NQxtb5KdgbT6JwACnhBrG7afyEpQ883gLNKZswEAAwIAA3gAAzgE";
 
 export function registerPostcardHandlers(
   bot: Telegraf<BotContext>,
@@ -45,11 +51,167 @@ export function registerPostcardHandlers(
       reply_markup: {
         inline_keyboard: [
           [{ text: "💌 Открытка из текста", callback_data: "postcard_text" }],
-          [{ text: "🏞 Открытка из фото", callback_data: "postcard_photo" }],
+          [
+            {
+              text: "🏞 Открытка с Новым годом",
+              callback_data: "postcard_photo",
+            },
+          ],
+          [
+            {
+              text: "🎄Открытка с Рождеством",
+              callback_data: "postcard_christmas",
+            },
+          ],
           [{ text: "Главное меню", callback_data: "main_menu" }],
         ],
       },
     });
+  });
+
+  bot.action("postcard_christmas", async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes("query is too old")) {
+        console.error("Ошибка answerCbQuery:", error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const balance = await Database.getUserBalance(userId);
+
+    const message = getChristmasPostcardMessage(balance);
+
+    try {
+      await ctx.replyWithVideo(POSTCARD_CHRISTMAS_HERO_VIDEO, {
+        caption: message,
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "🎄 Создать открытку",
+                callback_data: "postcard_christmas_start",
+              },
+            ],
+            [
+              {
+                text: "Видео-инструкция",
+                callback_data: "postcard_christmas_instruction",
+              },
+            ],
+            [
+              {
+                text: "💳 Пополнить баланс",
+                callback_data: "refill_balance_from_postcard_christmas",
+              },
+            ],
+            [{ text: "Назад", callback_data: "postcard" }],
+          ],
+        },
+      });
+    } catch (error: any) {
+      console.log("Ошибка reply:", error.message);
+      await ctx.reply(message, {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "🎄 Создать открытку",
+                callback_data: "postcard_christmas_start",
+              },
+            ],
+            [
+              {
+                text: "Видео-инструкция",
+                callback_data: "postcard_christmas_instruction",
+              },
+            ],
+            [
+              {
+                text: "💳 Пополнить баланс",
+                callback_data: "refill_balance_from_postcard_christmas",
+              },
+            ],
+            [{ text: "Назад", callback_data: "postcard" }],
+          ],
+        },
+      });
+    }
+  });
+
+  bot.action("postcard_christmas_start", async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes("query is too old")) {
+        console.error("Ошибка answerCbQuery:", error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const message = POSTCARD_CHRISTMAS_START;
+
+    if (await Database.hasEnoughBalance(userId, PRICES.POSTCARD_CHRISTMAS)) {
+      userStates.set(userId, {
+        step: "waiting_postcard_christmas",
+      });
+
+      try {
+        await ctx.replyWithPhoto(POSTCARD_CHRISTMAS_PHOTO, {
+          caption: message,
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "Назад", callback_data: "postcard_christmas" }],
+            ],
+          },
+        });
+      } catch (error) {
+        console.log("Ошибка reply:", error);
+        await ctx.reply(message, {
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "Назад", callback_data: "postcard_christmas" }],
+            ],
+          },
+        });
+      }
+    } else {
+      const balance = await Database.getUserBalance(userId);
+
+      const paymentMessage = `
+К сожалению, <b>на вашем балансе недостаточно средств</b> для создания генерации 😢
+
+<blockquote>💰 Ваш баланс: ${balance.toFixed(2)}₽
+🎄 Генерация 1 открытки: ${PRICES.POSTCARD_CHRISTMAS.toFixed(2)}₽</blockquote>
+
+Чтобы продолжить, <b>пополните баланс</b>
+
+Выберите способ оплаты ⤵️`.trim();
+
+      await ctx.telegram.sendMessage(userId, paymentMessage, {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "Оплата картой",
+                callback_data: "refill_balance_from_postcard_christmas",
+              },
+            ],
+            [{ text: "Главное меню", callback_data: "main_menu" }],
+          ],
+        },
+      });
+    }
   });
 
   bot.action("postcard_text", async (ctx) => {
@@ -400,7 +562,7 @@ export function registerPostcardHandlers(
         parse_mode: "HTML",
         reply_markup: {
           inline_keyboard: [
-            [{ text: "Назад", callback_data: "postcard_text" }],
+            [{ text: "Назад", callback_data: "postcard_photo" }],
           ],
         },
       });
@@ -410,6 +572,45 @@ export function registerPostcardHandlers(
         reply_markup: {
           inline_keyboard: [
             [{ text: "Назад", callback_data: "postcard_photo" }],
+          ],
+        },
+      });
+    }
+  });
+
+  bot.action("postcard_christmas_instruction", async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes("query is too old")) {
+        console.error("Ошибка answerCbQuery:", error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const messge = `
+📹 <b>Видео-инструкция по созданию открыток из вашего фото</b>
+
+Смотрите короткое видео, чтобы правильно и качественно выполнять шаги и получать потрясающие результаты 🔥`.trim();
+
+    try {
+      await ctx.replyWithVideo(POSTCARD_PHOTO_INSTRUCTION, {
+        caption: messge,
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "Назад", callback_data: "postcard_christmas" }],
+          ],
+        },
+      });
+    } catch (error: any) {
+      await ctx.reply("Ошибка воспроизведения видео!", {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "Назад", callback_data: "postcard_christmas" }],
           ],
         },
       });

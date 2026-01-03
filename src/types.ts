@@ -1,4 +1,4 @@
-import { Context } from 'telegraf';
+import { Context } from "telegraf";
 
 export interface BotContext extends Context {}
 
@@ -14,25 +14,26 @@ export interface Broadcast {
   bonusAmount?: number;
 }
 
-export type UserStep = 
-  | 'waiting_photo' 
-  | 'waiting_for_restoration_photo' 
-  | 'waiting_for_colorize_photo'
-  | 'waiting_description' 
-  | 'waiting_music_text' 
-  | 'waiting_music_style' 
-  | 'waiting_music_params' 
-  | 'waiting_email'
-  | 'waiting_broadcast_message'
-  | 'waiting_broadcast_photo'
-  | 'waiting_broadcast_video'
-  | 'waiting_broadcast_button_text'
-  | 'waiting_broadcast_button_callback'
-  | 'waiting_broadcast_bonus'
-  | 'waiting_DM_photo_generation'
-  | 'waiting_DM_text'
-  | 'waiting_postcard_text'
-  | 'waiting_postcard_photo'
+export type UserStep =
+  | "waiting_photo"
+  | "waiting_for_restoration_photo"
+  | "waiting_for_colorize_photo"
+  | "waiting_description"
+  | "waiting_music_text"
+  | "waiting_music_style"
+  | "waiting_music_params"
+  | "waiting_email"
+  | "waiting_broadcast_message"
+  | "waiting_broadcast_photo"
+  | "waiting_broadcast_video"
+  | "waiting_broadcast_button_text"
+  | "waiting_broadcast_button_callback"
+  | "waiting_broadcast_bonus"
+  | "waiting_DM_photo_generation"
+  | "waiting_DM_text"
+  | "waiting_postcard_text"
+  | "waiting_postcard_photo"
+  | "waiting_postcard_christmas"
   | null;
 
 export interface UserState {
@@ -44,7 +45,16 @@ export interface UserState {
   paymentId?: string;
   musicText?: string;
   musicStyle?: string;
-  refillSource?: 'photo' | 'profile' | 'music' | 'restoration' | 'colorize' | 'dm' | 'postcardPhoto' | 'postcardText';
+  refillSource?:
+    | "photo"
+    | "profile"
+    | "music"
+    | "restoration"
+    | "colorize"
+    | "dm"
+    | "postcardPhoto"
+    | "postcardChristmas"
+    | "postcardText";
   pendingPaymentAmount?: number;
   freeGenerations?: number;
   regenPromptAttempts?: number;
@@ -67,7 +77,7 @@ export interface MailingData {
   sent_count: number;
   failed_count: number;
   blocked_count: number;
-  status: 'processing' | 'completed' | 'failed';
+  status: "processing" | "completed" | "failed";
   created_at: Date;
   completed_at?: Date;
 }
@@ -88,7 +98,7 @@ export interface MailingTask {
   id: number;
   mailing_id: number;
   user_id: number;
-  status: 'sent' | 'failed' | 'blocked';
+  status: "sent" | "failed" | "blocked";
   attempts: number;
   error_message?: string;
   sent_at?: Date;
@@ -98,7 +108,7 @@ export interface MailingTask {
 export interface CreateMailingTask {
   mailing_id: number;
   user_id: number;
-  status: 'sent' | 'failed' | 'blocked';
+  status: "sent" | "failed" | "blocked";
   error_message?: string;
   attempts?: number;
 }
@@ -108,7 +118,7 @@ export interface UpdateMailingStats {
   sent_count?: number;
   failed_count?: number;
   blocked_count?: number;
-  status?: 'processing' | 'completed' | 'failed';
+  status?: "processing" | "completed" | "failed";
 }
 
 export interface MailingJobData {

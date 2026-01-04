@@ -726,7 +726,7 @@ export class Database {
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const updatedTime = await client
         .query(
-          `SELECT updated_at FROM referral_sources WHERE source_key = $1`,
+          `SELECT updated_at FROM referral_sources WHERE key_substring = $1`,
           [keySubstring]
         )
         .then((res) => res.rows[0].updated_at);

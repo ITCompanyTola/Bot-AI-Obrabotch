@@ -40,6 +40,7 @@ export function registerMainMenuHandlers(
 
         await ctx.reply(mainMenuMessage, {
           parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
           ...Markup.inlineKeyboard(mainMenuKeyboard),
         });
       } else {
@@ -85,6 +86,7 @@ export function registerMainMenuHandlers(
 
     await ctx.editMessageText(mainMenuMessage, {
       parse_mode: "HTML",
+      link_preview_options: { is_disabled: true },
       ...Markup.inlineKeyboard(mainMenuKeyboard),
     });
   });
@@ -132,12 +134,14 @@ export function registerMainMenuHandlers(
         // Если это текстовое сообщение - редактируем
         await ctx.editMessageText(mainMenuMessage, {
           parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
           ...keyboard,
         });
       } else {
         // Если это медиа (фото/видео) - отправляем новое
         await ctx.telegram.sendMessage(userId, mainMenuMessage, {
           parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
           ...keyboard,
         });
       }
@@ -180,6 +184,7 @@ https://t.me/obrabotych_support
 
     await ctx.reply(mainMenuMessage, {
       parse_mode: "HTML",
+      link_preview_options: { is_disabled: true },
       ...Markup.inlineKeyboard(mainMenuKeyboard),
     });
   });
@@ -546,6 +551,7 @@ https://t.me/obrabotych_support
 * /stats_pw - Получить статистику вовлеченности пользователей
 * /stats_all - Получить общую статистику бота
 * /refferal_stats - Получить статистику рефералов
+* <code>/updateSource_<b><i>название_источника</i></b></code> - Обновить источник
 
 <b>Рассылка</b>
 * /broadcast - Рассылка сообщений пользователям
@@ -558,8 +564,9 @@ https://t.me/obrabotych_support
 ЧБ: <code>photo_colorize</code>
 Дед мороз: <code>ded_moroz</code>
 Открытки: <code>postcard</code>
-Открытка по фото: <code>postcard_photo</code>
+Открытка новогодняя по фото: <code>postcard_photo</code>
 Открытка по тексту: <code>postcard_text</code>
+Открытка рождественская по фото: <code>postcard_christmas</code>
 Пополнить баланс: <code>refill_balance_from_profile</code>`.trim();
 
     await ctx.reply(helpMessage, { parse_mode: "HTML" });
@@ -606,69 +613,109 @@ https://t.me/obrabotych_support
 🔑 Ключ: https://t.me/Obrabotych_bot?start=${source.key_substring}
 
 <b>За все время</b>
-👥 Количество пользователей: <b>${stats.all.usersCount}</b>
-💳 Количество успешных пополнений: <b>${stats.all.successfulPayments}</b>
+👥 Количество пользователей: <b>${stats.all.usersCount} / ${
+        stats.all.usersCountUpdated
+      }</b>
+💳 Количество успешных пополнений: <b>${stats.all.successfulPayments} / ${
+        stats.all.successfulPaymentsUpdated
+      }</b>
 💰 Сумма успешных пополнений: <b>${stats.all.totalPaymentsAmount.toFixed(
         2
-      )}₽</b>
-📸 Количество генераций фото: <b>${stats.all.photoGenerations}</b>
-🎵 Количество генераций музыки: <b>${stats.all.musicGenerations}</b>
-🎅 Количество генераций ДМ: <b>${stats.all.dmVideoGenerations}</b>
-🎨 Количество генераций чб: <b>${stats.all.colorizeGenerations}</b>
-🏞 Количество генераций рестварации: <b>${stats.all.restorationGenerations}</b>
+      )}₽ / ${stats.all.totalPaymentsAmountUpdated.toFixed(2)}₽</b>
+📸 Количество генераций фото: <b>${stats.all.photoGenerations} / ${
+        stats.all.photoGenerationsUpdated
+      }</b>
+🎵 Количество генераций музыки: <b>${stats.all.musicGenerations} / ${
+        stats.all.musicGenerationsUpdated
+      }</b>
+🎅 Количество генераций ДМ: <b>${stats.all.dmVideoGenerations} / ${
+        stats.all.dmVideoGenerationsUpdated
+      }</b>
+🎨 Количество генераций чб: <b>${stats.all.colorizeGenerations} / ${
+        stats.all.colorizeGenerationsUpdated
+      }</b>
+🏞 Количество генераций рестварации: <b>${stats.all.restorationGenerations} / ${
+        stats.all.restorationGenerationsUpdated
+      }</b>
 🏞 Количество генераций открыток из текста: <b>${
         stats.all.postcardTextGenerations
-      }</b>
+      } / ${stats.all.postcardTextGenerationsUpdated}</b>
 🏞 Количество генераций новогодних открыток из фото: <b>${
         stats.all.postcardPhotoGenerations
-      }</b>
+      } / ${stats.all.postcardPhotoGenerationsUpdated}</b>
 🏞 Количество генераций рождественских открыток из фото: <b>${
         stats.all.christmasPostcardGenerations
-      }</b>
+      } / ${stats.all.christmasPostcardGenerationsUpdated}</b>
 
 <b>За последние 7 дней</b>
-👥 Количество пользователей: <b>${stats.last7Days.usersCount}</b>
-💳 Количество успешных пополнений: <b>${stats.last7Days.successfulPayments}</b>
+👥 Количество пользователей: <b>${stats.last7Days.usersCount} / ${
+        stats.last7Days.usersCountUpdated
+      }</b>
+💳 Количество успешных пополнений: <b>${stats.last7Days.successfulPayments} / ${
+        stats.last7Days.successfulPaymentsUpdated
+      }</b>
 💰 Сумма успешных пополнений: <b>${stats.last7Days.totalPaymentsAmount.toFixed(
         2
-      )}₽</b>
-📸 Количество генераций фото: <b>${stats.last7Days.photoGenerations}</b>
-🎵 Количество генераций музыки: <b>${stats.last7Days.musicGenerations}</b>
-🎅 Количество генераций ДМ: <b>${stats.last7Days.dmVideoGenerations}</b>
-🎨 Количество генераций чб: <b>${stats.last7Days.colorizeGenerations}</b>
+      )}₽ / ${stats.last7Days.totalPaymentsAmountUpdated.toFixed(2)}₽</b>
+📸 Количество генераций фото: <b>${stats.last7Days.photoGenerations} / ${
+        stats.last7Days.photoGenerationsUpdated
+      }</b>
+🎵 Количество генераций музыки: <b>${stats.last7Days.musicGenerations} / ${
+        stats.last7Days.musicGenerationsUpdated
+      }</b>
+🎅 Количество генераций ДМ: <b>${stats.last7Days.dmVideoGenerations} / ${
+        stats.last7Days.dmVideoGenerationsUpdated
+      }</b>
+🎨 Количество генераций чб: <b>${stats.last7Days.colorizeGenerations} / ${
+        stats.last7Days.colorizeGenerationsUpdated
+      }</b>
 🏞 Количество генераций рестварации: <b>${
         stats.last7Days.restorationGenerations
-      }</b>
+      } / ${stats.last7Days.restorationGenerationsUpdated}</b>
 🏞 Количество генераций открыток из текста: <b>${
         stats.last7Days.postcardTextGenerations
-      }</b>
+      } / ${stats.last7Days.postcardTextGenerationsUpdated}</b>
 🏞 Количество генераций новогодних открыток из фото: <b>${
         stats.last7Days.postcardPhotoGenerations
-      }</b>
+      } / ${stats.last7Days.postcardPhotoGenerationsUpdated}</b>
 🏞 Количество генераций рождественских открыток из фото: <b>${
         stats.last7Days.christmasPostcardGenerations
-      }</b>
+      } / ${stats.last7Days.christmasPostcardGenerationsUpdated}</b>
 
 <b>За сегодня ${todayStr}</b>
-👥 Количество пользователей: <b>${stats.today.usersCount}</b>
-💳 Количество успешных пополнений: <b>${stats.today.successfulPayments}</b>
+👥 Количество пользователей: <b>${stats.today.usersCount} / ${
+        stats.today.usersCountUpdated
+      }</b>
+💳 Количество успешных пополнений: <b>${stats.today.successfulPayments} / ${
+        stats.today.successfulPaymentsUpdated
+      }</b>
 💰 Сумма успешных пополнений: <b>${stats.today.totalPaymentsAmount.toFixed(
         2
-      )}₽</b>
-📸 Количество генераций фото: <b>${stats.today.photoGenerations}</b>
-🎵 Количество генераций музыки: <b>${stats.today.musicGenerations}</b>
-🎅 Количество генераций ДМ: <b>${stats.today.dmVideoGenerations}</b>
-🎨 Количество генераций чб: <b>${stats.today.colorizeGenerations}</b>
-🏞 Количество генераций рестварации: <b>${stats.today.restorationGenerations}</b>
+      )}₽ / ${stats.today.totalPaymentsAmountUpdated.toFixed(2)}₽</b>
+📸 Количество генераций фото: <b>${stats.today.photoGenerations} / ${
+        stats.today.photoGenerationsUpdated
+      }</b>
+🎵 Количество генераций музыки: <b>${stats.today.musicGenerations} / ${
+        stats.today.musicGenerationsUpdated
+      }</b>
+🎅 Количество генераций ДМ: <b>${stats.today.dmVideoGenerations} / ${
+        stats.today.dmVideoGenerationsUpdated
+      }</b>
+🎨 Количество генераций чб: <b>${stats.today.colorizeGenerations} / ${
+        stats.today.colorizeGenerationsUpdated
+      }</b>
+🏞 Количество генераций рестварации: <b>${
+        stats.today.restorationGenerations
+      } / ${stats.today.restorationGenerationsUpdated}</b>
 🏞 Количество генераций открыток из текста: <b>${
         stats.today.postcardTextGenerations
-      }</b>
+      } / ${stats.today.postcardTextGenerationsUpdated}</b>
 🏞 Количество генераций новогодних открыток из фото: <b>${
         stats.today.postcardPhotoGenerations
-      }</b>
+      } / ${stats.today.postcardPhotoGenerationsUpdated}</b>
 🏞 Количество генераций рождественских открыток из фото: <b>${
         stats.today.christmasPostcardGenerations
-      }</b>
+      } / ${stats.today.christmasPostcardGenerationsUpdated}</b>
       `.trim();
 
       await ctx.reply(statsMessage, { parse_mode: "HTML" });
@@ -676,6 +723,27 @@ https://t.me/obrabotych_support
       console.error("Ошибка получения статистики источника:", error);
       await ctx.reply("❌ Ошибка при получении статистики");
     }
+  });
+
+  bot.command(/^updateSource_(.+)$/, async (ctx) => {
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const isAdmin = await Database.isAdmin(userId);
+    if (!isAdmin) {
+      await ctx.reply("❌ У вас нет прав на выполнение данной команды");
+      return;
+    }
+
+    const sourceName = ctx.match[1];
+    if (!sourceName) return;
+    await Database.updateSource(sourceName);
+    await ctx.reply(
+      `✅ Статистика успешно обновлена для источника ${sourceName}. Используйте команду <code>/stats_${sourceName}</code> для получения новой информации.`,
+      {
+        parse_mode: "HTML",
+      }
+    );
   });
 
   bot.command("lk", async (ctx) => {

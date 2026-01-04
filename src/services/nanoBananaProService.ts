@@ -1,22 +1,22 @@
-import axios from 'axios';
-import { Buffer } from 'buffer';
-import { Markup } from 'telegraf';
-import { config } from '../config';
-import { Database } from '../database';
-import { MAIN_MENU_MESSAGE, mainMenuKeyboard, PRICES } from '../constants';
-import { axiosRetry } from '../utils/axiosRetry';
+import axios from "axios";
+import { Buffer } from "buffer";
+import { Markup } from "telegraf";
+import { config } from "../config";
+import { Database } from "../database";
+import { MAIN_MENU_MESSAGE, mainMenuKeyboard, PRICES } from "../constants";
+import { axiosRetry } from "../utils/axiosRetry";
 
-const API_URL = 'https://api.kie.ai/api/v1/jobs';
+const API_URL = "https://api.kie.ai/api/v1/jobs";
 const API_KEY = config.nanoBananaApiKey;
 
-const MODEL = 'nano-banana-pro';
+const MODEL = "nano-banana-pro";
 
 interface TaskResponse {
   code: number;
   message: number;
   data: {
     taskId: string;
-  }
+  };
 }
 
 interface TaskStatusResponse {
@@ -25,14 +25,17 @@ interface TaskStatusResponse {
   data: {
     taskId: string;
     model: string;
-    state: 'waiting' | 'queuing' | 'generating' | 'success' | 'fail';
+    state: "waiting" | "queuing" | "generating" | "success" | "fail";
     resultJson?: string;
     failCode?: string;
     failMsg?: string;
-  }
+  };
 }
 
-async function createColorizeTask(image_url: string, prompt: string): Promise<string> {
+async function createColorizeTask(
+  image_url: string,
+  prompt: string
+): Promise<string> {
   const image_urls: string[] = [];
   image_urls.push(image_url);
   try {
@@ -43,14 +46,14 @@ async function createColorizeTask(image_url: string, prompt: string): Promise<st
         input: {
           prompt: prompt,
           image_input: image_urls,
-          aspect_ratio: 'auto'
-        }
+          aspect_ratio: "auto",
+        },
       },
       {
         headers: {
-          'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${API_KEY}`,
+          "Content-Type": "application/json",
+        },
       }
     );
 
@@ -60,89 +63,103 @@ async function createColorizeTask(image_url: string, prompt: string): Promise<st
 
     return response.data.data.taskId;
   } catch (error) {
-    console.error('Ошибка создания задачи на окрашивание фото: ', error);
+    console.error("Ошибка создания задачи на окрашивание фото: ", error);
     throw error;
   }
 }
 
-async function checkColorizeTaskStatus(taskId: string): Promise<TaskStatusResponse['data']> {
+async function checkColorizeTaskStatus(
+  taskId: string
+): Promise<TaskStatusResponse["data"]> {
   try {
-    const response = await axios.get(
-      `${API_URL}/recordInfo?taskId=${taskId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${API_KEY}`
-        }
-      }
-    );
+    const response = await axios.get(`${API_URL}/recordInfo?taskId=${taskId}`, {
+      headers: {
+        Authorization: `Bearer ${API_KEY}`,
+      },
+    });
 
     if (response.data.code !== 200) {
-      console.error('Error code:', response.data.code);
+      console.error("Error code:", response.data.code);
       console.error(response.data.data.failMsg);
       throw new Error(`API Error: ${response.data.message}`);
     }
 
     return response.data.data;
   } catch (error) {
-    console.error('Ошибка проверки статуса окрашивания фото:', error);
+    console.error("Ошибка проверки статуса окрашивания фото:", error);
     throw error;
   }
 }
 
-async function waitForColorizeTaskCompletion(taskId: string, maxAttempts: number = 50): Promise<string> {
+async function waitForColorizeTaskCompletion(
+  taskId: string,
+  maxAttempts: number = 50
+): Promise<string> {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const status = await checkColorizeTaskStatus(taskId);
 
-    console.log(`📊 Статус задачи ${taskId}: ${status.state} (попытка ${attempt + 1}/${maxAttempts})`);
+    console.log(
+      `📊 Статус задачи ${taskId}: ${status.state} (попытка ${
+        attempt + 1
+      }/${maxAttempts})`
+    );
 
-    if (status.state === 'success') {
+    if (status.state === "success") {
       if (!status.resultJson) {
-        throw new Error('Результат не найден');
+        throw new Error("Результат не найден");
       }
 
       const result = JSON.parse(status.resultJson);
       if (!result.resultUrls || result.resultUrls.length === 0) {
-        throw new Error('URL фото не найден');
+        throw new Error("URL фото не найден");
       }
 
       return result.resultUrls[0];
     }
 
-    if (status.state === 'fail') {
-      throw new Error(`Генерация failed: ${status.failMsg || 'Unknown error'}`);
+    if (status.state === "fail") {
+      throw new Error(`Генерация failed: ${status.failMsg || "Unknown error"}`);
     }
 
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
   }
 
-  throw new Error('Превышено время ожидания генерации');
+  throw new Error("Превышено время ожидания генерации");
 }
 
-async function generatePhotoWithBanana(imageUrl: string, prompt: string): Promise<string> {
+async function generatePhotoWithBanana(
+  imageUrl: string,
+  prompt: string
+): Promise<string> {
   console.log(`📸 Окрашиваю фото: ${imageUrl}`);
   console.log(`💬 С описанием: ${prompt}`);
-  
+
   const taskId = await createColorizeTask(imageUrl, prompt);
   console.log(`✅ Задача создана: ${taskId}`);
-  
+
   const photoUrl = await waitForColorizeTaskCompletion(taskId);
   console.log(`✅ Фото готово: ${photoUrl}`);
-  
+
   return photoUrl;
 }
 
-export async function processPhotoColorize(ctx: any, userId: number, photoFileId: string, prompt: string) {
+export async function processPhotoColorize(
+  ctx: any,
+  userId: number,
+  photoFileId: string,
+  prompt: string
+) {
   try {
     const deducted = await Database.deductBalance(
       userId,
       PRICES.PHOTO_COLORIZE,
-      'Окрашивание фото'
+      "Окрашивание фото"
     );
 
     if (!deducted) {
       await ctx.telegram.sendMessage(
         userId,
-        '❌ Недостаточно средств для генерации'
+        "❌ Недостаточно средств для генерации"
       );
       return;
     }
@@ -152,139 +169,179 @@ export async function processPhotoColorize(ctx: any, userId: number, photoFileId
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
 
-    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3-х минут.');
-    
-    const colorizedPhotoUrl = await generatePhotoWithBanana(photoUrl.href, prompt);
+    await ctx.telegram.sendMessage(
+      userId,
+      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+      {
+        parse_mode: "HTML",
+        link_preview_options: { is_disabled: true },
+      }
+    );
+
+    const colorizedPhotoUrl = await generatePhotoWithBanana(
+      photoUrl.href,
+      prompt
+    );
 
     const photoResponse = await axiosRetry(colorizedPhotoUrl, 5);
     if (photoResponse == null) {
-      throw new Error('Фото не загрузилось');
+      throw new Error("Фото не загрузилось");
     }
     const photoBuffer = Buffer.from(photoResponse.data);
 
-    const caption = `✅ <b>Ваше фото готово!</b>`.trim()
-    const sentMessage = await ctx.telegram.sendPhoto(userId, { source: photoBuffer }, {
-      caption: caption,
-      parse_mode: 'HTML',
-    });
+    const caption = `✅ <b>Ваше фото готово!</b>`.trim();
+    const sentMessage = await ctx.telegram.sendPhoto(
+      userId,
+      { source: photoBuffer },
+      {
+        caption: caption,
+        parse_mode: "HTML",
+      }
+    );
 
     const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
-    await Database.saveGeneratedFile(userId, 'colorize', fileId, prompt);
+    await Database.saveGeneratedFile(userId, "colorize", fileId, prompt);
 
-    console.log(`✅ Окрашенная фотография сгенерирована и сохранена для пользователя ${userId}`);
+    console.log(
+      `✅ Окрашенная фотография сгенерирована и сохранена для пользователя ${userId}`
+    );
     console.log(`📁 File ID: ${fileId}`);
 
-    const mainMenuMessage =MAIN_MENU_MESSAGE;
+    const mainMenuMessage = MAIN_MENU_MESSAGE;
 
-  await ctx.telegram.sendMessage(
-  userId,
-  mainMenuMessage,
-  {
-    parse_mode: 'HTML',
-    ...Markup.inlineKeyboard(mainMenuKeyboard)
-  });
-
+    await ctx.telegram.sendMessage(userId, mainMenuMessage, {
+      parse_mode: "HTML",
+      link_preview_options: { is_disabled: true },
+      ...Markup.inlineKeyboard(mainMenuKeyboard),
+    });
   } catch (error) {
-    console.error('❌ Ошибка генерации фотографии:', error);
-    
+    console.error("❌ Ошибка генерации фотографии:", error);
+
     await Database.addBalance(
       userId,
       PRICES.PHOTO_COLORIZE,
-      'Возврат средств за ошибку генерации',
-      'bonus'
+      "Возврат средств за ошибку генерации",
+      "bonus"
     );
 
-    console.log(`💰 Возвращено ${PRICES.PHOTO_COLORIZE}₽ пользователю ${userId}`);
-    
+    console.log(
+      `💰 Возвращено ${PRICES.PHOTO_COLORIZE}₽ пользователю ${userId}`
+    );
+
     await ctx.telegram.sendMessage(
       userId,
-      '❌ Произошла ошибка при генерации. Средства возвращены на баланс.'
+      "❌ Произошла ошибка при генерации. Средства возвращены на баланс."
     );
   }
 }
 
 // Открытка
-async function generatePostcardWithBananaPro(imageUrl: string, prompt: string): Promise<string> {
+async function generatePostcardWithBananaPro(
+  imageUrl: string,
+  prompt: string
+): Promise<string> {
   console.log(`📸 Создаю открытку по фото: ${imageUrl}`);
   console.log(`💬 С описанием: ${prompt}`);
-  
+
   const taskId = await createColorizeTask(imageUrl, prompt);
   console.log(`✅ Задача создана: ${taskId}`);
-  
+
   const photoUrl = await waitForColorizeTaskCompletion(taskId);
   console.log(`✅ Открытка готово: ${photoUrl}`);
-  
+
   return photoUrl;
 }
 
-export async function processPostcardCreationWithBananaPro(ctx: any, userId: number, photoFileId: string, prompt: string) {
+export async function processPostcardCreationWithBananaPro(
+  ctx: any,
+  userId: number,
+  photoFileId: string,
+  prompt: string
+) {
   try {
     const deducted = await Database.deductBalance(
       userId,
       PRICES.POSTCARD_PHOTO,
-      'Создание открытки по фото'
+      "Создание открытки по фото"
     );
 
     if (!deducted) {
       await ctx.telegram.sendMessage(
         userId,
-        '❌ Недостаточно средств для генерации'
+        "❌ Недостаточно средств для генерации"
       );
       return;
     }
 
-    console.log(`⏳ Начинается создание открытки по фото для пользователя ${userId}...`);
+    console.log(
+      `⏳ Начинается создание открытки по фото для пользователя ${userId}...`
+    );
 
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
 
-    await ctx.telegram.sendMessage(userId, '⏳ Начинаю генерацию... Это займет около 3-х минут.');
-    
-    const colorizedPhotoUrl = await generatePostcardWithBananaPro(photoUrl.href, prompt);
+    await ctx.telegram.sendMessage(
+      userId,
+      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+      {
+        parse_mode: "HTML",
+        link_preview_options: { is_disabled: true },
+      }
+    );
+
+    const colorizedPhotoUrl = await generatePostcardWithBananaPro(
+      photoUrl.href,
+      prompt
+    );
 
     const photoResponse = await axiosRetry(colorizedPhotoUrl, 5);
     if (photoResponse == null) {
-      throw new Error('Фото не загрузилось');
+      throw new Error("Фото не загрузилось");
     }
     const photoBuffer = Buffer.from(photoResponse.data);
 
-    const caption = `✅ <b>Ваша открытка готова!</b>`.trim()
-    const sentMessage = await ctx.telegram.sendPhoto(userId, { source: photoBuffer }, {
-      caption: caption,
-      parse_mode: 'HTML',
-    });
+    const caption = `✅ <b>Ваша открытка готова!</b>`.trim();
+    const sentMessage = await ctx.telegram.sendPhoto(
+      userId,
+      { source: photoBuffer },
+      {
+        caption: caption,
+        parse_mode: "HTML",
+      }
+    );
 
     const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
-    await Database.saveGeneratedFile(userId, 'postcard_photo', fileId, prompt);
+    await Database.saveGeneratedFile(userId, "postcard_photo", fileId, prompt);
 
-    console.log(`✅ Открытка из фото сгенерирована и сохранена для пользователя ${userId}`);
+    console.log(
+      `✅ Открытка из фото сгенерирована и сохранена для пользователя ${userId}`
+    );
     console.log(`📁 File ID: ${fileId}`);
 
     const mainMenuMessage = MAIN_MENU_MESSAGE;
 
-  await ctx.telegram.sendMessage(
-  userId,
-  mainMenuMessage,
-  {
-    parse_mode: 'HTML',
-    ...Markup.inlineKeyboard(mainMenuKeyboard)
-  });
-
+    await ctx.telegram.sendMessage(userId, mainMenuMessage, {
+      parse_mode: "HTML",
+      link_preview_options: { is_disabled: true },
+      ...Markup.inlineKeyboard(mainMenuKeyboard),
+    });
   } catch (error) {
-    console.error('❌ Ошибка генерации открытки по фото:', error);
-    
+    console.error("❌ Ошибка генерации открытки по фото:", error);
+
     await Database.addBalance(
       userId,
       PRICES.POSTCARD_PHOTO,
-      'Возврат средств за ошибку генерации',
-      'bonus'
+      "Возврат средств за ошибку генерации",
+      "bonus"
     );
 
-    console.log(`💰 Возвращено ${PRICES.POSTCARD_PHOTO}₽ пользователю ${userId}`);
-    
+    console.log(
+      `💰 Возвращено ${PRICES.POSTCARD_PHOTO}₽ пользователю ${userId}`
+    );
+
     await ctx.telegram.sendMessage(
       userId,
-      '❌ Произошла ошибка при генерации. Средства возвращены на баланс.'
+      "❌ Произошла ошибка при генерации. Средства возвращены на баланс."
     );
   }
 }

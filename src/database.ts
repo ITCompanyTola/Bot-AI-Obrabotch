@@ -724,17 +724,33 @@ export class Database {
         now.getDate()
       );
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const updatedTime = await client
+        .query(
+          `SELECT updated_at FROM referral_sources WHERE source_key = $1`,
+          [keySubstring]
+        )
+        .then((res) => res.rows[0].updated_at);
 
       // За все время
       const usersCountAll = await client.query(
         "SELECT COUNT(*) as count FROM users WHERE source_key = $1",
         [keySubstring]
       );
+      const usersCountAllUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM users WHERE source_key = $1 AND updated_at >= $2`,
+        [keySubstring, updatedTime]
+      );
       const paymentsCountAll = await client.query(
         `SELECT COUNT(*) as count FROM transactions t 
        JOIN users u ON t.user_id = u.id 
        WHERE u.source_key = $1 AND t.type = 'refill'`,
         [keySubstring]
+      );
+      const paymentsCountAllUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM transactions t 
+       JOIN users u ON t.user_id = u.id 
+       WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
+        [keySubstring, updatedTime]
       );
       const paymentsSumAll = await client.query(
         `SELECT 
@@ -756,17 +772,47 @@ export class Database {
        WHERE u.source_key = $1 AND t.type = 'refill'`,
         [keySubstring]
       );
+      const paymentsSumAllUpdated = await client.query(
+        `SELECT 
+         COALESCE(SUM(
+           CASE t.amount
+             WHEN 150 THEN 150
+             WHEN 300 THEN 300
+             WHEN 800 THEN 800
+             WHEN 1600 THEN 1600
+             WHEN 180 THEN 150
+             WHEN 390 THEN 300
+             WHEN 1280 THEN 800
+             WHEN 3040 THEN 1600
+             ELSE 0
+           END
+         ), 0) as total_rub 
+       FROM transactions t 
+       JOIN users u ON t.user_id = u.id 
+       WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
+        [keySubstring, updatedTime]
+      );
 
       // За последние 7 дней
       const usersCount7d = await client.query(
         "SELECT COUNT(*) as count FROM users WHERE source_key = $1 AND created_at >= $2",
         [keySubstring, sevenDaysAgo]
       );
+      const usersCount7dUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM users WHERE source_key = $1 AND created_at >= $2 AND created_at >= $3`,
+        [keySubstring, sevenDaysAgo, updatedTime]
+      );
       const paymentsCount7d = await client.query(
         `SELECT COUNT(*) as count FROM transactions t 
        JOIN users u ON t.user_id = u.id 
        WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
         [keySubstring, sevenDaysAgo]
+      );
+      const paymentsCount7dUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM transactions t 
+       JOIN users u ON t.user_id = u.id 
+       WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2 AND t.created_at >= $3`,
+        [keySubstring, sevenDaysAgo, updatedTime]
       );
       const paymentsSum7d = await client.query(
         `SELECT 
@@ -788,17 +834,47 @@ export class Database {
        WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
         [keySubstring, sevenDaysAgo]
       );
+      const paymentsSum7dUpdated = await client.query(
+        `SELECT 
+         COALESCE(SUM(
+           CASE t.amount
+             WHEN 150 THEN 150
+             WHEN 300 THEN 300
+             WHEN 800 THEN 800
+             WHEN 1600 THEN 1600
+             WHEN 180 THEN 150
+             WHEN 390 THEN 300
+             WHEN 1280 THEN 800
+             WHEN 3040 THEN 1600
+             ELSE 0
+           END
+         ), 0) as total_rub 
+       FROM transactions t 
+       JOIN users u ON t.user_id = u.id 
+       WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2 AND t.created_at >= $3`,
+        [keySubstring, sevenDaysAgo, updatedTime]
+      );
 
       // За сегодня
       const usersCountToday = await client.query(
         "SELECT COUNT(*) as count FROM users WHERE source_key = $1 AND created_at >= $2",
         [keySubstring, startOfToday]
       );
+      const usersCountTodayUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM users WHERE source_key = $1 AND created_at >= $2 AND created_at >= $3`,
+        [keySubstring, startOfToday, updatedTime]
+      );
       const paymentsCountToday = await client.query(
         `SELECT COUNT(*) as count FROM transactions t 
        JOIN users u ON t.user_id = u.id 
        WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
         [keySubstring, startOfToday]
+      );
+      const paymentsCountTodayUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM transactions t 
+       JOIN users u ON t.user_id = u.id 
+       WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2 AND t.created_at >= $3`,
+        [keySubstring, startOfToday, updatedTime]
       );
       const paymentsSumToday = await client.query(
         `SELECT 
@@ -820,6 +896,26 @@ export class Database {
        WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2`,
         [keySubstring, startOfToday]
       );
+      const paymentsSumTodayUpdated = await client.query(
+        `SELECT 
+         COALESCE(SUM(
+           CASE t.amount
+             WHEN 150 THEN 150
+             WHEN 300 THEN 300
+             WHEN 800 THEN 800
+             WHEN 1600 THEN 1600
+             WHEN 180 THEN 150
+             WHEN 390 THEN 300
+             WHEN 1280 THEN 800
+             WHEN 3040 THEN 1600
+             ELSE 0
+           END
+         ), 0) as total_rub 
+       FROM transactions t 
+       JOIN users u ON t.user_id = u.id 
+       WHERE u.source_key = $1 AND t.type = 'refill' AND t.created_at >= $2 AND t.created_at >= $3`,
+        [keySubstring, startOfToday, updatedTime]
+      );
 
       // Другие статистики остаются без изменений
       const photoGenAll = await client.query(
@@ -828,11 +924,23 @@ export class Database {
        WHERE u.source_key = $1 AND g.file_type = 'photo'`,
         [keySubstring]
       );
+      const photoGenAllUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'photo' AND g.created_at >= $2`,
+        [keySubstring, updatedTime]
+      );
       const musicGenAll = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
        JOIN users u ON g.user_id = u.id 
        WHERE u.source_key = $1 AND g.file_type = 'music'`,
         [keySubstring]
+      );
+      const musicGenAllUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'music' AND g.created_at >= $2`,
+        [keySubstring, updatedTime]
       );
       const dmGenAll = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g
@@ -840,11 +948,23 @@ export class Database {
        WHERE u.source_key = $1 AND g.file_type = 'dm_video'`,
         [keySubstring]
       );
+      const dmGenAllUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g
+       JOIN users u ON g.user_id = u.id
+       WHERE u.source_key = $1 AND g.file_type = 'dm_video' AND g.created_at >= $2`,
+        [keySubstring, updatedTime]
+      );
       const colorizeGenAll = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
        JOIN users u ON g.user_id = u.id 
        WHERE u.source_key = $1 AND g.file_type = 'colorize'`,
         [keySubstring]
+      );
+      const colorizeGenAllUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'colorize' AND g.created_at >= $2`,
+        [keySubstring, updatedTime]
       );
       const restorationGenAll = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
@@ -852,11 +972,23 @@ export class Database {
        WHERE u.source_key = $1 AND g.file_type = 'restoration'`,
         [keySubstring]
       );
+      const restorationGenAllUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'restoration' AND g.created_at >= $2`,
+        [keySubstring, updatedTime]
+      );
       const postcardTextGenAll = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
        JOIN users u ON g.user_id = u.id 
        WHERE u.source_key = $1 AND g.file_type = 'postcard_text'`,
         [keySubstring]
+      );
+      const postcardTextGenAllUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_text' AND g.created_at >= $2`,
+        [keySubstring, updatedTime]
       );
       const postcardPhotoGenAll = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
@@ -864,11 +996,23 @@ export class Database {
        WHERE u.source_key = $1 AND g.file_type = 'postcard_photo'`,
         [keySubstring]
       );
+      const postcardPhotoGenAllUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_photo' AND g.created_at >= $2`,
+        [keySubstring, updatedTime]
+      );
       const christmasPostcardGenAll = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
        JOIN users u ON g.user_id = u.id 
        WHERE u.source_key = $1 AND g.file_type = 'postcard_christmas'`,
         [keySubstring]
+      );
+      const christmasPostcardGenAllUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_christmas' AND g.created_at >= $2`,
+        [keySubstring, updatedTime]
       );
 
       const photoGen7d = await client.query(
@@ -877,11 +1021,23 @@ export class Database {
        WHERE u.source_key = $1 AND g.file_type = 'photo' AND g.created_at >= $2`,
         [keySubstring, sevenDaysAgo]
       );
+      const photoGen7dUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'photo' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, sevenDaysAgo, updatedTime]
+      );
       const musicGen7d = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
        JOIN users u ON g.user_id = u.id 
        WHERE u.source_key = $1 AND g.file_type = 'music' AND g.created_at >= $2`,
         [keySubstring, sevenDaysAgo]
+      );
+      const musicGen7dUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'music' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, sevenDaysAgo, updatedTime]
       );
       const dmGen7d = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g
@@ -889,11 +1045,23 @@ export class Database {
        WHERE u.source_key = $1 AND g.file_type = 'dm_video' AND g.created_at >= $2`,
         [keySubstring, sevenDaysAgo]
       );
+      const dmGen7dUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g
+       JOIN users u ON g.user_id = u.id
+       WHERE u.source_key = $1 AND g.file_type = 'dm_video' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, sevenDaysAgo, updatedTime]
+      );
       const colorizeGen7d = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
        JOIN users u ON g.user_id = u.id 
        WHERE u.source_key = $1 AND g.file_type = 'colorize' AND g.created_at >= $2`,
         [keySubstring, sevenDaysAgo]
+      );
+      const colorizeGen7dUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'colorize' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, sevenDaysAgo, updatedTime]
       );
       const restorationGen7d = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
@@ -901,11 +1069,23 @@ export class Database {
        WHERE u.source_key = $1 AND g.file_type = 'restoration' AND g.created_at >= $2`,
         [keySubstring, sevenDaysAgo]
       );
+      const restorationGen7dUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'restoration' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, sevenDaysAgo, updatedTime]
+      );
       const postcardTextGen7d = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
        JOIN users u ON g.user_id = u.id 
        WHERE u.source_key = $1 AND g.file_type = 'postcard_text' AND g.created_at >= $2`,
         [keySubstring, sevenDaysAgo]
+      );
+      const postcardTextGen7dUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_text' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, sevenDaysAgo, updatedTime]
       );
       const postcardPhotoGen7d = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
@@ -913,11 +1093,23 @@ export class Database {
        WHERE u.source_key = $1 AND g.file_type = 'postcard_photo' AND g.created_at >= $2`,
         [keySubstring, sevenDaysAgo]
       );
+      const postcardPhotoGen7dUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_photo' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, sevenDaysAgo, updatedTime]
+      );
       const christmasPostcardGen7d = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
        JOIN users u ON g.user_id = u.id 
        WHERE u.source_key = $1 AND g.file_type = 'postcard_christmas' AND g.created_at >= $2`,
         [keySubstring, sevenDaysAgo]
+      );
+      const christmasPostcardGen7dUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_christmas' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, sevenDaysAgo, updatedTime]
       );
 
       const photoGenToday = await client.query(
@@ -926,11 +1118,23 @@ export class Database {
        WHERE u.source_key = $1 AND g.file_type = 'photo' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
       );
+      const photoGenTodayUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'photo' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, startOfToday, updatedTime]
+      );
       const musicGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
        JOIN users u ON g.user_id = u.id 
        WHERE u.source_key = $1 AND g.file_type = 'music' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
+      );
+      const musicGenTodayUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'music' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, startOfToday, updatedTime]
       );
       const dmGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g
@@ -938,11 +1142,23 @@ export class Database {
        WHERE u.source_key = $1 AND g.file_type = 'dm_video' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
       );
+      const dmGenTodayUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g
+       JOIN users u ON g.user_id = u.id
+       WHERE u.source_key = $1 AND g.file_type = 'dm_video' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, startOfToday, updatedTime]
+      );
       const colorizeGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
        JOIN users u ON g.user_id = u.id 
        WHERE u.source_key = $1 AND g.file_type = 'colorize' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
+      );
+      const colorizeGenTodayUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'colorize' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, startOfToday, updatedTime]
       );
       const restorationGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
@@ -950,11 +1166,23 @@ export class Database {
        WHERE u.source_key = $1 AND g.file_type = 'restoration' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
       );
+      const restorationGenTodayUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'restoration' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, startOfToday, updatedTime]
+      );
       const postcardTextGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
        JOIN users u ON g.user_id = u.id 
        WHERE u.source_key = $1 AND g.file_type = 'postcard_text' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
+      );
+      const postcardTextGenTodayUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_text' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, startOfToday, updatedTime]
       );
       const postcardPhotoGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
@@ -962,62 +1190,161 @@ export class Database {
        WHERE u.source_key = $1 AND g.file_type = 'postcard_photo' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
       );
+      const postcardPhotoGenTodayUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_photo' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, startOfToday, updatedTime]
+      );
       const christmasPostcardGenToday = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
        JOIN users u ON g.user_id = u.id 
        WHERE u.source_key = $1 AND g.file_type = 'postcard_christmas' AND g.created_at >= $2`,
         [keySubstring, startOfToday]
       );
+      const christmasPostcardGenTodayUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'postcard_christmas' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, startOfToday, updatedTime]
+      );
 
       return {
         all: {
           usersCount: parseInt(usersCountAll.rows[0].count),
+          usersCountUpdated: parseInt(usersCountAllUpdated.rows[0].count),
           successfulPayments: parseInt(paymentsCountAll.rows[0].count),
+          successfulPaymentsUpdated: parseInt(
+            paymentsCountAllUpdated.rows[0].count
+          ),
           totalPaymentsAmount: parseFloat(paymentsSumAll.rows[0].total_rub),
+          totalPaymentsAmountUpdated: parseFloat(
+            paymentsSumAllUpdated.rows[0].total_rub
+          ),
           photoGenerations: parseInt(photoGenAll.rows[0].count),
+          photoGenerationsUpdated: parseInt(photoGenAllUpdated.rows[0].count),
           musicGenerations: parseInt(musicGenAll.rows[0].count),
+          musicGenerationsUpdated: parseInt(musicGenAllUpdated.rows[0].count),
           dmVideoGenerations: parseInt(dmGenAll.rows[0].count),
+          dmVideoGenerationsUpdated: parseInt(dmGenAllUpdated.rows[0].count),
           colorizeGenerations: parseInt(colorizeGenAll.rows[0].count),
+          colorizeGenerationsUpdated: parseInt(
+            colorizeGenAllUpdated.rows[0].count
+          ),
           restorationGenerations: parseInt(restorationGenAll.rows[0].count),
+          restorationGenerationsUpdated: parseInt(
+            restorationGenAllUpdated.rows[0].count
+          ),
           postcardTextGenerations: parseInt(postcardTextGenAll.rows[0].count),
+          postcardTextGenerationsUpdated: parseInt(
+            postcardTextGenAllUpdated.rows[0].count
+          ),
           postcardPhotoGenerations: parseInt(postcardPhotoGenAll.rows[0].count),
+          postcardPhotoGenerationsUpdated: parseInt(
+            postcardPhotoGenAllUpdated.rows[0].count
+          ),
           christmasPostcardGenerations: parseInt(
             christmasPostcardGenAll.rows[0].count
+          ),
+          christmasPostcardGenerationsUpdated: parseInt(
+            christmasPostcardGenAllUpdated.rows[0].count
           ),
         },
         last7Days: {
           usersCount: parseInt(usersCount7d.rows[0].count),
+          usersCountUpdated: parseInt(usersCount7dUpdated.rows[0].count),
           successfulPayments: parseInt(paymentsCount7d.rows[0].count),
+          successfulPaymentsUpdated: parseInt(
+            paymentsCount7dUpdated.rows[0].count
+          ),
           totalPaymentsAmount: parseFloat(paymentsSum7d.rows[0].total_rub),
+          totalPaymentsAmountUpdated: parseFloat(
+            paymentsSum7dUpdated.rows[0].total_rub
+          ),
           photoGenerations: parseInt(photoGen7d.rows[0].count),
+          photoGenerationsUpdated: parseInt(photoGen7dUpdated.rows[0].count),
           musicGenerations: parseInt(musicGen7d.rows[0].count),
+          musicGenerationsUpdated: parseInt(musicGen7dUpdated.rows[0].count),
           dmVideoGenerations: parseInt(dmGen7d.rows[0].count),
+          dmVideoGenerationsUpdated: parseInt(dmGen7dUpdated.rows[0].count),
           colorizeGenerations: parseInt(colorizeGen7d.rows[0].count),
+          colorizeGenerationsUpdated: parseInt(
+            colorizeGen7dUpdated.rows[0].count
+          ),
           restorationGenerations: parseInt(restorationGen7d.rows[0].count),
+          restorationGenerationsUpdated: parseInt(
+            restorationGen7dUpdated.rows[0].count
+          ),
           postcardTextGenerations: parseInt(postcardTextGen7d.rows[0].count),
+          postcardTextGenerationsUpdated: parseInt(
+            postcardTextGen7dUpdated.rows[0].count
+          ),
           postcardPhotoGenerations: parseInt(postcardPhotoGen7d.rows[0].count),
+          postcardPhotoGenerationsUpdated: parseInt(
+            postcardPhotoGen7dUpdated.rows[0].count
+          ),
           christmasPostcardGenerations: parseInt(
             christmasPostcardGen7d.rows[0].count
+          ),
+          christmasPostcardGenerationsUpdated: parseInt(
+            christmasPostcardGen7dUpdated.rows[0].count
           ),
         },
         today: {
           usersCount: parseInt(usersCountToday.rows[0].count),
+          usersCountUpdated: parseInt(usersCountTodayUpdated.rows[0].count),
           successfulPayments: parseInt(paymentsCountToday.rows[0].count),
+          successfulPaymentsUpdated: parseInt(
+            paymentsCountTodayUpdated.rows[0].count
+          ),
           totalPaymentsAmount: parseFloat(paymentsSumToday.rows[0].total_rub),
+          totalPaymentsAmountUpdated: parseFloat(
+            paymentsSumTodayUpdated.rows[0].total_rub
+          ),
           photoGenerations: parseInt(photoGenToday.rows[0].count),
+          photoGenerationsUpdated: parseInt(photoGenTodayUpdated.rows[0].count),
           musicGenerations: parseInt(musicGenToday.rows[0].count),
+          musicGenerationsUpdated: parseInt(musicGenTodayUpdated.rows[0].count),
           dmVideoGenerations: parseInt(dmGenToday.rows[0].count),
+          dmVideoGenerationsUpdated: parseInt(dmGenTodayUpdated.rows[0].count),
           colorizeGenerations: parseInt(colorizeGenToday.rows[0].count),
+          colorizeGenerationsUpdated: parseInt(
+            colorizeGenTodayUpdated.rows[0].count
+          ),
           restorationGenerations: parseInt(restorationGenToday.rows[0].count),
+          restorationGenerationsUpdated: parseInt(
+            restorationGenTodayUpdated.rows[0].count
+          ),
           postcardTextGenerations: parseInt(postcardTextGenToday.rows[0].count),
+          postcardTextGenerationsUpdated: parseInt(
+            postcardTextGenTodayUpdated.rows[0].count
+          ),
           postcardPhotoGenerations: parseInt(
             postcardPhotoGenToday.rows[0].count
+          ),
+          postcardPhotoGenerationsUpdated: parseInt(
+            postcardPhotoGenTodayUpdated.rows[0].count
           ),
           christmasPostcardGenerations: parseInt(
             christmasPostcardGenToday.rows[0].count
           ),
+          christmasPostcardGenerationsUpdated: parseInt(
+            christmasPostcardGenTodayUpdated.rows[0].count
+          ),
         },
       };
+    } finally {
+      client.release();
+    }
+  }
+
+  static async updateSource(sourceName: string): Promise<void> {
+    const client = await pool.connect();
+    try {
+      await client.query(
+        "UPDATE referral_sources SET updated_at = NOW() WHERE source_name = $1",
+        [sourceName]
+      );
     } finally {
       client.release();
     }

@@ -62,7 +62,11 @@ export async function generatePostcard(
 
     await ctx.telegram.sendMessage(
       userId,
-      "⏳ Начинаю генерацию... Это займет около 3-х минут."
+      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+      {
+        parse_mode: "HTML",
+        link_preview_options: { is_disabled: true },
+      }
     );
 
     console.log("🟡 [4] Creating OpenAI client");
@@ -162,6 +166,7 @@ export async function generatePostcard(
 
     await ctx.telegram.sendMessage(userId, MAIN_MENU_MESSAGE, {
       parse_mode: "HTML",
+      link_preview_options: { is_disabled: true },
       ...Markup.inlineKeyboard(mainMenuKeyboard),
     });
 

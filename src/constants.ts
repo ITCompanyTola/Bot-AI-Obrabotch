@@ -3,8 +3,8 @@ import { Markup } from "telegraf";
 export const PRICES = {
   PHOTO_ANIMATION: 80,
   MUSIC_CREATION: 195,
-  PHOTO_RESTORATION: 35,
-  PHOTO_COLORIZE: 35,
+  PHOTO_RESTORATION: 30,
+  PHOTO_COLORIZE: 30,
   DED_MOROZ: 195,
   POSTCARD_TEXT: 45,
   POSTCARD_PHOTO: 119,
@@ -36,7 +36,9 @@ export const MAIN_MENU_MESSAGE = `
 - <b><i>реставрировать</i></b> старые\n<b><i>фотографии</i></b> ✨
 - переводить ч/б фото в <b><i>цветные</i></b> 🎨
 
-Вы можете творить сами или доверить работу нам 🤝`.trim();
+Вы можете творить сами или доверить работу нам 🤝
+
+<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin`.trim();
 
 export const getDedMorozMessage = (balance: number) =>
   `

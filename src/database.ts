@@ -1689,12 +1689,9 @@ export class Database {
   ): Promise<MailingData> {
     const client = await pool.connect();
     try {
-      // Telegram entities - это массив объектов вида {offset, length, type, ...}
-      // Нужно сохранить как JSON
       let entitiesForDb = null;
 
       if (data.entities && Array.isArray(data.entities)) {
-        // Проверяем, что это валидные entities
         const isValid = data.entities.every(
           (entity) =>
             entity &&
@@ -1711,13 +1708,15 @@ export class Database {
 
       console.log("📊 Сохранение данных рассылки:");
       console.log("- Сообщение:", data.message?.substring(0, 100));
-      console.log("- Текст кнопки:", data.button_text);
-      console.log("- Callback кнопки:", data.button_callback);
+      console.log("- Текст кнопки (legacy):", data.button_text);
+      console.log("- Callback кнопки (legacy):", data.button_callback);
+      console.log("- Кнопки в JSON:", data.buttons_json?.substring(0, 100));
 
       const result = await client.query(
         `INSERT INTO mailing_data 
-       (admin_id, message, entities, photo_file_id, video_file_id, button_text, button_callback, bonus_amount, total_users)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       (admin_id, message, entities, photo_file_id, video_file_id, 
+        button_text, button_callback, buttons_json, bonus_amount, total_users)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
         [
           data.admin_id,
@@ -1727,15 +1726,16 @@ export class Database {
           data.video_file_id,
           data.button_text || null,
           data.button_callback || null,
-          data.bonus_amount || 0, // ДОБАВЛЕНО: бонус, по умолчанию 0
+          data.buttons_json || null,
+          data.bonus_amount || 0,
           data.total_users,
         ]
       );
 
       console.log("✅ Данные рассылки сохранены в БД:", {
         id: result.rows[0].id,
-        hasButtonText: !!result.rows[0].button_text,
-        hasButtonCallback: !!result.rows[0].button_callback,
+        hasLegacyButton: !!result.rows[0].button_text,
+        hasButtonsJson: !!result.rows[0].buttons_json,
       });
 
       return result.rows[0];
@@ -1762,19 +1762,15 @@ export class Database {
         id: row.id,
         button_text: row.button_text,
         button_callback: row.button_callback,
-        hasButton: !!row.button_text && !!row.button_callback,
+        buttons_json: row.buttons_json?.substring(0, 100),
       });
 
-      // Извлекаем entities
       let entities = null;
       if (row.entities) {
         try {
-          // Если это строка JSON
           if (typeof row.entities === "string") {
             entities = JSON.parse(row.entities);
-          }
-          // Если pg драйвер уже распарсил
-          else if (typeof row.entities === "object") {
+          } else if (typeof row.entities === "object") {
             entities = row.entities;
           }
         } catch (error) {
@@ -1783,12 +1779,25 @@ export class Database {
         }
       }
 
+      let parsedButtons = null;
+      if (row.buttons_json) {
+        try {
+          parsedButtons = JSON.parse(row.buttons_json);
+          console.log("✅ Загружены кнопки из JSON:", parsedButtons);
+        } catch (error) {
+          console.error("❌ Ошибка чтения JSON кнопок:", error);
+          parsedButtons = null;
+        }
+      }
+
       return {
         ...row,
         entities,
         button_text: row.button_text || undefined,
         button_callback: row.button_callback || undefined,
-        bonus_amount: row.bonus_amount || 0, // ДОБАВЛЕНО: бонус
+        buttons_json: row.buttons_json || undefined,
+        parsed_buttons: parsedButtons,
+        bonus_amount: row.bonus_amount || 0,
       };
     } finally {
       client.release();

@@ -2,15 +2,17 @@ import { Context } from "telegraf";
 
 export interface BotContext extends Context {}
 
+export interface BroadcastButton {
+  text: string;
+  callbackData: string;
+}
+
 export interface Broadcast {
   message: string;
   entities: any;
   photoFileId?: string;
   videoFileId?: string;
-  button?: {
-    text: string;
-    callbackData: string;
-  };
+  buttons?: BroadcastButton[];
   bonusAmount?: number;
 }
 
@@ -26,8 +28,10 @@ export type UserStep =
   | "waiting_broadcast_message"
   | "waiting_broadcast_photo"
   | "waiting_broadcast_video"
+  | "waiting_broadcast_button"
   | "waiting_broadcast_button_text"
   | "waiting_broadcast_button_callback"
+  | "waiting_broadcast_add_another"
   | "waiting_broadcast_bonus"
   | "waiting_DM_photo_generation"
   | "waiting_DM_text"
@@ -59,8 +63,8 @@ export interface UserState {
   freeGenerations?: number;
   regenPromptAttempts?: number;
   dmPhotoFileId?: string;
-  broadcastButtonText?: string;
-  broadcastButtonCallback?: string;
+  broadcastCurrentButton?: BroadcastButton;
+  broadcastButtons?: BroadcastButton[];
 }
 
 export interface MailingData {
@@ -72,6 +76,8 @@ export interface MailingData {
   video_file_id?: string;
   button_text?: string;
   button_callback?: string;
+  buttons_json?: string;
+  parsed_buttons?: BroadcastButton[];
   bonus_amount?: number;
   total_users: number;
   sent_count: number;
@@ -90,6 +96,7 @@ export interface CreateMailingData {
   video_file_id?: string;
   button_text?: string;
   button_callback?: string;
+  buttons_json?: string | null;
   bonus_amount?: number;
   total_users: number;
 }

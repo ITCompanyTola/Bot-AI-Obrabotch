@@ -107,16 +107,25 @@ export class MailingWorker {
       total_users: totalUsers,
     });
 
-    let bonusInfo = '';
+    let bonusInfo = "";
     if (mailing.bonus_amount && mailing.bonus_amount > 0) {
       bonusInfo = `Бонус: ${mailing.bonus_amount}₽\n`;
     }
-    
+
+    // Информация о кнопках
+    let buttonsInfo = "";
+    if (mailing.parsed_buttons && mailing.parsed_buttons.length > 0) {
+      buttonsInfo = `Кнопок: ${mailing.parsed_buttons.length}\n`;
+    } else if (mailing.button_text && mailing.button_callback) {
+      buttonsInfo = `Кнопка: "${mailing.button_text}"\n`;
+    }
+
     await this.notifyAdmin(
       adminId,
       `Начата рассылка #${mailingId}\n` +
-      `${bonusInfo}` +
-      `Пользователей: ${totalUsers}`
+        `${buttonsInfo}` +
+        `${bonusInfo}` +
+        `Пользователей: ${totalUsers}`
     );
 
     while (processed < totalUsers) {
@@ -126,18 +135,23 @@ export class MailingWorker {
         try {
           await this.sendMessageToUser(userId, mailing);
           progress.sent++;
-          
+
           if (mailing.bonus_amount && mailing.bonus_amount > 0) {
             try {
               await Database.addBalance(
-                userId, 
-                mailing.bonus_amount, 
+                userId,
+                mailing.bonus_amount,
                 `Бонус из рассылки #${mailingId}`,
-                'bonus'
+                "bonus"
               );
-              console.log(`Начислен бонус ${mailing.bonus_amount}₽ пользователю ${userId}`);
+              console.log(
+                `Начислен бонус ${mailing.bonus_amount}₽ пользователю ${userId}`
+              );
             } catch (bonusError) {
-              console.error(`Ошибка начисления бонуса пользователю ${userId}:`, bonusError);
+              console.error(
+                `Ошибка начисления бонуса пользователю ${userId}:`,
+                bonusError
+              );
             }
           }
 
@@ -189,7 +203,14 @@ export class MailingWorker {
       status: "completed",
     });
 
-    await this.sendFinalReport(adminId, mailingId, progress, totalUsers, mailing.bonus_amount);
+    await this.sendFinalReport(
+      adminId,
+      mailingId,
+      progress,
+      totalUsers,
+      mailing.bonus_amount,
+      mailing.parsed_buttons
+    );
 
     console.log(`✅ Рассылка ${mailingId} завершена`);
   }
@@ -197,43 +218,58 @@ export class MailingWorker {
   private async sendMessageToUser(userId: number, mailing: any): Promise<void> {
     try {
       let replyMarkup: any = undefined;
-      
-      if (mailing.button_text && mailing.button_callback) {
+
+      // Используем новые кнопки из JSON
+      if (mailing.parsed_buttons && mailing.parsed_buttons.length > 0) {
+        const inlineKeyboard = mailing.parsed_buttons.map(
+          (button: { text: any; callbackData: any }) => [
+            {
+              text: button.text,
+              callback_data: button.callbackData,
+            },
+          ]
+        );
+        replyMarkup = { inline_keyboard: inlineKeyboard };
+        console.log(`📤 Отправка с ${mailing.parsed_buttons.length} кнопками`);
+      }
+      // Обратная совместимость со старым форматом
+      else if (mailing.button_text && mailing.button_callback) {
         replyMarkup = {
-          inline_keyboard: [[
-            { 
-              text: mailing.button_text, 
-              callback_data: mailing.button_callback 
-            }
-          ]]
+          inline_keyboard: [
+            [
+              {
+                text: mailing.button_text,
+                callback_data: mailing.button_callback,
+              },
+            ],
+          ],
         };
       }
 
+      const options: any = {};
+
+      if (replyMarkup) {
+        options.reply_markup = replyMarkup;
+      }
+
       if (mailing.photo_file_id) {
-        const options: any = {
-          caption: mailing.message,
-          caption_entities: mailing.entities,
-        };
-        if (replyMarkup) {
-          options.reply_markup = replyMarkup;
-        }
-        await this.bot.telegram.sendPhoto(userId, mailing.photo_file_id, options);
+        options.caption = mailing.message;
+        options.caption_entities = mailing.entities;
+        await this.bot.telegram.sendPhoto(
+          userId,
+          mailing.photo_file_id,
+          options
+        );
       } else if (mailing.video_file_id) {
-        const options: any = {
-          caption: mailing.message,
-          caption_entities: mailing.entities,
-        };
-        if (replyMarkup) {
-          options.reply_markup = replyMarkup;
-        }
-        await this.bot.telegram.sendVideo(userId, mailing.video_file_id, options);
+        options.caption = mailing.message;
+        options.caption_entities = mailing.entities;
+        await this.bot.telegram.sendVideo(
+          userId,
+          mailing.video_file_id,
+          options
+        );
       } else {
-        const options: any = {
-          entities: mailing.entities,
-        };
-        if (replyMarkup) {
-          options.reply_markup = replyMarkup;
-        }
+        options.entities = mailing.entities;
         await this.bot.telegram.sendMessage(userId, mailing.message, options);
       }
     } catch (error: any) {
@@ -248,7 +284,7 @@ export class MailingWorker {
   private determineErrorStatus(error: any): "failed" | "blocked" {
     const errorMessage = error.message || "";
     if (errorMessage.includes("bot was blocked")) return "blocked";
-    return 'failed';
+    return "failed";
   }
 
   private async updateProgress(
@@ -274,15 +310,21 @@ export class MailingWorker {
     mailingId: number,
     progress: MailingProgress,
     totalUsers: number,
-    bonusAmount?: number
+    bonusAmount?: number,
+    buttons?: any[]
   ): Promise<void> {
     const successRate =
       totalUsers > 0 ? Math.round((progress.sent / totalUsers) * 100) : 0;
 
-    let bonusInfo = '';
+    let bonusInfo = "";
     if (bonusAmount && bonusAmount > 0) {
       const totalBonus = progress.sent * bonusAmount;
       bonusInfo = `Всего бонусов: ${totalBonus}₽ (${bonusAmount}₽ × ${progress.sent})\n`;
+    }
+
+    let buttonsInfo = "";
+    if (buttons && buttons.length > 0) {
+      buttonsInfo = `Кнопок: ${buttons.length}\n`;
     }
 
     await this.notifyAdmin(
@@ -293,6 +335,7 @@ export class MailingWorker {
         `Отправлено: ${progress.sent} (${successRate}%)\n` +
         `Ошибки: ${progress.failed}\n` +
         `Заблокировали: ${progress.blocked}\n` +
+        `${buttonsInfo}` +
         `${bonusInfo}`
     );
   }

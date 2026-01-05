@@ -22,6 +22,7 @@ import {
   broadcastVideoHandler,
   sendBroadcastExample,
   askForBonus,
+  askForAnotherButton,
 } from "./broadcast";
 import { processVideoDMGeneration } from "../services/veoService";
 import { updatePrompt } from "../services/openaiService";
@@ -140,6 +141,7 @@ export function registerTextHandlers(
       return;
     }
 
+    // Обработчик текста для кнопки
     if (userState?.step === "waiting_broadcast_button_text") {
       const buttonText = ctx.message.text;
 
@@ -148,7 +150,10 @@ export function registerTextHandlers(
       userStates.set(userId, {
         ...userState,
         step: "waiting_broadcast_button_callback",
-        broadcastButtonText: buttonText,
+        broadcastCurrentButton: {
+          text: buttonText,
+          callbackData: "",
+        },
       });
 
       await ctx.reply(
@@ -164,6 +169,7 @@ export function registerTextHandlers(
       return;
     }
 
+    // Обработчик callback_data для кнопки
     if (userState?.step === "waiting_broadcast_button_callback") {
       const callbackData = ctx.message.text;
 
@@ -181,16 +187,39 @@ export function registerTextHandlers(
         return;
       }
 
+      // Обновляем текущую кнопку
+      const currentButton = userState.broadcastCurrentButton;
+      if (!currentButton) {
+        await ctx.reply("Ошибка: не найден текст кнопки");
+        userStates.delete(userId);
+        return;
+      }
+
+      const completedButton = {
+        text: currentButton.text,
+        callbackData: callbackData,
+      };
+
+      // Добавляем кнопку в массив
+      const updatedButtons = [
+        ...(currentBroadcast.buttons || []),
+        completedButton,
+      ];
+
       // Сохраняем кнопку в broadcast
       broadcast.set(userId, {
         ...currentBroadcast,
-        button: {
-          text: userState.broadcastButtonText || "Кнопка",
-          callbackData: callbackData,
-        },
+        buttons: updatedButtons,
       });
 
-      await askForBonus(ctx, userId, userState, userStates);
+      // Обновляем состояние пользователя
+      userStates.set(userId, {
+        ...userState,
+        step: "waiting_broadcast_add_another",
+        broadcastCurrentButton: undefined,
+      });
+
+      await askForAnotherButton(ctx, userId, userState);
       return;
     }
 

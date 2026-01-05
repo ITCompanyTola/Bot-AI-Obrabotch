@@ -269,14 +269,14 @@ https://t.me/obrabotych_support
 🏞 Количество генераций реставрации: <b>${stats.all.restorationGenerations}</b>
 🎨 Количество генерации ЧБ: <b>${stats.all.colorizeGenerations}</b>
 🎅 Количество генераций Д.Мороза: <b>${stats.all.dmVideoGenerations}</b>
-🏞 Количество генераций открыток из текста: <b>${
+💌 Количество генераций открыток из текста: <b>${
         stats.all.postcardTextGenerations
       }</b>
 🏞 Количество генераций новогодних открыток из фото: <b>${
         stats.all.postcardPhotoGenerations
       }</b>
-🏞 Количество генераций рождественских открыток из фото: <b>${
-        stats.today.christmasPostcardGenerations
+🎄 Количество генераций рождественских открыток из фото: <b>${
+        stats.all.christmasPostcardGenerations
       }</b>
 
 
@@ -293,13 +293,13 @@ https://t.me/obrabotych_support
       }</b>
 🎨 Количество генерации ЧБ: <b>${stats.last7Days.colorizeGenerations}</b>
 🎅 Количество генераций Д.Мороза: <b>${stats.last7Days.dmVideoGenerations}</b>
-🏞 Количество генераций открыток из текста: <b>${
+💌 Количество генераций открыток из текста: <b>${
         stats.last7Days.postcardTextGenerations
       }</b>
 🏞 Количество генераций новогодних открыток из фото: <b>${
         stats.last7Days.postcardPhotoGenerations
       }</b>
-🏞 Количество генераций рождественских открыток из фото: <b>${
+🎄 Количество генераций рождественских открыток из фото: <b>${
         stats.last7Days.christmasPostcardGenerations
       }</b>
 
@@ -314,13 +314,13 @@ https://t.me/obrabotych_support
 🏞 Количество генераций реставрации: <b>${stats.today.restorationGenerations}</b>
 🎨 Количество генерации ЧБ: <b>${stats.today.colorizeGenerations}</b>
 🎅 Количество генераций Д.Мороза: <b>${stats.today.dmVideoGenerations}</b>
-🏞 Количество генераций открыток из текста: <b>${
+💌 Количество генераций открыток из текста: <b>${
         stats.today.postcardTextGenerations
       }</b>
 🏞 Количество генераций новогодних открыток из фото: <b>${
         stats.today.postcardPhotoGenerations
       }</b>
-🏞 Количество генераций рождественских открыток из фото: <b>${
+🎄 Количество генераций рождественских открыток из фото: <b>${
         stats.today.christmasPostcardGenerations
       }</b>`.trim();
 
@@ -527,6 +527,37 @@ https://t.me/obrabotych_support
     }
   });
 
+  bot.hears(/^\/updateSource_(.+)$/, async (ctx) => {
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const isAdmin = await Database.isAdmin(userId);
+    if (!isAdmin) {
+      await ctx.reply("❌ У вас нет прав на выполнение данной команды");
+      return;
+    }
+
+    const sourceName = ctx.match?.[1].trim();
+    console.log(sourceName);
+    if (!sourceName) return;
+    if (!(await Database.sourceExists(sourceName))) {
+      await ctx.reply("❌ Источник не найден");
+      return;
+    }
+    try {
+      await Database.updateSource(sourceName);
+      await ctx.reply(
+        `✅ Статистика успешно обновлена для источника ${sourceName}. Используйте команду <code>/stats_${sourceName}</code> для получения новой информации.`,
+        {
+          parse_mode: "HTML",
+        }
+      );
+    } catch (error) {
+      console.log("Ошибка обновления статистики:", error);
+      await ctx.reply("❌ Ошибка при обновлении статистики");
+    }
+  });
+
   bot.command("team", async (ctx) => {
     const userId = ctx.from?.id;
     if (!userId) return;
@@ -723,27 +754,6 @@ https://t.me/obrabotych_support
       console.error("Ошибка получения статистики источника:", error);
       await ctx.reply("❌ Ошибка при получении статистики");
     }
-  });
-
-  bot.command(/^updateSource_(.+)$/, async (ctx) => {
-    const userId = ctx.from?.id;
-    if (!userId) return;
-
-    const isAdmin = await Database.isAdmin(userId);
-    if (!isAdmin) {
-      await ctx.reply("❌ У вас нет прав на выполнение данной команды");
-      return;
-    }
-
-    const sourceName = ctx.match[1];
-    if (!sourceName) return;
-    await Database.updateSource(sourceName);
-    await ctx.reply(
-      `✅ Статистика успешно обновлена для источника ${sourceName}. Используйте команду <code>/stats_${sourceName}</code> для получения новой информации.`,
-      {
-        parse_mode: "HTML",
-      }
-    );
   });
 
   bot.command("lk", async (ctx) => {

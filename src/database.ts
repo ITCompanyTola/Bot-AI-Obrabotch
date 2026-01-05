@@ -1338,6 +1338,19 @@ export class Database {
     }
   }
 
+  static async sourceExists(sourceName: string): Promise<boolean> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        "SELECT id FROM referral_sources WHERE source_name = $1",
+        [sourceName]
+      );
+      return result.rows.length > 0;
+    } finally {
+      client.release();
+    }
+  }
+
   static async updateSource(sourceName: string): Promise<void> {
     const client = await pool.connect();
     try {

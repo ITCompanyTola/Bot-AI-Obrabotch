@@ -3,10 +3,16 @@ import { Buffer } from "buffer";
 import { Markup } from "telegraf";
 import { config } from "../config";
 import { Database } from "../database";
-import { MAIN_MENU_MESSAGE, mainMenuKeyboard, PRICES } from "../constants";
+import {
+  MAIN_MENU_MESSAGE,
+  mainMenuKeyboard,
+  PRICES,
+  TELEGRAM_CHANNEL_MESSAGE,
+} from "../constants";
 import { UserState } from "../types";
 import { axiosRetry } from "../utils/axiosRetry";
 import { redisStateService } from "../redis-state.service";
+import { isSubscribed } from "../utils/isSubscribed";
 
 const API_URL = "https://api.kie.ai/api/v1/jobs";
 const API_KEY = config.nanoBananaApiKey;
@@ -172,14 +178,23 @@ export async function processPhotoRestoration(
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
 
-    await ctx.telegram.sendMessage(
-      userId,
-      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
-      {
-        parse_mode: "HTML",
-        link_preview_options: { is_disabled: true },
-      }
-    );
+    if (await isSubscribed(userId)) {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    } else {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    }
 
     const restoratedPhotoUrl = await generatePhotoWithBanana(
       photoUrl.href,
@@ -209,7 +224,11 @@ export async function processPhotoRestoration(
     );
     console.log(`📁 File ID: ${fileId}`);
 
-    const mainMenuMessage = MAIN_MENU_MESSAGE;
+    let mainMenuMessage = MAIN_MENU_MESSAGE;
+
+    if (!(await isSubscribed(userId))) {
+      mainMenuMessage += TELEGRAM_CHANNEL_MESSAGE;
+    }
 
     await ctx.telegram.sendMessage(userId, mainMenuMessage, {
       parse_mode: "HTML",
@@ -268,14 +287,23 @@ export async function processDMPhotoCreation(
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
 
-    await ctx.telegram.sendMessage(
-      userId,
-      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
-      {
-        parse_mode: "HTML",
-        link_preview_options: { is_disabled: true },
-      }
-    );
+    if (await isSubscribed(userId)) {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    } else {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    }
 
     const DMPhotoUrl = await generateDMPhotoWithBanana(photoUrl.href, prompt);
 
@@ -450,7 +478,11 @@ export async function processPostcardCreationWithBanana(
     );
     console.log(`📁 File ID: ${fileId}`);
 
-    const mainMenuMessage = MAIN_MENU_MESSAGE;
+    let mainMenuMessage = MAIN_MENU_MESSAGE;
+
+    if (!(await isSubscribed(userId))) {
+      mainMenuMessage += TELEGRAM_CHANNEL_MESSAGE;
+    }
 
     await ctx.telegram.sendMessage(userId, mainMenuMessage, {
       parse_mode: "HTML",

@@ -4,6 +4,7 @@ import { Database } from "../database";
 import { PRICES } from "../constants";
 import { processVideoGeneration } from "../services/klingService";
 import { redisStateService } from "../redis-state.service";
+import { isSubscribed } from "../utils/isSubscribed";
 
 const VIDEO_FILE_ID =
   "BAACAgIAAxkBAAECXWtpSDoDQQ-MSv3zGWfvxAQxJBoFzAACDpQAAr5EQUqE-gauHSVXMDYE";
@@ -346,14 +347,23 @@ export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>) {
       return;
     }
 
-    await ctx.telegram.sendMessage(
-      userId,
-      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
-      {
-        parse_mode: "HTML",
-        link_preview_options: { is_disabled: true },
-      }
-    );
+    if (await isSubscribed(userId)) {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    } else {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    }
 
     processVideoGeneration(ctx, userId, photoFileId, prompt);
 

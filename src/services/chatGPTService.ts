@@ -5,6 +5,7 @@ import {
   POSTCARD_CHRISTMAS_PROMPT,
   POSTCARD_PHOTO_PROMPT,
   PRICES,
+  TELEGRAM_CHANNEL_MESSAGE,
 } from "../constants";
 
 import fs from "fs";
@@ -17,6 +18,7 @@ import { File } from "node:buffer";
 (globalThis as any).File = File;
 
 import { ProxyAgent } from "undici";
+import { isSubscribed } from "../utils/isSubscribed";
 
 export const openAIProxyAgent = process.env.HTTPS_PROXY_FOR_OPENAI
   ? new ProxyAgent(process.env.HTTPS_PROXY_FOR_OPENAI)
@@ -60,14 +62,23 @@ export async function generatePostcard(
 
     console.log("🟢 [3] Balance deducted");
 
-    await ctx.telegram.sendMessage(
-      userId,
-      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
-      {
-        parse_mode: "HTML",
-        link_preview_options: { is_disabled: true },
-      }
-    );
+    if (await isSubscribed(userId)) {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    } else {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    }
 
     console.log("🟡 [4] Creating OpenAI client");
     const openai = new OpenAI({
@@ -164,7 +175,13 @@ export async function generatePostcard(
 
     console.log("🟢 [15] Saved to DB");
 
-    await ctx.telegram.sendMessage(userId, MAIN_MENU_MESSAGE, {
+    let mainMenuMessage = MAIN_MENU_MESSAGE;
+
+    if (!(await isSubscribed(userId))) {
+      mainMenuMessage += TELEGRAM_CHANNEL_MESSAGE;
+    }
+
+    await ctx.telegram.sendMessage(userId, mainMenuMessage, {
       parse_mode: "HTML",
       link_preview_options: { is_disabled: true },
       ...Markup.inlineKeyboard(mainMenuKeyboard),

@@ -4,12 +4,13 @@ import { Markup } from "telegraf";
 import { config } from "../config";
 import { Database } from "../database";
 import {
-  DED_MOROZ_INSTRUCTION,
   MAIN_MENU_MESSAGE,
   mainMenuKeyboard,
   PRICES,
+  TELEGRAM_CHANNEL_MESSAGE,
 } from "../constants";
 import { axiosRetry } from "../utils/axiosRetry";
+import { isSubscribed } from "../utils/isSubscribed";
 
 const API_URL = "https://api.kie.ai/api/v1/jobs";
 const API_KEY = config.klingApiKey;
@@ -211,7 +212,11 @@ export async function processVideoGeneration(
     );
     console.log(`📁 File ID: ${sentMessage.video.file_id}`);
 
-    const mainMenuMessage = MAIN_MENU_MESSAGE;
+    let mainMenuMessage = MAIN_MENU_MESSAGE;
+
+    if (!(await isSubscribed(userId))) {
+      mainMenuMessage += TELEGRAM_CHANNEL_MESSAGE;
+    }
 
     await ctx.telegram.sendMessage(userId, mainMenuMessage, {
       parse_mode: "HTML",

@@ -4,6 +4,7 @@ import { Database } from "../database";
 import { PRICES } from "../constants";
 import { processMusicGeneration } from "../services/sunoService";
 import { redisStateService } from "../redis-state.service";
+import { isSubscribed } from "../utils/isSubscribed";
 
 const HERO_AUDIO: string =
   "CQACAgIAAxkBAAECYRBpSLNMTRdaHnocly1WciCK2IjllAAC45cAAr5EQUrEr1-izwc0vTYE";
@@ -198,13 +199,23 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>) {
       return;
     }
 
-    await ctx.editMessageText(
-      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
-      {
-        parse_mode: "HTML",
-        link_preview_options: { is_disabled: true },
-      }
-    );
+    if (await isSubscribed(userId)) {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    } else {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    }
 
     processMusicGeneration(
       ctx,
@@ -274,13 +285,23 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>) {
       return;
     }
 
-    await ctx.editMessageText(
-      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
-      {
-        parse_mode: "HTML",
-        link_preview_options: { is_disabled: true },
-      }
-    );
+    if (await isSubscribed(userId)) {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    } else {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    }
 
     processMusicGeneration(
       ctx,
@@ -350,13 +371,23 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>) {
       return;
     }
 
-    await ctx.editMessageText(
-      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
-      {
-        parse_mode: "HTML",
-        link_preview_options: { is_disabled: true },
-      }
-    );
+    if (await isSubscribed(userId)) {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    } else {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    }
 
     processMusicGeneration(
       ctx,
@@ -426,13 +457,23 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>) {
       return;
     }
 
-    await ctx.editMessageText(
-      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
-      {
-        parse_mode: "HTML",
-        link_preview_options: { is_disabled: true },
-      }
-    );
+    if (await isSubscribed(userId)) {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    } else {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    }
 
     processMusicGeneration(
       ctx,
@@ -502,13 +543,23 @@ export function registerMusicCreationHandlers(bot: Telegraf<BotContext>) {
       return;
     }
 
-    await ctx.editMessageText(
-      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
-      {
-        parse_mode: "HTML",
-        link_preview_options: { is_disabled: true },
-      }
-    );
+    if (await isSubscribed(userId)) {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    } else {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    }
 
     processMusicGeneration(
       ctx,

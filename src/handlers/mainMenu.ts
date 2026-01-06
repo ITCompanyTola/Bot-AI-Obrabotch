@@ -2,8 +2,13 @@ import { Telegraf, Markup } from "telegraf";
 import { BotContext } from "../types";
 import { Database } from "../database";
 import { sendTGTrackUserStart } from "./index";
-import { MAIN_MENU_MESSAGE, mainMenuKeyboard } from "../constants";
+import {
+  MAIN_MENU_MESSAGE,
+  mainMenuKeyboard,
+  TELEGRAM_CHANNEL_MESSAGE,
+} from "../constants";
 import { redisStateService } from "../redis-state.service";
+import { isSubscribed } from "../utils/isSubscribed";
 
 export function registerMainMenuHandlers(bot: Telegraf<BotContext>) {
   bot.command("start", async (ctx) => {
@@ -34,7 +39,11 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>) {
       const policyAccepted = await Database.hasPolicyAccepted(userId);
 
       if (policyAccepted) {
-        const mainMenuMessage = MAIN_MENU_MESSAGE;
+        let mainMenuMessage = MAIN_MENU_MESSAGE;
+
+        if (!(await isSubscribed(userId))) {
+          mainMenuMessage += TELEGRAM_CHANNEL_MESSAGE;
+        }
 
         await ctx.reply(mainMenuMessage, {
           parse_mode: "HTML",
@@ -80,7 +89,11 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>) {
 
     await Database.setPolicyAccepted(userId);
 
-    const mainMenuMessage = MAIN_MENU_MESSAGE;
+    let mainMenuMessage = MAIN_MENU_MESSAGE;
+
+    if (!(await isSubscribed(userId))) {
+      mainMenuMessage += TELEGRAM_CHANNEL_MESSAGE;
+    }
 
     await ctx.editMessageText(mainMenuMessage, {
       parse_mode: "HTML",
@@ -117,7 +130,11 @@ export function registerMainMenuHandlers(bot: Telegraf<BotContext>) {
     const userState = await redisStateService.get(userId);
     if (userState) await redisStateService.delete(userId);
 
-    const mainMenuMessage = MAIN_MENU_MESSAGE;
+    let mainMenuMessage = MAIN_MENU_MESSAGE;
+
+    if (!(await isSubscribed(userId))) {
+      mainMenuMessage += TELEGRAM_CHANNEL_MESSAGE;
+    }
 
     const keyboard = Markup.inlineKeyboard(mainMenuKeyboard);
 
@@ -178,7 +195,11 @@ https://t.me/obrabotych_support
     const userState = await redisStateService.get(userId);
     if (userState) await redisStateService.delete(userId);
 
-    const mainMenuMessage = MAIN_MENU_MESSAGE;
+    let mainMenuMessage = MAIN_MENU_MESSAGE;
+
+    if (!(await isSubscribed(userId))) {
+      mainMenuMessage += TELEGRAM_CHANNEL_MESSAGE;
+    }
 
     await ctx.reply(mainMenuMessage, {
       parse_mode: "HTML",

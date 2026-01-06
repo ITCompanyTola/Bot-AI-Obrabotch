@@ -29,6 +29,7 @@ import { updatePrompt } from "../services/openaiService";
 import { processPostcardCreation } from "../services/fluxService";
 import { generatePostcard } from "../services/chatGPTService";
 import { redisStateService } from "../redis-state.service";
+import { isSubscribed } from "../utils/isSubscribed";
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -539,13 +540,23 @@ export function registerTextHandlers(bot: Telegraf<BotContext>) {
       return;
     }
 
-    await ctx.reply(
-      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
-      {
-        parse_mode: "HTML",
-        link_preview_options: { is_disabled: true },
-      }
-    );
+    if (await isSubscribed(userId)) {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    } else {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    }
 
     if (userState.photoFileId == undefined || userState.prompt == undefined)
       return;
@@ -597,13 +608,23 @@ export function registerTextHandlers(bot: Telegraf<BotContext>) {
       return;
     }
 
-    await ctx.reply(
-      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
-      {
-        parse_mode: "HTML",
-        link_preview_options: { is_disabled: true },
-      }
-    );
+    if (await isSubscribed(userId)) {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    } else {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    }
 
     if (
       userState.photoFileId == undefined ||

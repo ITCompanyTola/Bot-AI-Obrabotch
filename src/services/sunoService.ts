@@ -3,7 +3,13 @@ import { Buffer } from "buffer";
 import { Markup } from "telegraf";
 import { config } from "../config";
 import { Database } from "../database";
-import { MAIN_MENU_MESSAGE, mainMenuKeyboard, PRICES } from "../constants";
+import {
+  MAIN_MENU_MESSAGE,
+  mainMenuKeyboard,
+  PRICES,
+  TELEGRAM_CHANNEL_MESSAGE,
+} from "../constants";
+import { isSubscribed } from "../utils/isSubscribed";
 
 const API_URL = "https://api.kie.ai/api/v1";
 const API_KEY = config.sunoApiKey;
@@ -242,7 +248,11 @@ export async function processMusicGeneration(
     console.log(`✅ Трек сгенерирован и сохранен для пользователя ${userId}`);
     console.log(`📁 File ID: ${sentMessage.audio.file_id}`);
 
-    const mainMenuMessage = MAIN_MENU_MESSAGE;
+    let mainMenuMessage = MAIN_MENU_MESSAGE;
+
+    if (!(await isSubscribed(userId))) {
+      mainMenuMessage += TELEGRAM_CHANNEL_MESSAGE;
+    }
 
     await ctx.telegram.sendMessage(userId, mainMenuMessage, {
       parse_mode: "HTML",

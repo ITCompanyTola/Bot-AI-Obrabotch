@@ -4,6 +4,7 @@ import { bot } from "./bot";
 import { Markup } from "telegraf";
 import { mainMenuKeyboard } from "./constants";
 import crypto from "crypto";
+import { isSubscribed } from "utils/isSubscribed";
 
 const app = express();
 app.use(express.json());
@@ -110,17 +111,31 @@ app.post("/webhook/yookassa", async (req, res) => {
       const newBalance = await Database.getUserBalance(userId);
 
       try {
-        await bot.telegram.sendMessage(
-          userId,
-          `✅ <b>Платёж успешно получен!</b>\n\n💰 Зачислено: ${amount}₽\n💳 Ваш баланс: ${newBalance.toFixed(
-            2
-          )}₽\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin`,
-          {
-            parse_mode: "HTML",
-            link_preview_options: { is_disabled: true },
-            ...Markup.inlineKeyboard(mainMenuKeyboard),
-          }
-        );
+        if (await isSubscribed(userId)) {
+          await bot.telegram.sendMessage(
+            userId,
+            `✅ <b>Платёж успешно получен!</b>\n\n💰 Зачислено: ${amount}₽\n💳 Ваш баланс: ${newBalance.toFixed(
+              2
+            )}₽`,
+            {
+              parse_mode: "HTML",
+              link_preview_options: { is_disabled: true },
+              ...Markup.inlineKeyboard(mainMenuKeyboard),
+            }
+          );
+        } else {
+          await bot.telegram.sendMessage(
+            userId,
+            `✅ <b>Платёж успешно получен!</b>\n\n💰 Зачислено: ${amount}₽\n💳 Ваш баланс: ${newBalance.toFixed(
+              2
+            )}₽\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin`,
+            {
+              parse_mode: "HTML",
+              link_preview_options: { is_disabled: true },
+              ...Markup.inlineKeyboard(mainMenuKeyboard),
+            }
+          );
+        }
       } catch (error) {
         console.error("Ошибка отправки уведомления пользователю:", error);
       }

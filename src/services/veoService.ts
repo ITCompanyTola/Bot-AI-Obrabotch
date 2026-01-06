@@ -8,9 +8,11 @@ import {
   MAIN_MENU_MESSAGE,
   mainMenuKeyboard,
   PRICES,
+  TELEGRAM_CHANNEL_MESSAGE,
 } from "../constants";
 import { axiosRetry } from "../utils/axiosRetry";
 import { redisStateService } from "../redis-state.service";
+import { isSubscribed } from "../utils/isSubscribed";
 
 const API_URL = "https://api.kie.ai/api/v1/veo";
 const API_KEY = config.klingApiKey;
@@ -175,14 +177,23 @@ export async function processVideoDMGeneration(
 
     console.log(`⏳ Начинается генерация видео для пользователя ${userId}...`);
 
-    await ctx.telegram.sendMessage(
-      userId,
-      "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
-      {
-        parse_mode: "HTML",
-        link_preview_options: { is_disabled: true },
-      }
-    );
+    if (await isSubscribed(userId)) {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    } else {
+      await ctx.editMessageText(
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        {
+          parse_mode: "HTML",
+          link_preview_options: { is_disabled: true },
+        }
+      );
+    }
 
     const photoUrl = await ctx.telegram.getFileLink(photoFileId);
     console.log(`📸 URL фото: ${photoUrl.href}`);
@@ -231,7 +242,11 @@ export async function processVideoDMGeneration(
 
     await redisStateService.delete(userId);
 
-    const mainMenuMessage = MAIN_MENU_MESSAGE;
+    let mainMenuMessage = MAIN_MENU_MESSAGE;
+
+    if (!(await isSubscribed(userId))) {
+      mainMenuMessage += TELEGRAM_CHANNEL_MESSAGE;
+    }
 
     await ctx.telegram.sendMessage(userId, mainMenuMessage, {
       parse_mode: "HTML",

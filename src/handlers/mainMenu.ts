@@ -578,6 +578,7 @@ https://t.me/obrabotych_support
 
 <b>Статистика</b>
 * /stats_pw - Получить статистику вовлеченности пользователей
+* /blockend_users - Получить список заблокированных пользователей
 * /stats_all - Получить общую статистику бота
 * /refferal_stats - Получить статистику рефералов
 * <code>/updateSource_<b><i>название_источника</i></b></code> - Обновить источник
@@ -599,6 +600,32 @@ https://t.me/obrabotych_support
 Пополнить баланс: <code>refill_balance_from_profile</code>`.trim();
 
     await ctx.reply(helpMessage, { parse_mode: "HTML" });
+  });
+
+  bot.command("blocked_users", async (ctx) => {
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const isAdmin = await Database.isAdmin(userId);
+    if (!isAdmin) {
+      await ctx.reply("❌ У вас нет прав для выполнения этой команды");
+      return;
+    }
+
+    const blockedUsers = await Database.getBlockedUsers();
+
+    const blockedUsersStr = `
+<b>👥 Кол-во всех пользователей: ${blockedUsers.allUsersCount}</b>
+
+<b>✅ Кол-во активных пользователей: ${
+      blockedUsers.allUsersCount - blockedUsers.blockedUsersCount
+    }</b>
+
+<b>❌ Кол-во заблокированных пользователей: ${
+      blockedUsers.blockedUsersCount
+    }</b>`.trim();
+
+    await ctx.reply(blockedUsersStr, { parse_mode: "HTML" });
   });
 
   bot.on("text", async (ctx, next) => {

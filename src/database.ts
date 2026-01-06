@@ -472,6 +472,25 @@ export class Database {
     }
   }
 
+  static async getBlockedUsers() {
+    const client = await pool.connect();
+    try {
+      const allUsersCount = await client.query(
+        "SELECT COUNT(*) as count FROM users"
+      );
+      const blockedUsersCount = await client
+        .query("SELECT * FROM mailing_data ORDER BY created_at DESC")
+        .then((res) => parseInt(res.rows[0].blocked_count));
+
+      return {
+        allUsersCount: parseInt(allUsersCount.rows[0].count),
+        blockedUsersCount,
+      };
+    } finally {
+      client.release();
+    }
+  }
+
   static async getGlobalStats() {
     const client = await pool.connect();
     try {

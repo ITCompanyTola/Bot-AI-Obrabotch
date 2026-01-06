@@ -86,14 +86,15 @@ app.post("/webhook/yookassa", async (req, res) => {
               );
 
               await Database.setRefferalKeyUsed(userId);
-
-              await bot.telegram.sendMessage(
-                reffererUserId,
-                `🎉 На ваш счёт <b>начислено 100₽</b> за приглашённого пользователя`,
-                {
-                  parse_mode: "HTML",
-                }
-              );
+              setTimeout(async () => {
+                await bot.telegram.sendMessage(
+                  reffererUserId,
+                  `🎉 На ваш счёт <b>начислено 100₽</b> за приглашённого пользователя`,
+                  {
+                    parse_mode: "HTML",
+                  }
+                );
+              }, 100000);
               console.log(
                 `✅ Реферальная программа: +100₽ для пользователя ${reffererUserId}`
               );

@@ -1,24 +1,21 @@
 import { Telegraf } from "telegraf";
-import { BotContext, UserState } from "../types";
+import { BotContext } from "../types";
 import {
   processDMPhotoCreation,
   processPhotoRestoration,
 } from "../services/nanoBananaService";
 import { processPhotoColorize } from "../services/nanoBananaProService";
-import { POSTCARD_PHOTO_PROMPT } from "../constants";
 import { generatePostcard } from "../services/chatGPTService";
+import { redisStateService } from "../redis-state.service";
 
-export function registerDocumentHandler(
-  bot: Telegraf<BotContext>,
-  userStates: Map<number, UserState>
-) {
+export function registerDocumentHandler(bot: Telegraf<BotContext>) {
   bot.on("document", async (ctx) => {
     const userId = ctx.from?.id;
     if (!userId) return;
 
     console.log("Тип полученного документа: ", ctx.message.document.mime_type);
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState) return;
 
     const callbackActions = {
@@ -54,7 +51,7 @@ export function registerDocumentHandler(
     console.log(photoFileId);
 
     if (userState?.step === "waiting_photo") {
-      userStates.set(userId, {
+      await redisStateService.set(userId, {
         step: "waiting_description",
         photoFileId: photoFileId,
       });
@@ -87,7 +84,7 @@ export function registerDocumentHandler(
 
       processPhotoRestoration(ctx, userId, photoFileId, prompt);
 
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
     }
 
     if (userState.step === "waiting_for_colorize_photo") {
@@ -96,30 +93,30 @@ export function registerDocumentHandler(
 
       processPhotoColorize(ctx, userId, photoFileId, prompt);
 
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
     }
 
     if (userState?.step === "waiting_postcard_photo") {
       generatePostcard(ctx, userId, photoFileId, "photo");
 
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
     }
 
     if (userState?.step === "waiting_postcard_christmas") {
       generatePostcard(ctx, userId, photoFileId, "christmas");
 
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
     }
 
     if (userState.step === "waiting_DM_photo_generation") {
       const prompt =
         "Russian Father Frost, long red coat down to the floor, thick white fur trim, gold braid, red belt, tall red hat with fur and gold trim, very long curly white beard down to his waist, red mittens with fur, majestic posture, photorealistic, premium class. Santa Claus should be approximately 165 cm tall and fit well into the loaded image";
-      userStates.set(userId, {
+      await redisStateService.set(userId, {
         ...userState,
         photoFileId: photoFileId,
       });
-      const newUserState = userStates.get(userId);
-      if (newUserState === undefined) return;
+      const newUserState = await redisStateService.get(userId);
+      if (newUserState === null) return;
       processDMPhotoCreation(ctx, userId, newUserState, prompt);
     }
   });

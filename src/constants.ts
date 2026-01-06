@@ -394,6 +394,8 @@ Subtle old paper texture, gentle grain.
 Soft warm lighting, calm and joyful Christmas atmosphere.
 
 Inscription:
-“С Рождеством!”
-Handwritten fairy-tale font in the style of vintage Christmas postcards.
+Text: “С Рождеством!”
+The inscription is written in an elegant calligraphic antique script (antiqua-script style), inspired by classic vintage Christmas postcards.
+Handwritten, flowing, refined letterforms with historical character.
+Ink-like texture, slightly irregular strokes, authentic old postcard typography.
 The inscription is placed carefully and does not cover faces or bodies.`.trim();

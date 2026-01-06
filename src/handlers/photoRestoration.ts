@@ -1,22 +1,26 @@
-import { Telegraf } from 'telegraf';
-import { BotContext, UserState } from '../types';
-import { Database } from '../database';
-import { PRICES } from '../constants';
+import { Telegraf } from "telegraf";
+import { BotContext, UserState } from "../types";
+import { Database } from "../database";
+import { PRICES } from "../constants";
+import { redisStateService } from "../redis-state.service";
 
-const EXAMPLE_PHOTO_RESTORATION: string = 'AgACAgIAAxkBAAECXaRpSDzGj_QjXoenroik6oeuVAObkQACWA9rG75EQUoRFpQnbHIyfQEAAwIAA3gAAzYE'; // Загрузить и вставить свое фото
-const PHOTO_RESTORATION_INSTRUCTION: string = 'BAACAgIAAxkBAAECdyNpSuExOUrSjpxBZQaqRgABlTr9IfAAAvSVAAJyIFlKZWEtLHGSNQk2BA'; // Загрузить и вставить свое видео
-const HERO_VIDEO: string = 'BAACAgIAAxkBAAECXaBpSDyetWAlb6lWMjpBwIEU_8wcMQACRZQAAr5EQUovJZGexEaBRzYE';
+const EXAMPLE_PHOTO_RESTORATION: string =
+  "AgACAgIAAxkBAAECXaRpSDzGj_QjXoenroik6oeuVAObkQACWA9rG75EQUoRFpQnbHIyfQEAAwIAA3gAAzYE"; // Загрузить и вставить свое фото
+const PHOTO_RESTORATION_INSTRUCTION: string =
+  "BAACAgIAAxkBAAECdyNpSuExOUrSjpxBZQaqRgABlTr9IfAAAvSVAAJyIFlKZWEtLHGSNQk2BA"; // Загрузить и вставить свое видео
+const HERO_VIDEO: string =
+  "BAACAgIAAxkBAAECXaBpSDyetWAlb6lWMjpBwIEU_8wcMQACRZQAAr5EQUovJZGexEaBRzYE";
 
-export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, userState: Map<number, UserState>) {
-  bot.action('photo_restoration', async (ctx) => {
+export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>) {
+  bot.action("photo_restoration", async (ctx) => {
     try {
       await ctx.answerCbQuery();
     } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
+      if (!error.description?.includes("query is too old")) {
+        console.error("Ошибка answerCbQuery:", error.message);
       }
     }
-    
+
     const userId = ctx.from?.id;
     if (!userId) return;
 
@@ -39,91 +43,137 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
     try {
       await ctx.telegram.sendVideo(userId, HERO_VIDEO, {
         caption: photoRestorationMessage,
-        parse_mode: 'HTML',
+        parse_mode: "HTML",
         reply_markup: {
           inline_keyboard: [
-            [{text: '✨ Реставрировать фото', callback_data: 'photo_restoration_start'}],
-            [{text: 'Видео-инструкция', callback_data: 'photo_restoration_instruction'}],
-            [{text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_restoration'}],
-            [{text: 'Главное меню', callback_data: 'main_menu'}],
-          ]
-        }
+            [
+              {
+                text: "✨ Реставрировать фото",
+                callback_data: "photo_restoration_start",
+              },
+            ],
+            [
+              {
+                text: "Видео-инструкция",
+                callback_data: "photo_restoration_instruction",
+              },
+            ],
+            [
+              {
+                text: "💳 Пополнить баланс",
+                callback_data: "refill_balance_from_restoration",
+              },
+            ],
+            [{ text: "Главное меню", callback_data: "main_menu" }],
+          ],
+        },
       });
-    } catch(error: any) {
-       await ctx.telegram.sendMessage(userId, photoRestorationMessage, {
-        parse_mode: 'HTML',
+    } catch (error: any) {
+      await ctx.telegram.sendMessage(userId, photoRestorationMessage, {
+        parse_mode: "HTML",
         reply_markup: {
           inline_keyboard: [
-            [{text: '✨ Реставрировать фото', callback_data: 'photo_restoration_start'}],
-            [{text: 'Видео-инструкция', callback_data: 'photo_restoration_instruction'}],
-            [{text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_restoration'}],
-            [{text: 'Главное меню', callback_data: 'main_menu'}],
-          ]
-        }
-      }); 
+            [
+              {
+                text: "✨ Реставрировать фото",
+                callback_data: "photo_restoration_start",
+              },
+            ],
+            [
+              {
+                text: "Видео-инструкция",
+                callback_data: "photo_restoration_instruction",
+              },
+            ],
+            [
+              {
+                text: "💳 Пополнить баланс",
+                callback_data: "refill_balance_from_restoration",
+              },
+            ],
+            [{ text: "Главное меню", callback_data: "main_menu" }],
+          ],
+        },
+      });
     }
   });
 
-  bot.action('photo_restoration_start', async (ctx) => {
+  bot.action("photo_restoration_start", async (ctx) => {
     try {
       await ctx.answerCbQuery();
     } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
+      if (!error.description?.includes("query is too old")) {
+        console.error("Ошибка answerCbQuery:", error.message);
       }
     }
 
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const hasEnoughBalance = await Database.hasEnoughBalance(userId, PRICES.PHOTO_RESTORATION);
+    const hasEnoughBalance = await Database.hasEnoughBalance(
+      userId,
+      PRICES.PHOTO_RESTORATION
+    );
 
     if (hasEnoughBalance) {
-      userState.set(userId, {step: 'waiting_for_restoration_photo'});
+      await redisStateService.set(userId, {
+        step: "waiting_for_restoration_photo",
+      });
 
-    const photoRestorationWaitingMessage = `
+      const photoRestorationWaitingMessage = `
 <b>Пример ⤴️</b>
 
 Отправьте <b><i>фотографию</i></b> которую нужно восстановить — бот устранит шум, повреждения и повысит качество изображения ✨
     `.trim();
-    const restorationMessageWithoutExample = `
+      const restorationMessageWithoutExample = `
 Отправьте <b><i>фотографию</i></b>, которую нужно восстановить — бот устранит шум, повреждения и повысит качество изображения ✨
     `.trim();
 
-    if (EXAMPLE_PHOTO_RESTORATION && EXAMPLE_PHOTO_RESTORATION.trim() !== '') {
-      try {
-        await ctx.telegram.sendPhoto(userId, EXAMPLE_PHOTO_RESTORATION, {
-          caption: photoRestorationWaitingMessage,
-          parse_mode: 'HTML',
-          reply_markup: {
-            inline_keyboard: [
-              [{text: 'Назад', callback_data: 'photo_restoration'}]
-            ]
+      if (
+        EXAMPLE_PHOTO_RESTORATION &&
+        EXAMPLE_PHOTO_RESTORATION.trim() !== ""
+      ) {
+        try {
+          await ctx.telegram.sendPhoto(userId, EXAMPLE_PHOTO_RESTORATION, {
+            caption: photoRestorationWaitingMessage,
+            parse_mode: "HTML",
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: "Назад", callback_data: "photo_restoration" }],
+              ],
+            },
+          });
+        } catch (error) {
+          console.error("Ошибка отправки фото для реставрации: ", error);
+          await ctx.telegram.sendMessage(
+            userId,
+            restorationMessageWithoutExample,
+            {
+              parse_mode: "HTML",
+              reply_markup: {
+                inline_keyboard: [
+                  [{ text: "Назад", callback_data: "photo_restoration" }],
+                ],
+              },
+            }
+          );
+        }
+        return;
+      } else {
+        await ctx.telegram.sendMessage(
+          userId,
+          restorationMessageWithoutExample,
+          {
+            parse_mode: "HTML",
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: "Назад", callback_data: "photo_restoration" }],
+              ],
+            },
           }
-        });
-      } catch (error) {
-        console.error('Ошибка отправки фото для реставрации: ', error);
-        await ctx.telegram.sendMessage(userId, restorationMessageWithoutExample, {
-          parse_mode: 'HTML',
-          reply_markup: {
-            inline_keyboard: [
-              [{text: 'Назад', callback_data: 'photo_restoration'}]
-            ] 
-          }
-        });
+        );
+        return;
       }
-      return;
-    } else {
-      await ctx.telegram.sendMessage(userId, restorationMessageWithoutExample, {
-          parse_mode: 'HTML',
-          reply_markup: {
-            inline_keyboard: [
-              [{text: 'Назад', callback_data: 'photo_restoration'}]
-            ] 
-          }
-      });
-      return;
-    }
     }
 
     const balance = await Database.getUserBalance(userId);
@@ -137,24 +187,29 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
 Чтобы продолжить, <b>пополните баланс</b>
 
 Выберите способ оплаты ⤵️`.trim();
-    
+
     await ctx.telegram.sendMessage(userId, paymentMessage, {
-      parse_mode: 'HTML',
+      parse_mode: "HTML",
       reply_markup: {
         inline_keyboard: [
-          [{text: 'Оплата картой', callback_data: 'refill_balance_from_restoration'}],
-          [{text: 'Главное меню', callback_data: 'main_menu'}]
-        ]
-      }
+          [
+            {
+              text: "Оплата картой",
+              callback_data: "refill_balance_from_restoration",
+            },
+          ],
+          [{ text: "Главное меню", callback_data: "main_menu" }],
+        ],
+      },
     });
   });
 
-  bot.action('photo_restoration_instruction', async (ctx) => {
+  bot.action("photo_restoration_instruction", async (ctx) => {
     try {
       await ctx.answerCbQuery();
     } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
+      if (!error.description?.includes("query is too old")) {
+        console.error("Ошибка answerCbQuery:", error.message);
       }
     }
 
@@ -168,31 +223,35 @@ export function registerPhotoRestorationHandlers(bot: Telegraf<BotContext>, user
     `.trim();
 
     const sendErrorMessage = async (): Promise<void> => {
-      const instructionErrorMessage = 'Ошибка загрузки видео. Пожалуйста вернитесь назад.'
+      const instructionErrorMessage =
+        "Ошибка загрузки видео. Пожалуйста вернитесь назад.";
       await ctx.telegram.sendMessage(userId, instructionErrorMessage, {
         reply_markup: {
           inline_keyboard: [
-            [{text: 'Назад', callback_data: 'photo_restoration'}]
-          ]
-        }
+            [{ text: "Назад", callback_data: "photo_restoration" }],
+          ],
+        },
       });
-    }
+    };
 
-    if (PHOTO_RESTORATION_INSTRUCTION && PHOTO_RESTORATION_INSTRUCTION.trim() !== '') {
+    if (
+      PHOTO_RESTORATION_INSTRUCTION &&
+      PHOTO_RESTORATION_INSTRUCTION.trim() !== ""
+    ) {
       try {
         await ctx.telegram.sendVideo(userId, PHOTO_RESTORATION_INSTRUCTION, {
           caption: photoRestorationInstructionMessage,
-          parse_mode: 'HTML',
+          parse_mode: "HTML",
           reply_markup: {
             inline_keyboard: [
-              [{text: 'Назад', callback_data: 'photo_restoration'}]
-            ] 
-          }
+              [{ text: "Назад", callback_data: "photo_restoration" }],
+            ],
+          },
         });
       } catch (error) {
-          console.error('Ошибка отправки инструкции к реставрации фото', error);
-          sendErrorMessage();
-        }
+        console.error("Ошибка отправки инструкции к реставрации фото", error);
+        sendErrorMessage();
+      }
     } else {
       sendErrorMessage();
     }

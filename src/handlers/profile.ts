@@ -2,10 +2,7 @@ import { Telegraf, Markup } from "telegraf";
 import { BotContext, UserState } from "../types";
 import { Database } from "../database";
 
-export function registerProfileHandlers(
-  bot: Telegraf<BotContext>,
-  userStates: Map<number, UserState>
-) {
+export function registerProfileHandlers(bot: Telegraf<BotContext>) {
   bot.action("profile", async (ctx) => {
     try {
       await ctx.answerCbQuery();

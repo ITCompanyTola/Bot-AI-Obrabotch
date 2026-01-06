@@ -1,16 +1,15 @@
 import { Telegraf, Markup } from "telegraf";
-import { BotContext, UserState } from "../types";
+import { BotContext } from "../types";
 import { Database } from "../database";
-import { createPayment, checkPaymentStatus } from "../services/paymentService";
+import { createPayment } from "../services/paymentService";
 import { logToFile } from "../bot";
-import crypto from "crypto";
+import { redisStateService } from "../redis-state.service";
 
 const { v4: uuidv4 } = require("uuid");
 
 async function showPaymentMessage(
   ctx: any,
   amount: number,
-  userStates: Map<number, UserState>,
   backAction: string,
   useReply: boolean = false
 ) {
@@ -35,8 +34,10 @@ async function showPaymentMessage(
       `✅ Платеж создан успешно: paymentId=${payment.paymentId}, url=${payment.confirmationUrl}`
     );
 
-    const currentState = userStates.get(userId) || { step: null };
-    userStates.set(userId, {
+    const currentState = (await redisStateService.get(userId)) || {
+      step: null,
+    };
+    await redisStateService.set(userId, {
       ...currentState,
       paymentId: payment.paymentId,
       paymentAmount: amount,
@@ -94,7 +95,6 @@ ${payment.confirmationUrl}
 
 async function showRefillAmountSelection(
   ctx: any,
-  userStates: Map<number, UserState>,
   refillSource:
     | "photo"
     | "profile"
@@ -110,8 +110,8 @@ async function showRefillAmountSelection(
   const userId = ctx.from?.id;
   if (!userId) return;
 
-  const currentState = userStates.get(userId) || { step: null };
-  userStates.set(userId, {
+  const currentState = (await redisStateService.get(userId)) || { step: null };
+  await redisStateService.set(userId, {
     ...currentState,
     refillSource,
     step: null,
@@ -162,7 +162,6 @@ async function showRefillAmountSelection(
 async function requestEmailOrProceed(
   ctx: any,
   amount: number,
-  userStates: Map<number, UserState>,
   backAction: string
 ) {
   const userId = ctx.from?.id;
@@ -171,8 +170,10 @@ async function requestEmailOrProceed(
   const email = await Database.getUserEmail(userId);
 
   if (!email) {
-    const currentState = userStates.get(userId) || { step: null };
-    userStates.set(userId, {
+    const currentState = (await redisStateService.get(userId)) || {
+      step: null,
+    };
+    await redisStateService.set(userId, {
       ...currentState,
       step: "waiting_email",
       pendingPaymentAmount: amount,
@@ -185,14 +186,11 @@ async function requestEmailOrProceed(
 
     logToFile(`📧 Запрошен email у пользователя ${userId}`);
   } else {
-    await showPaymentMessage(ctx, amount, userStates, backAction);
+    await showPaymentMessage(ctx, amount, backAction);
   }
 }
 
-export function registerPaymentHandlers(
-  bot: Telegraf<BotContext>,
-  userStates: Map<number, UserState>
-) {
+export function registerPaymentHandlers(bot: Telegraf<BotContext>) {
   bot.action("refill_balance", async (ctx) => {
     try {
       await ctx.answerCbQuery();
@@ -207,10 +205,10 @@ export function registerPaymentHandlers(
 
     logToFile(`📝 refill_balance вызван: userId=${userId}`);
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     const useEdit = userState?.step === "waiting_email";
 
-    await showRefillAmountSelection(ctx, userStates, "photo", useEdit);
+    await showRefillAmountSelection(ctx, "photo", useEdit);
   });
 
   bot.action("refill_balance_from_profile", async (ctx) => {
@@ -227,7 +225,7 @@ export function registerPaymentHandlers(
 
     logToFile(`📝 refill_balance_from_profile вызван: userId=${userId}`);
 
-    await showRefillAmountSelection(ctx, userStates, "profile", false);
+    await showRefillAmountSelection(ctx, "profile", false);
   });
 
   bot.action("refill_balance_from_postcard_christmas", async (ctx) => {
@@ -248,7 +246,7 @@ export function registerPaymentHandlers(
 
     await showRefillAmountSelection(
       ctx,
-      userStates,
+
       "postcardChristmas",
       false
     );
@@ -268,7 +266,7 @@ export function registerPaymentHandlers(
 
     logToFile(`📝 refill_balance_from_postcard_text вызван: userId=${userId}`);
 
-    await showRefillAmountSelection(ctx, userStates, "postcardText", false);
+    await showRefillAmountSelection(ctx, "postcardText", false);
   });
 
   bot.action("refill_balance_from_postcard_photo", async (ctx) => {
@@ -285,7 +283,7 @@ export function registerPaymentHandlers(
 
     logToFile(`📝 refill_balance_from_postcard_photo вызван: userId=${userId}`);
 
-    await showRefillAmountSelection(ctx, userStates, "postcardPhoto", false);
+    await showRefillAmountSelection(ctx, "postcardPhoto", false);
   });
 
   bot.action("refill_balance_from_music", async (ctx) => {
@@ -302,7 +300,7 @@ export function registerPaymentHandlers(
 
     logToFile(`📝 refill_balance_from_music вызван: userId=${userId}`);
 
-    await showRefillAmountSelection(ctx, userStates, "music", false);
+    await showRefillAmountSelection(ctx, "music", false);
   });
 
   bot.action("refill_balance_from_restoration", async (ctx) => {
@@ -319,7 +317,7 @@ export function registerPaymentHandlers(
 
     logToFile(`📝 refill_balance_from_restoration вызван: userId=${userId}`);
 
-    await showRefillAmountSelection(ctx, userStates, "restoration", false);
+    await showRefillAmountSelection(ctx, "restoration", false);
   });
 
   bot.action("refill_balance_from_colorize", async (ctx) => {
@@ -336,7 +334,7 @@ export function registerPaymentHandlers(
 
     logToFile(`📝 refill_balance_from_colorize вызван: userId=${userId}`);
 
-    await showRefillAmountSelection(ctx, userStates, "colorize", false);
+    await showRefillAmountSelection(ctx, "colorize", false);
   });
 
   bot.action("refill_balance_from_dm", async (ctx) => {
@@ -353,7 +351,7 @@ export function registerPaymentHandlers(
 
     logToFile(`📝 refill_balance_from_dm вызван: userId=${userId}`);
 
-    await showRefillAmountSelection(ctx, userStates, "dm", false);
+    await showRefillAmountSelection(ctx, "dm", false);
   });
 
   bot.action("refill_150", async (ctx) => {
@@ -370,7 +368,7 @@ export function registerPaymentHandlers(
 
     logToFile(`📝 refill_150 вызван: userId=${userId}`);
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     let backAction = "refill_balance";
 
     if (userState?.refillSource === "profile") {
@@ -390,7 +388,7 @@ export function registerPaymentHandlers(
     } else if (userState?.refillSource === "postcardChristmas") {
       backAction = "refill_balance_from_postcard_christmas";
     }
-    await requestEmailOrProceed(ctx, 150, userStates, backAction);
+    await requestEmailOrProceed(ctx, 150, backAction);
   });
 
   bot.action("refill_300", async (ctx) => {
@@ -407,7 +405,7 @@ export function registerPaymentHandlers(
 
     logToFile(`📝 refill_300 вызван: userId=${userId}`);
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     let backAction = "refill_balance";
 
     if (userState?.refillSource === "profile") {
@@ -428,7 +426,7 @@ export function registerPaymentHandlers(
       backAction = "refill_balance_from_postcard_christmas";
     }
 
-    await requestEmailOrProceed(ctx, 300, userStates, backAction);
+    await requestEmailOrProceed(ctx, 300, backAction);
   });
 
   bot.action("refill_800", async (ctx) => {
@@ -445,7 +443,7 @@ export function registerPaymentHandlers(
 
     logToFile(`📝 refill_800 вызван: userId=${userId}`);
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     let backAction = "refill_balance";
 
     if (userState?.refillSource === "profile") {
@@ -466,7 +464,7 @@ export function registerPaymentHandlers(
       backAction = "refill_balance_from_postcard_christmas";
     }
 
-    await requestEmailOrProceed(ctx, 800, userStates, backAction);
+    await requestEmailOrProceed(ctx, 800, backAction);
   });
 
   bot.action("refill_1600", async (ctx) => {
@@ -483,7 +481,7 @@ export function registerPaymentHandlers(
 
     logToFile(`📝 refill_1600 вызван: userId=${userId}`);
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     let backAction = "refill_balance";
 
     if (userState?.refillSource === "profile") {
@@ -504,7 +502,7 @@ export function registerPaymentHandlers(
       backAction = "refill_balance_from_postcard_christmas";
     }
 
-    await requestEmailOrProceed(ctx, 1600, userStates, backAction);
+    await requestEmailOrProceed(ctx, 1600, backAction);
   });
 
   bot.command("robokassa_pay", async (ctx) => {
@@ -525,7 +523,7 @@ export function registerPaymentHandlers(
 
     console.log(`📝 robokassa_pay вызван: userId=${userId}`);
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     // if (userState?.paymentAmount === undefined) {
     //   return;
     // }

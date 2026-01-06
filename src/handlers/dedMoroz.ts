@@ -1,82 +1,137 @@
-import { Telegraf } from 'telegraf';
-import { BotContext, UserState } from '../types';
-import { Database } from '../database';
-import { DED_MOROZ_INSTRUCTION, dedMorozStartMessage, dedMorozStartMessageWithoutPhoto, getDedMorozMessage, PRICES } from '../constants';
-import { processDMPhotoCreation } from '../services/nanoBananaService';
+import { Telegraf } from "telegraf";
+import { BotContext, UserState } from "../types";
+import { Database } from "../database";
+import {
+  DED_MOROZ_INSTRUCTION,
+  dedMorozStartMessage,
+  dedMorozStartMessageWithoutPhoto,
+  getDedMorozMessage,
+  PRICES,
+} from "../constants";
+import { processDMPhotoCreation } from "../services/nanoBananaService";
+import { redisStateService } from "../redis-state.service";
 
-const PHOTO_GENERATION_EXAMPLE_ID: string = 'AgACAgIAAxkBAAECXk1pSEENA6TKsTXdeFdTEEcheHjAaQACeg9rG75EQUqEuUJPG9v14AEAAwIAA3kAAzYE';
-const VIDEO_EXAMPLE_ID: string = 'BAACAgIAAxkBAAECXkVpSEDxom0P9I603C31cPtJRV-yKgACfJQAAr5EQUqdH0cc6lB24DYE';
-const VIDEO_INSTRUCTION_ID: string = 'BAACAgIAAxkBAAECgxdpS-7O5MqSNym0OM8ukAjT-e0AAUsAAgqTAALXjGBKwlk9ZlYlmWM2BA';
+const PHOTO_GENERATION_EXAMPLE_ID: string =
+  "AgACAgIAAxkBAAECXk1pSEENA6TKsTXdeFdTEEcheHjAaQACeg9rG75EQUqEuUJPG9v14AEAAwIAA3kAAzYE";
+const VIDEO_EXAMPLE_ID: string =
+  "BAACAgIAAxkBAAECXkVpSEDxom0P9I603C31cPtJRV-yKgACfJQAAr5EQUqdH0cc6lB24DYE";
+const VIDEO_INSTRUCTION_ID: string =
+  "BAACAgIAAxkBAAECgxdpS-7O5MqSNym0OM8ukAjT-e0AAUsAAgqTAALXjGBKwlk9ZlYlmWM2BA";
 
-export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
-  bot.action('ded_moroz', async (ctx) => {
+export function registerDMHandlers(bot: Telegraf<BotContext>) {
+  bot.action("ded_moroz", async (ctx) => {
     try {
       await ctx.answerCbQuery();
     } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
+      if (!error.description?.includes("query is too old")) {
+        console.error("Ошибка answerCbQuery:", error.message);
       }
     }
-    
+
     const userId = ctx.from?.id;
     if (!userId) return;
 
     const balance = await Database.getUserBalance(userId);
-    
+
     const dedMorozMessage = getDedMorozMessage(balance);
-    
+
     if (VIDEO_EXAMPLE_ID && VIDEO_EXAMPLE_ID.length > 0) {
       try {
         await ctx.telegram.sendVideo(userId, VIDEO_EXAMPLE_ID, {
-        caption: dedMorozMessage,
-        parse_mode: 'HTML',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '🎅 Поздравление Д.Мороза', callback_data: 'ded_moroz_start' }],
-            [{ text: 'Видео-инструкция', callback_data: 'ded_moroz_instruction' }],
-            [{ text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_dm' }],
-            [{ text: 'Главное меню', callback_data: 'main_menu' }]
-          ]
-        }
-      });
+          caption: dedMorozMessage,
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🎅 Поздравление Д.Мороза",
+                  callback_data: "ded_moroz_start",
+                },
+              ],
+              [
+                {
+                  text: "Видео-инструкция",
+                  callback_data: "ded_moroz_instruction",
+                },
+              ],
+              [
+                {
+                  text: "💳 Пополнить баланс",
+                  callback_data: "refill_balance_from_dm",
+                },
+              ],
+              [{ text: "Главное меню", callback_data: "main_menu" }],
+            ],
+          },
+        });
       } catch (error: any) {
         console.log(error);
         await ctx.telegram.sendMessage(userId, dedMorozMessage, {
-        parse_mode: 'HTML',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '🎅 Поздравление Д.Мороза', callback_data: 'ded_moroz_start' }],
-            [{ text: 'Видео-инструкция', callback_data: 'ded_moroz_instruction' }],
-            [{ text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_dm' }],
-            [{ text: 'Главное меню', callback_data: 'main_menu' }]
-          ]
-        }
-      });
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🎅 Поздравление Д.Мороза",
+                  callback_data: "ded_moroz_start",
+                },
+              ],
+              [
+                {
+                  text: "Видео-инструкция",
+                  callback_data: "ded_moroz_instruction",
+                },
+              ],
+              [
+                {
+                  text: "💳 Пополнить баланс",
+                  callback_data: "refill_balance_from_dm",
+                },
+              ],
+              [{ text: "Главное меню", callback_data: "main_menu" }],
+            ],
+          },
+        });
       }
       return;
     }
     await ctx.telegram.sendMessage(userId, dedMorozMessage, {
-      parse_mode: 'HTML',
+      parse_mode: "HTML",
       reply_markup: {
         inline_keyboard: [
-          [{ text: '🎅 Поздравление Д.Мороза', callback_data: 'ded_moroz_start' }],
-          [{ text: 'Видео-инструкция', callback_data: 'ded_moroz_instruction' }],
-          [{ text: '💳 Пополнить баланс', callback_data: 'refill_balance_from_dm' }],
-          [{ text: 'Главное меню', callback_data: 'main_menu' }]
-        ]
-      }
+          [
+            {
+              text: "🎅 Поздравление Д.Мороза",
+              callback_data: "ded_moroz_start",
+            },
+          ],
+          [
+            {
+              text: "Видео-инструкция",
+              callback_data: "ded_moroz_instruction",
+            },
+          ],
+          [
+            {
+              text: "💳 Пополнить баланс",
+              callback_data: "refill_balance_from_dm",
+            },
+          ],
+          [{ text: "Главное меню", callback_data: "main_menu" }],
+        ],
+      },
     });
   });
 
-  bot.action('ded_moroz_start', async (ctx) => {
+  bot.action("ded_moroz_start", async (ctx) => {
     try {
       await ctx.answerCbQuery();
     } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
+      if (!error.description?.includes("query is too old")) {
+        console.error("Ошибка answerCbQuery:", error.message);
       }
     }
-    
+
     const userId = ctx.from?.id;
     if (!userId) return;
 
@@ -85,49 +140,48 @@ export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<nu
     if (await Database.hasEnoughBalance(userId, PRICES.DED_MOROZ)) {
       const message = dedMorozStartMessage;
 
-      userStates.set(userId, {
-        step: 'waiting_DM_photo_generation',
-        freeGenerations: 2
+      await redisStateService.set(userId, {
+        step: "waiting_DM_photo_generation",
+        freeGenerations: 2,
       });
-      if (PHOTO_GENERATION_EXAMPLE_ID && PHOTO_GENERATION_EXAMPLE_ID.length > 0) {
-        try{ 
+      if (
+        PHOTO_GENERATION_EXAMPLE_ID &&
+        PHOTO_GENERATION_EXAMPLE_ID.length > 0
+      ) {
+        try {
           await ctx.telegram.sendPhoto(userId, PHOTO_GENERATION_EXAMPLE_ID, {
-          caption: message,
-          parse_mode: 'HTML',
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: 'Назад', callback_data: 'ded_moroz' }]
-            ]
-          }
-        });
+            caption: message,
+            parse_mode: "HTML",
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: "Назад", callback_data: "ded_moroz" }],
+              ],
+            },
+          });
         } catch (error: any) {
           console.log(error);
           const message = dedMorozStartMessageWithoutPhoto;
           await ctx.telegram.sendMessage(userId, message, {
-          parse_mode: 'HTML',
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: 'Назад', callback_data: 'ded_moroz' }]
-            ]
-          }
-        });
+            parse_mode: "HTML",
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: "Назад", callback_data: "ded_moroz" }],
+              ],
+            },
+          });
         }
-        
       } else {
-        const message = dedMorozStartMessageWithoutPhoto
+        const message = dedMorozStartMessageWithoutPhoto;
         await ctx.telegram.sendMessage(userId, message, {
-          parse_mode: 'HTML',
+          parse_mode: "HTML",
           reply_markup: {
-            inline_keyboard: [
-              [{ text: 'Назад', callback_data: 'ded_moroz' }]
-            ]
-          }
-        })
+            inline_keyboard: [[{ text: "Назад", callback_data: "ded_moroz" }]],
+          },
+        });
       }
-      
+
       return;
     } else {
-
       const paymentMessage = `
 К сожалению, <b>на вашем балансе недостаточно средств</b> для создания генерации 😢
 
@@ -137,51 +191,57 @@ export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<nu
 Чтобы продолжить, <b>пополните баланс</b>
 
 Выберите способ оплаты ⤵️`.trim();
-    
+
       await ctx.telegram.sendMessage(userId, paymentMessage, {
-        parse_mode: 'HTML',
+        parse_mode: "HTML",
         reply_markup: {
           inline_keyboard: [
-            [{text: 'Оплата картой', callback_data: 'refill_balance_from_dm'}],
-            [{text: 'Главное меню', callback_data: 'main_menu'}]
-          ]
-        }
+            [
+              {
+                text: "Оплата картой",
+                callback_data: "refill_balance_from_dm",
+              },
+            ],
+            [{ text: "Главное меню", callback_data: "main_menu" }],
+          ],
+        },
       });
     }
   });
 
-  bot.action('repeat_dm', async (ctx) => {
+  bot.action("repeat_dm", async (ctx) => {
     try {
       await ctx.answerCbQuery();
     } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
+      if (!error.description?.includes("query is too old")) {
+        console.error("Ошибка answerCbQuery:", error.message);
       }
     }
-    
+
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState || !userState.photoFileId) return;
-    const prompt = 'Russian Father Frost, long red coat down to the floor, thick white fur trim, gold braid, red belt, tall red hat with fur and gold trim, very long curly white beard down to his waist, red mittens with fur, majestic posture, photorealistic, premium class. Santa Claus should be approximately 165 cm tall and fit well into the loaded image';
-    
+    const prompt =
+      "Russian Father Frost, long red coat down to the floor, thick white fur trim, gold braid, red belt, tall red hat with fur and gold trim, very long curly white beard down to his waist, red mittens with fur, majestic posture, photorealistic, premium class. Santa Claus should be approximately 165 cm tall and fit well into the loaded image";
+
     processDMPhotoCreation(ctx, userId, userState, prompt);
   });
 
-  bot.action('confirm_dm', async (ctx) => {
+  bot.action("confirm_dm", async (ctx) => {
     try {
       await ctx.answerCbQuery();
     } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
+      if (!error.description?.includes("query is too old")) {
+        console.error("Ошибка answerCbQuery:", error.message);
       }
     }
-    
+
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState || !userState.photoFileId) return;
 
     const message = `
@@ -194,60 +254,54 @@ export function registerDMHandlers(bot: Telegraf<BotContext>, userStates: Map<nu
 
 - Пожалуйста, <b><i>не пишите слишком длинный текст</i></b> — видео длится до 8 секунд, короткие пожелания звучат волшебнее! ✨`.trim();
 
-    userStates.set(userId, {
+    await redisStateService.set(userId, {
       ...userState,
-      step: 'waiting_DM_text',
-    })
+      step: "waiting_DM_text",
+    });
     await ctx.telegram.sendMessage(userId, message, {
-      parse_mode: 'HTML',
+      parse_mode: "HTML",
     });
   });
 
-  bot.action('ded_moroz_instruction', async (ctx) => {
+  bot.action("ded_moroz_instruction", async (ctx) => {
     try {
       await ctx.answerCbQuery();
     } catch (error: any) {
-      if (!error.description?.includes('query is too old')) {
-        console.error('Ошибка answerCbQuery:', error.message);
+      if (!error.description?.includes("query is too old")) {
+        console.error("Ошибка answerCbQuery:", error.message);
       }
     }
-    
+
     const userId = ctx.from?.id;
     if (!userId) return;
 
     const message = DED_MOROZ_INSTRUCTION;
-    
+
     if (VIDEO_INSTRUCTION_ID && VIDEO_INSTRUCTION_ID.length > 0) {
       try {
         await ctx.telegram.sendVideo(userId, VIDEO_INSTRUCTION_ID, {
-        caption: message,
-        parse_mode: 'HTML',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: 'Назад', callback_data: 'ded_moroz' }]
-          ]
-        }
-      });
+          caption: message,
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [[{ text: "Назад", callback_data: "ded_moroz" }]],
+          },
+        });
       } catch (error: any) {
         console.log(error);
         await ctx.telegram.sendMessage(userId, message, {
-          parse_mode: 'HTML',
+          parse_mode: "HTML",
           reply_markup: {
-            inline_keyboard: [
-              [{ text: 'Назад', callback_data: 'ded_moroz' }]
-            ]
-          }
+            inline_keyboard: [[{ text: "Назад", callback_data: "ded_moroz" }]],
+          },
         });
       }
       return;
     } else {
-      await ctx.telegram.sendMessage(userId,'Ошибка загрузки видео!', {
-        parse_mode: 'HTML',
+      await ctx.telegram.sendMessage(userId, "Ошибка загрузки видео!", {
+        parse_mode: "HTML",
         reply_markup: {
-          inline_keyboard: [
-            [{ text: 'Назад', callback_data: 'ded_moroz' }]
-          ]
-        }
+          inline_keyboard: [[{ text: "Назад", callback_data: "ded_moroz" }]],
+        },
       });
     }
   });

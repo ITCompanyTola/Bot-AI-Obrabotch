@@ -1,13 +1,11 @@
 import { Telegraf, Markup } from "telegraf";
-import { BotContext, UserState } from "../types";
+import { BotContext } from "../types";
 import { Database } from "../database";
 import { sendTGTrackUserStart } from "./index";
 import { MAIN_MENU_MESSAGE, mainMenuKeyboard } from "../constants";
+import { redisStateService } from "../redis-state.service";
 
-export function registerMainMenuHandlers(
-  bot: Telegraf<BotContext>,
-  userStates: Map<number, UserState>
-) {
+export function registerMainMenuHandlers(bot: Telegraf<BotContext>) {
   bot.command("start", async (ctx) => {
     const userId = ctx.from?.id;
     if (!userId) return;
@@ -116,8 +114,8 @@ export function registerMainMenuHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
-    if (userState) userStates.delete(userId);
+    const userState = await redisStateService.get(userId);
+    if (userState) await redisStateService.delete(userId);
 
     const mainMenuMessage = MAIN_MENU_MESSAGE;
 
@@ -177,8 +175,8 @@ https://t.me/obrabotych_support
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
-    if (userState) userStates.delete(userId);
+    const userState = await redisStateService.get(userId);
+    if (userState) await redisStateService.delete(userId);
 
     const mainMenuMessage = MAIN_MENU_MESSAGE;
 

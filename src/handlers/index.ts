@@ -1,19 +1,19 @@
-import { Telegraf } from 'telegraf';
-import { BotContext, UserState } from '../types';
-import { registerMainMenuHandlers } from './mainMenu';
-import { registerPhotoAnimationHandlers } from './photoAnimation';
-import { registerMusicCreationHandlers } from './musicCreation';
-import { registerProfileHandlers } from './profile';
-import { registerPaymentHandlers } from './payment';
-import { registerTextHandlers } from './textHandlers';
-import { config } from '../config';
-import { registerPhotoRestorationHandlers } from './photoRestoration';
-import { registerPhotoColorizeHandlers } from './photoColorize';
-import { registerDocumentHandler } from './documentHandler';
-import { registerBroadcastHandlers } from './broadcast';
-import { registerDMHandlers } from './dedMoroz';
-import { registerPostcardHandlers } from './postcardHandlers';
-import { registerRefferal } from './refferalHandler';
+import { Telegraf } from "telegraf";
+import { BotContext, UserState } from "../types";
+import { registerMainMenuHandlers } from "./mainMenu";
+import { registerPhotoAnimationHandlers } from "./photoAnimation";
+import { registerMusicCreationHandlers } from "./musicCreation";
+import { registerProfileHandlers } from "./profile";
+import { registerPaymentHandlers } from "./payment";
+import { registerTextHandlers } from "./textHandlers";
+import { config } from "../config";
+import { registerPhotoRestorationHandlers } from "./photoRestoration";
+import { registerPhotoColorizeHandlers } from "./photoColorize";
+import { registerDocumentHandler } from "./documentHandler";
+import { registerBroadcastHandlers } from "./broadcast";
+import { registerDMHandlers } from "./dedMoroz";
+import { registerPostcardHandlers } from "./postcardHandlers";
+import { registerRefferal } from "./refferalHandler";
 
 async function sendTGTrackWebhook(update: any) {
   // if (!config.tgtrackApiKey) return;
@@ -29,60 +29,76 @@ async function sendTGTrackWebhook(update: any) {
   // }
 }
 
-export async function sendTGTrackUserStart(userId: number, firstName?: string, lastName?: string, username?: string, startValue?: string) {
+export async function sendTGTrackUserStart(
+  userId: number,
+  firstName?: string,
+  lastName?: string,
+  username?: string,
+  startValue?: string
+) {
   if (!config.tgtrackApiKey) return;
-  
+
   try {
     const payload: any = {
       user_id: userId.toString(),
-      first_name: firstName || ''
+      first_name: firstName || "",
     };
-    
+
     if (lastName) payload.last_name = lastName;
     if (username) payload.username = username;
-    if (firstName && lastName) payload.full_name = `${firstName} ${lastName}`.trim();
+    if (firstName && lastName)
+      payload.full_name = `${firstName} ${lastName}`.trim();
     else if (firstName) payload.full_name = firstName;
     if (startValue) payload.start_value = startValue;
-    
-    await fetch(`https://bot-api.tgtrack.ru/v1/${config.tgtrackApiKey}/user_did_start_bot`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+
+    await fetch(
+      `https://bot-api.tgtrack.ru/v1/${config.tgtrackApiKey}/user_did_start_bot`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
   } catch (error) {
-    console.error('TGTrack user start error:', error);
+    console.error("TGTrack user start error:", error);
   }
 }
 
 async function sendTGTrackBotStopped(userId: number) {
   if (!config.tgtrackApiKey) return;
-  
+
   try {
     const payload = {
       user_id: userId.toString(),
-      date: Math.floor(Date.now() / 1000)
+      date: Math.floor(Date.now() / 1000),
     };
-    
-    await fetch(`https://bot-api.tgtrack.ru/v1/${config.tgtrackApiKey}/my_bot_was_stopped`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+
+    await fetch(
+      `https://bot-api.tgtrack.ru/v1/${config.tgtrackApiKey}/my_bot_was_stopped`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
   } catch (error) {
-    console.error('TGTrack bot stopped error:', error);
+    console.error("TGTrack bot stopped error:", error);
   }
 }
 
-export function registerAllHandlers(bot: Telegraf<BotContext>, userStates: Map<number, UserState>) {
+export function registerAllHandlers(bot: Telegraf<BotContext>) {
   bot.use(async (ctx, next) => {
     await sendTGTrackWebhook(ctx.update);
     return next();
   });
 
   bot.catch(async (err: any, ctx) => {
-    console.error('Bot error:', err);
-    
-    if (err.response?.error_code === 403 && err.response?.description?.includes('blocked')) {
+    console.error("Bot error:", err);
+
+    if (
+      err.response?.error_code === 403 &&
+      err.response?.description?.includes("blocked")
+    ) {
       const userId = ctx.from?.id;
       if (userId) {
         await sendTGTrackBotStopped(userId);
@@ -91,17 +107,17 @@ export function registerAllHandlers(bot: Telegraf<BotContext>, userStates: Map<n
     }
   });
 
-  registerMainMenuHandlers(bot, userStates);
-  registerBroadcastHandlers(bot, userStates);
-  registerPhotoAnimationHandlers(bot, userStates);
-  registerMusicCreationHandlers(bot, userStates);
-  registerPhotoRestorationHandlers(bot, userStates);
-  registerRefferal(bot, userStates);
-  registerPhotoColorizeHandlers(bot, userStates);
-  registerPostcardHandlers(bot, userStates);
-  registerDMHandlers(bot, userStates);
-  registerProfileHandlers(bot, userStates);
-  registerPaymentHandlers(bot, userStates);
-  registerTextHandlers(bot, userStates);
-  registerDocumentHandler(bot, userStates);
+  registerMainMenuHandlers(bot);
+  registerBroadcastHandlers(bot);
+  registerPhotoAnimationHandlers(bot);
+  registerMusicCreationHandlers(bot);
+  registerPhotoRestorationHandlers(bot);
+  registerRefferal(bot);
+  registerPhotoColorizeHandlers(bot);
+  registerPostcardHandlers(bot);
+  registerDMHandlers(bot);
+  registerProfileHandlers(bot);
+  registerPaymentHandlers(bot);
+  registerTextHandlers(bot);
+  registerDocumentHandler(bot);
 }

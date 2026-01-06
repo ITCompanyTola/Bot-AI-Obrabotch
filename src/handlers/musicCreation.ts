@@ -3,15 +3,13 @@ import { BotContext, UserState } from "../types";
 import { Database } from "../database";
 import { PRICES } from "../constants";
 import { processMusicGeneration } from "../services/sunoService";
+import { redisStateService } from "../redis-state.service";
 
 const HERO_AUDIO: string =
   "CQACAgIAAxkBAAECYRBpSLNMTRdaHnocly1WciCK2IjllAAC45cAAr5EQUrEr1-izwc0vTYE";
 const INSTRUCTION: string =
   "BAACAgIAAxkBAAECdx5pSuD8Ixy3akoBLuqAPiGS-FDUSAAC6ZUAAnIgWUpnpTE2oM4fbDYE";
-export function registerMusicCreationHandlers(
-  bot: Telegraf<BotContext>,
-  userStates: Map<number, UserState>
-) {
+export function registerMusicCreationHandlers(bot: Telegraf<BotContext>) {
   bot.action("music_creation", async (ctx) => {
     try {
       await ctx.answerCbQuery();
@@ -94,7 +92,7 @@ export function registerMusicCreationHandlers(
 
     const userId = ctx.from?.id;
     if (userId) {
-      userStates.set(userId, { step: "waiting_music_text" });
+      await redisStateService.set(userId, { step: "waiting_music_text" });
     }
 
     await ctx.reply(
@@ -154,17 +152,17 @@ export function registerMusicCreationHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (userState) {
       userState.musicStyle = "Поп";
-      userStates.set(userId, userState);
+      await redisStateService.set(userId, userState);
     }
 
     if (!userState?.musicText || !userState?.musicStyle) {
       await ctx.editMessageText(
         "❌ Ошибка: не найдены данные для генерации. Начните сначала."
       );
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
       return;
     }
 
@@ -215,7 +213,7 @@ export function registerMusicCreationHandlers(
       userState.musicStyle
     );
 
-    userStates.delete(userId);
+    await redisStateService.delete(userId);
   });
 
   bot.action("music_style_kpop", async (ctx) => {
@@ -230,17 +228,17 @@ export function registerMusicCreationHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (userState) {
       userState.musicStyle = "К-поп";
-      userStates.set(userId, userState);
+      await redisStateService.set(userId, userState);
     }
 
     if (!userState?.musicText || !userState?.musicStyle) {
       await ctx.editMessageText(
         "❌ Ошибка: не найдены данные для генерации. Начните сначала."
       );
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
       return;
     }
 
@@ -291,7 +289,7 @@ export function registerMusicCreationHandlers(
       userState.musicStyle
     );
 
-    userStates.delete(userId);
+    await redisStateService.delete(userId);
   });
 
   bot.action("music_style_rnb", async (ctx) => {
@@ -306,17 +304,17 @@ export function registerMusicCreationHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (userState) {
       userState.musicStyle = "R&B";
-      userStates.set(userId, userState);
+      await redisStateService.set(userId, userState);
     }
 
     if (!userState?.musicText || !userState?.musicStyle) {
       await ctx.editMessageText(
         "❌ Ошибка: не найдены данные для генерации. Начните сначала."
       );
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
       return;
     }
 
@@ -367,7 +365,7 @@ export function registerMusicCreationHandlers(
       userState.musicStyle
     );
 
-    userStates.delete(userId);
+    await redisStateService.delete(userId);
   });
 
   bot.action("music_style_hiphop", async (ctx) => {
@@ -382,17 +380,17 @@ export function registerMusicCreationHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (userState) {
       userState.musicStyle = "Хип-хоп";
-      userStates.set(userId, userState);
+      await redisStateService.set(userId, userState);
     }
 
     if (!userState?.musicText || !userState?.musicStyle) {
       await ctx.editMessageText(
         "❌ Ошибка: не найдены данные для генерации. Начните сначала."
       );
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
       return;
     }
 
@@ -443,7 +441,7 @@ export function registerMusicCreationHandlers(
       userState.musicStyle
     );
 
-    userStates.delete(userId);
+    await redisStateService.delete(userId);
   });
 
   bot.action("music_style_dance", async (ctx) => {
@@ -458,17 +456,17 @@ export function registerMusicCreationHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (userState) {
       userState.musicStyle = "Дэнс";
-      userStates.set(userId, userState);
+      await redisStateService.set(userId, userState);
     }
 
     if (!userState?.musicText || !userState?.musicStyle) {
       await ctx.editMessageText(
         "❌ Ошибка: не найдены данные для генерации. Начните сначала."
       );
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
       return;
     }
 
@@ -519,7 +517,7 @@ export function registerMusicCreationHandlers(
       userState.musicStyle
     );
 
-    userStates.delete(userId);
+    await redisStateService.delete(userId);
   });
 
   bot.action("music_back_to_style", async (ctx) => {

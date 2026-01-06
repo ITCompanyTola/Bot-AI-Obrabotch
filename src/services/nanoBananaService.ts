@@ -2,11 +2,11 @@ import axios from "axios";
 import { Buffer } from "buffer";
 import { Markup } from "telegraf";
 import { config } from "../config";
-import { Database, UserRefferalData } from "../database";
+import { Database } from "../database";
 import { MAIN_MENU_MESSAGE, mainMenuKeyboard, PRICES } from "../constants";
 import { UserState } from "../types";
-import { userStates } from "../bot";
 import { axiosRetry } from "../utils/axiosRetry";
+import { redisStateService } from "../redis-state.service";
 
 const API_URL = "https://api.kie.ai/api/v1/jobs";
 const API_KEY = config.nanoBananaApiKey;
@@ -328,7 +328,7 @@ export async function processDMPhotoCreation(
 
       const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
 
-      userStates.set(userId, {
+      await redisStateService.set(userId, {
         ...userState,
         dmPhotoFileId: fileId,
         freeGenerations: userState.freeGenerations - 1,
@@ -357,7 +357,7 @@ export async function processDMPhotoCreation(
 
     const fileId = sentMessage.photo[sentMessage.photo.length - 1].file_id;
 
-    userStates.set(userId, {
+    await redisStateService.set(userId, {
       ...userState,
       dmPhotoFileId: fileId,
       freeGenerations: userState.freeGenerations - 1,

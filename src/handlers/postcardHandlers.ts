@@ -12,6 +12,7 @@ import {
   POSTCARD_PHOTO_START_WIHOUT,
   PRICES,
 } from "../constants";
+import { redisStateService } from "../redis-state.service";
 
 const HERO_VIDEO_TEXT: string =
   "BAACAgIAAxkBAAECdzFpSuGnIPA7Q_WONIwAAZvKW74rJtkAA5YAAnIgWUomnSdhRwQ1VjYE";
@@ -28,10 +29,7 @@ const POSTCARD_CHRISTMAS_HERO_VIDEO: string =
 const POSTCARD_CHRISTMAS_PHOTO: string =
   "AgACAgIAAxkBAAEMVkVpWUkXeDUu7cW1NQxtb5KdgbT6JwACnhBrG7afyEpQ883gLNKZswEAAwIAA3gAAzgE";
 
-export function registerPostcardHandlers(
-  bot: Telegraf<BotContext>,
-  userStates: Map<number, UserState>
-) {
+export function registerPostcardHandlers(bot: Telegraf<BotContext>) {
   bot.action("postcard", async (ctx) => {
     try {
       await ctx.answerCbQuery();
@@ -159,7 +157,7 @@ export function registerPostcardHandlers(
     const message = POSTCARD_CHRISTMAS_START;
 
     if (await Database.hasEnoughBalance(userId, PRICES.POSTCARD_CHRISTMAS)) {
-      userStates.set(userId, {
+      await redisStateService.set(userId, {
         step: "waiting_postcard_christmas",
       });
 
@@ -304,7 +302,7 @@ export function registerPostcardHandlers(
     const message = POSTCARD_MESSAGE_START;
 
     if (await Database.hasEnoughBalance(userId, PRICES.POSTCARD_TEXT)) {
-      userStates.set(userId, {
+      await redisStateService.set(userId, {
         step: "waiting_postcard_text",
       });
 
@@ -435,7 +433,7 @@ export function registerPostcardHandlers(
     const message = POSTCARD_PHOTO_START;
 
     if (await Database.hasEnoughBalance(userId, PRICES.POSTCARD_PHOTO)) {
-      userStates.set(userId, {
+      await redisStateService.set(userId, {
         step: "waiting_postcard_photo",
       });
       if (EXAMPLE_POSTCARD_PHOTO_ID && EXAMPLE_POSTCARD_PHOTO_ID.length > 0) {

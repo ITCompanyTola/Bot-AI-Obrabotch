@@ -3,6 +3,7 @@ import { BotContext, UserState, BroadcastButton } from "../types";
 import { Database } from "../database";
 import { broadcast } from "../bot";
 import { mailingQueue } from "../services/mailing-queue.service";
+import { redisStateService } from "../redis-state.service";
 
 const TEST_USER_IDS = [740946933, 1451737570, 540807716];
 
@@ -390,17 +391,14 @@ export async function askForBonus(
   });
 }
 
-export function registerBroadcastHandlers(
-  bot: Telegraf<BotContext>,
-  userStates: Map<number, UserState>
-) {
+export function registerBroadcastHandlers(bot: Telegraf<BotContext>) {
   bot.command("broadcast", async (ctx) => {
     const userId = ctx.from?.id;
     if (!userId) return;
     const isAdmin = await Database.isAdmin(userId);
     if (!isAdmin) return;
 
-    userStates.set(userId, {
+    await redisStateService.set(userId, {
       step: "waiting_broadcast_message",
     });
 
@@ -423,10 +421,10 @@ export function registerBroadcastHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState) return;
 
-    userStates.set(userId, {
+    await redisStateService.set(userId, {
       ...userState,
       step: "waiting_broadcast_photo",
     });
@@ -450,10 +448,10 @@ export function registerBroadcastHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState) return;
 
-    userStates.set(userId, {
+    await redisStateService.set(userId, {
       ...userState,
       step: "waiting_broadcast_video",
     });
@@ -477,7 +475,7 @@ export function registerBroadcastHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState) return;
 
     await broadcastTextHandler(ctx, userId, userState);
@@ -495,10 +493,10 @@ export function registerBroadcastHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState) return;
 
-    userStates.set(userId, {
+    await redisStateService.set(userId, {
       ...userState,
       step: "waiting_broadcast_button_text",
     });
@@ -524,10 +522,10 @@ export function registerBroadcastHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState) return;
 
-    userStates.set(userId, {
+    await redisStateService.set(userId, {
       ...userState,
       step: "waiting_broadcast_bonus",
     });
@@ -547,7 +545,7 @@ export function registerBroadcastHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState) return;
 
     // Очищаем кнопки если они были
@@ -559,7 +557,7 @@ export function registerBroadcastHandlers(
       });
     }
 
-    userStates.set(userId, {
+    await redisStateService.set(userId, {
       ...userState,
       step: "waiting_broadcast_bonus",
     });
@@ -579,7 +577,7 @@ export function registerBroadcastHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState) return;
 
     const currentBroadcast = broadcast.get(userId);
@@ -590,7 +588,7 @@ export function registerBroadcastHandlers(
       });
     }
 
-    userStates.set(userId, {
+    await redisStateService.set(userId, {
       ...userState,
       step: null,
     });
@@ -611,7 +609,7 @@ export function registerBroadcastHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState) return;
 
     const isAdmin = await Database.isAdmin(userId);
@@ -702,7 +700,7 @@ export function registerBroadcastHandlers(
     if (!userId) return;
 
     broadcast.delete(userId);
-    userStates.delete(userId);
+    await redisStateService.delete(userId);
     await ctx.reply("❌ Рассылка отменена.");
   });
 
@@ -719,7 +717,7 @@ export function registerBroadcastHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState) return;
 
     await sendBroadcastExample(ctx, userId, userState);

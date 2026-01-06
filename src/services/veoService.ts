@@ -9,8 +9,8 @@ import {
   mainMenuKeyboard,
   PRICES,
 } from "../constants";
-import { userStates } from "../bot";
 import { axiosRetry } from "../utils/axiosRetry";
+import { redisStateService } from "../redis-state.service";
 
 const API_URL = "https://api.kie.ai/api/v1/veo";
 const API_KEY = config.klingApiKey;
@@ -229,7 +229,7 @@ export async function processVideoDMGeneration(
     );
     console.log(`📁 File ID: ${sentMessage.video.file_id}`);
 
-    userStates.delete(userId);
+    await redisStateService.delete(userId);
 
     const mainMenuMessage = MAIN_MENU_MESSAGE;
 

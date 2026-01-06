@@ -28,26 +28,24 @@ import { processVideoDMGeneration } from "../services/veoService";
 import { updatePrompt } from "../services/openaiService";
 import { processPostcardCreation } from "../services/fluxService";
 import { generatePostcard } from "../services/chatGPTService";
+import { redisStateService } from "../redis-state.service";
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
 
-export function registerTextHandlers(
-  bot: Telegraf<BotContext>,
-  userStates: Map<number, UserState>
-) {
+export function registerTextHandlers(bot: Telegraf<BotContext>) {
   bot.on("photo", async (ctx) => {
     console.log(ctx.message.photo[ctx.message.photo.length - 1].file_id);
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (userState?.step === "waiting_photo") {
       const photo = ctx.message.photo[ctx.message.photo.length - 1];
 
-      userStates.set(userId, {
+      await redisStateService.set(userId, {
         step: "waiting_description",
         photoFileId: photo.file_id,
         regenPromptAttempts: 2,
@@ -82,7 +80,7 @@ export function registerTextHandlers(
 
       processPhotoRestoration(ctx, userId, photo.file_id, prompt);
 
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
     }
 
     if (userState?.step === "waiting_for_colorize_photo") {
@@ -92,7 +90,7 @@ export function registerTextHandlers(
 
       processPhotoColorize(ctx, userId, photo.file_id, prompt);
 
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
     }
 
     if (userState?.step === "waiting_DM_photo_generation") {
@@ -100,12 +98,12 @@ export function registerTextHandlers(
       const prompt =
         "Russian Father Frost, long red coat down to the floor, thick white fur trim, gold braid, red belt, tall red hat with fur and gold trim, very long curly white beard down to his waist, red mittens with fur, majestic posture, photorealistic, premium class. Santa Claus should be approximately 165 cm tall and fit well into the loaded image";
 
-      userStates.set(userId, {
+      await redisStateService.set(userId, {
         ...userState,
         photoFileId: photo.file_id,
       });
-      const newUserState = userStates.get(userId);
-      if (newUserState === undefined) return;
+      const newUserState = await redisStateService.get(userId);
+      if (newUserState === null) return;
       processDMPhotoCreation(ctx, userId, newUserState, prompt);
     }
 
@@ -119,7 +117,7 @@ export function registerTextHandlers(
 
       generatePostcard(ctx, userId, photoFileId, "photo");
 
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
     }
 
     if (userState?.step === "waiting_postcard_christmas") {
@@ -134,7 +132,7 @@ export function registerTextHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
 
     if (userState?.step === "waiting_broadcast_message") {
       broadcastMessageHandler(ctx, userId, userState);
@@ -147,7 +145,7 @@ export function registerTextHandlers(
 
       console.log(`✅ Получен текст кнопки от ${userId}: "${buttonText}"`);
 
-      userStates.set(userId, {
+      await redisStateService.set(userId, {
         ...userState,
         step: "waiting_broadcast_button_callback",
         broadcastCurrentButton: {
@@ -183,7 +181,7 @@ export function registerTextHandlers(
       const currentBroadcast = broadcast.get(userId);
       if (!currentBroadcast) {
         await ctx.reply("Ошибка");
-        userStates.delete(userId);
+        await redisStateService.delete(userId);
         return;
       }
 
@@ -191,7 +189,7 @@ export function registerTextHandlers(
       const currentButton = userState.broadcastCurrentButton;
       if (!currentButton) {
         await ctx.reply("Ошибка: не найден текст кнопки");
-        userStates.delete(userId);
+        await redisStateService.delete(userId);
         return;
       }
 
@@ -213,7 +211,7 @@ export function registerTextHandlers(
       });
 
       // Обновляем состояние пользователя
-      userStates.set(userId, {
+      await redisStateService.set(userId, {
         ...userState,
         step: "waiting_broadcast_add_another",
         broadcastCurrentButton: undefined,
@@ -247,7 +245,7 @@ export function registerTextHandlers(
         });
       }
 
-      userStates.set(userId, {
+      await redisStateService.set(userId, {
         ...userState,
         step: null,
       });
@@ -261,7 +259,7 @@ export function registerTextHandlers(
 
       processPostcardCreation(ctx, userId, prompt);
 
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
       return;
     }
 
@@ -276,7 +274,7 @@ export function registerTextHandlers(
         await ctx.reply("❌ Произошла ошибка. Попробуйте снова.");
       }
 
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
       return;
     }
 
@@ -296,7 +294,7 @@ export function registerTextHandlers(
       const amount = userState.pendingPaymentAmount;
       if (!amount) {
         await ctx.reply("❌ Произошла ошибка. Попробуйте снова.");
-        userStates.delete(userId);
+        await redisStateService.delete(userId);
         return;
       }
 
@@ -319,21 +317,21 @@ export function registerTextHandlers(
         backAction = "refill_balance_from_postcard_christmas";
       }
 
-      userStates.set(userId, {
+      await redisStateService.set(userId, {
         ...userState,
         step: null,
         pendingPaymentAmount: undefined,
       });
 
       const { showPaymentMessage } = await import("./payment");
-      await showPaymentMessage(ctx, amount, userStates, backAction, true);
+      await showPaymentMessage(ctx, amount, backAction, true);
       return;
     }
 
     if (userState?.step === "waiting_music_text") {
       const musicText = ctx.message.text;
 
-      userStates.set(userId, {
+      await redisStateService.set(userId, {
         step: "waiting_music_style",
         musicText: musicText,
       });
@@ -395,7 +393,7 @@ export function registerTextHandlers(
       await ctx.reply("❌ Произошла ошибка. Попробуйте снова.");
       return;
     }
-    userStates.set(userId, {
+    await redisStateService.set(userId, {
       ...userState,
       prompt: prompt,
       generatedPrompt: updatedPromptMessage,
@@ -420,12 +418,12 @@ export function registerTextHandlers(
     });
   });
 
-  bot.on("video", (ctx) => {
+  bot.on("video", async (ctx) => {
     console.log("Видео получено", ctx.message.video.file_id);
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState) return;
 
     if (userState?.step !== "waiting_broadcast_video") return;
@@ -437,7 +435,7 @@ export function registerTextHandlers(
     await ctx.answerCbQuery();
     const userId = ctx.from?.id;
     if (!userId) return;
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState || !userState.prompt) return;
 
     await ctx.reply(
@@ -467,7 +465,7 @@ export function registerTextHandlers(
       return;
     }
 
-    userStates.set(userId, {
+    await redisStateService.set(userId, {
       ...userState,
       generatedPrompt: updatedPromptMessage,
       regenPromptAttempts: Number(userState.regenPromptAttempts) - 1,
@@ -507,7 +505,7 @@ export function registerTextHandlers(
     await ctx.answerCbQuery();
     const userId = ctx.from?.id;
     if (!userId) return;
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState) return;
 
     console.log(
@@ -558,14 +556,14 @@ export function registerTextHandlers(
       userState.prompt
     );
 
-    userStates.delete(userId);
+    await redisStateService.delete(userId);
   });
 
   bot.action("confirm_ai_prompt", async (ctx) => {
     await ctx.answerCbQuery();
     const userId = ctx.from?.id;
     if (!userId) return;
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
     if (!userState) return;
 
     console.log(
@@ -619,6 +617,6 @@ export function registerTextHandlers(
       userState.generatedPrompt
     );
 
-    userStates.delete(userId);
+    await redisStateService.delete(userId);
   });
 }

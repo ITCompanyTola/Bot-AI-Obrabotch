@@ -3,6 +3,7 @@ import { BotContext, UserState } from "../types";
 import { Database } from "../database";
 import { PRICES } from "../constants";
 import { processVideoGeneration } from "../services/klingService";
+import { redisStateService } from "../redis-state.service";
 
 const VIDEO_FILE_ID =
   "BAACAgIAAxkBAAECXWtpSDoDQQ-MSv3zGWfvxAQxJBoFzAACDpQAAr5EQUqE-gauHSVXMDYE";
@@ -13,10 +14,7 @@ const ORDER_VIDEO_FILE_ID =
 const INTRUCTION_FILE_ID =
   "BAACAgIAAxkBAAECdxlpSuDEuFSmVp87Vy5NW8rMAUzLIQAC3pUAAnIgWUpp-RGgMQAB-eM2BA";
 
-export function registerPhotoAnimationHandlers(
-  bot: Telegraf<BotContext>,
-  userStates: Map<number, UserState>
-) {
+export function registerPhotoAnimationHandlers(bot: Telegraf<BotContext>) {
   bot.action("photo_animation", async (ctx) => {
     try {
       await ctx.answerCbQuery();
@@ -140,7 +138,7 @@ export function registerPhotoAnimationHandlers(
 
     const userId = ctx.from?.id;
     if (userId) {
-      userStates.set(userId, { step: "waiting_photo" });
+      await redisStateService.set(userId, { step: "waiting_photo" });
     }
 
     // Проверяем, есть ли PHOTO_FILE_ID
@@ -300,13 +298,13 @@ export function registerPhotoAnimationHandlers(
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    const userState = userStates.get(userId);
+    const userState = await redisStateService.get(userId);
 
     if (!userState?.photoFileId || !userState?.prompt) {
       await ctx.reply(
         "❌ Ошибка: не найдены данные для генерации. Начните сначала с команды /start"
       );
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
       return;
     }
 
@@ -344,7 +342,7 @@ export function registerPhotoAnimationHandlers(
 
     if (!deducted) {
       await ctx.reply("❌ Ошибка списания средств. Попробуйте позже.");
-      userStates.delete(userId);
+      await redisStateService.delete(userId);
       return;
     }
 
@@ -359,6 +357,6 @@ export function registerPhotoAnimationHandlers(
 
     processVideoGeneration(ctx, userId, photoFileId, prompt);
 
-    userStates.delete(userId);
+    await redisStateService.delete(userId);
   });
 }

@@ -129,7 +129,7 @@ export const getPostcardMessage = (balance: number) =>
 export const POSTCARD_MESSAGE_START = `
 Отправьте <b><i>текст</i></b> для открытки по примеру ниже ⤵️
 
-<blockquote><code>Задача: Сгенерируй картинку с надписью "С Новым годом". Стиль картинки: новогодний, праздничный, радостный</code></blockquote>`.trim();
+<blockquote><code>Задача: Сгенерируй картинку с надписью "С Новым годом". Стиль картинки: новогодний, праздничный, радостный. Шрифт: понятный, читабельный</code></blockquote>`.trim();
 
 export const getPostcardPhotoMessage = (balance: number) =>
   `

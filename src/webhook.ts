@@ -4,7 +4,7 @@ import { bot } from "./bot";
 import { Markup } from "telegraf";
 import { mainMenuKeyboard } from "./constants";
 import crypto from "crypto";
-import { isSubscribed } from "utils/isSubscribed";
+import { isSubscribed } from "./utils/isSubscribed";
 
 const app = express();
 app.use(express.json());

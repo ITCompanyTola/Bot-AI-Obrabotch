@@ -63,15 +63,12 @@ export async function generatePostcard(
     console.log("🟢 [3] Balance deducted");
 
     if (await isSubscribed(userId)) {
-      await ctx.editMessageText(
-        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
-        {
-          parse_mode: "HTML",
-          link_preview_options: { is_disabled: true },
-        }
-      );
+      await ctx.reply("⏳ Начинаю генерацию... Это займет около 3-х минут.", {
+        parse_mode: "HTML",
+        link_preview_options: { is_disabled: true },
+      });
     } else {
-      await ctx.editMessageText(
+      await ctx.reply(
         "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
         {
           parse_mode: "HTML",

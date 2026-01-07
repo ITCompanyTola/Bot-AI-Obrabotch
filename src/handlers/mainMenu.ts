@@ -599,7 +599,7 @@ https://t.me/obrabotych_support
 
 <b>Статистика</b>
 * /stats_pw - Получить статистику вовлеченности пользователей
-* /blockend_users - Получить список заблокированных пользователей
+* /blocked_users - Получить список заблокированных пользователей
 * /stats_all - Получить общую статистику бота
 * /refferal_stats - Получить статистику рефералов
 * <code>/updateSource_<b><i>название_источника</i></b></code> - Обновить источник
@@ -684,10 +684,21 @@ https://t.me/obrabotych_support
         year: "numeric",
       });
 
+      const lastUpdatedTime = new Date(source.updated_at);
+      const lastUpdatedTimeStr = lastUpdatedTime.toLocaleString("ru-RU", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
       const statsMessage = `
 📊 <b>Статистика источника "${source.source_name}"</b>
 
 🔑 Ключ: https://t.me/Obrabotych_bot?start=${source.key_substring}
+
+Последнее обновление: ${lastUpdatedTimeStr}
 
 <b>За все время</b>
 👥 Количество пользователей: <b>${stats.all.usersCount} / ${

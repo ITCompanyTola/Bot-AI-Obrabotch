@@ -1,10 +1,11 @@
 import { Telegraf, Markup } from "telegraf";
-import { BotContext, UserState } from "../types";
+import { BotContext } from "../types";
 import { Database } from "../database";
 import {
-  POSTCARD_CHRISTMAS_PROMPT,
-  POSTCARD_PHOTO_PROMPT,
+  MAIN_MENU_MESSAGE,
+  mainMenuKeyboard,
   PRICES,
+  TELEGRAM_CHANNEL_MESSAGE,
 } from "../constants";
 import { processVideoGeneration } from "../services/klingService";
 import { broadcast, logToFile } from "../bot";
@@ -12,16 +13,12 @@ import {
   processPhotoRestoration,
   processDMPhotoCreation,
 } from "../services/nanoBananaService";
-import {
-  processPhotoColorize,
-  processPostcardCreationWithBananaPro,
-} from "../services/nanoBananaProService";
+import { processPhotoColorize } from "../services/nanoBananaProService";
 import {
   broadcastMessageHandler,
   broadcastPhotoHandler,
   broadcastVideoHandler,
   sendBroadcastExample,
-  askForBonus,
   askForAnotherButton,
 } from "./broadcast";
 import { processVideoDMGeneration } from "../services/veoService";
@@ -36,6 +33,22 @@ function validateEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
+async function sendMainMenuMessage(ctx: any, userId: number) {
+  let mainMenuMessage = MAIN_MENU_MESSAGE;
+
+  if (!(await isSubscribed(userId))) {
+    mainMenuMessage += TELEGRAM_CHANNEL_MESSAGE;
+  }
+
+  const keyboard = Markup.inlineKeyboard(mainMenuKeyboard);
+
+  await ctx.telegram.sendMessage(userId, mainMenuMessage, {
+    parse_mode: "HTML",
+    link_preview_options: { is_disabled: true },
+    ...keyboard,
+  });
+}
+
 export function registerTextHandlers(bot: Telegraf<BotContext>) {
   bot.on("photo", async (ctx) => {
     console.log(ctx.message.photo[ctx.message.photo.length - 1].file_id);
@@ -43,6 +56,11 @@ export function registerTextHandlers(bot: Telegraf<BotContext>) {
     if (!userId) return;
 
     const userState = await redisStateService.get(userId);
+    if (!userState) {
+      await sendMainMenuMessage(ctx, userId);
+      return;
+    }
+
     if (userState?.step === "waiting_photo") {
       const photo = ctx.message.photo[ctx.message.photo.length - 1];
 
@@ -126,6 +144,8 @@ export function registerTextHandlers(bot: Telegraf<BotContext>) {
         ctx.message.photo[ctx.message.photo.length - 1].file_id;
 
       generatePostcard(ctx, userId, photoFileId, "christmas");
+
+      await redisStateService.delete(userId);
     }
   });
 
@@ -134,6 +154,10 @@ export function registerTextHandlers(bot: Telegraf<BotContext>) {
     if (!userId) return;
 
     const userState = await redisStateService.get(userId);
+    if (!userState) {
+      await sendMainMenuMessage(ctx, userId);
+      return;
+    }
 
     if (userState?.step === "waiting_broadcast_message") {
       broadcastMessageHandler(ctx, userId, userState);
@@ -541,15 +565,12 @@ export function registerTextHandlers(bot: Telegraf<BotContext>) {
     }
 
     if (await isSubscribed(userId)) {
-      await ctx.editMessageText(
-        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
-        {
-          parse_mode: "HTML",
-          link_preview_options: { is_disabled: true },
-        }
-      );
+      await ctx.reply("⏳ Начинаю генерацию... Это займет около 3-х минут.", {
+        parse_mode: "HTML",
+        link_preview_options: { is_disabled: true },
+      });
     } else {
-      await ctx.editMessageText(
+      await ctx.reply(
         "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
         {
           parse_mode: "HTML",
@@ -609,15 +630,12 @@ export function registerTextHandlers(bot: Telegraf<BotContext>) {
     }
 
     if (await isSubscribed(userId)) {
-      await ctx.editMessageText(
-        "⏳ Начинаю генерацию... Это займет около 3-х минут.",
-        {
-          parse_mode: "HTML",
-          link_preview_options: { is_disabled: true },
-        }
-      );
+      await ctx.reply("⏳ Начинаю генерацию... Это займет около 3-х минут.", {
+        parse_mode: "HTML",
+        link_preview_options: { is_disabled: true },
+      });
     } else {
-      await ctx.editMessageText(
+      await ctx.reply(
         "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
         {
           parse_mode: "HTML",

@@ -7,6 +7,7 @@ import {
 import { processPhotoColorize } from "../services/nanoBananaProService";
 import { generatePostcard } from "../services/chatGPTService";
 import { redisStateService } from "../redis-state.service";
+import { processTrendVideoGeneration } from "../services/klingServiceTrend";
 
 export function registerDocumentHandler(bot: Telegraf<BotContext>) {
   bot.on("document", async (ctx) => {
@@ -14,6 +15,10 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>) {
     if (!userId) return;
 
     console.log("Тип полученного документа: ", ctx.message.document.mime_type);
+    const photoFileId = ctx.message.document.file_id;
+    console.log(photoFileId);
+
+    console.log("file_url", await ctx.telegram.getFileLink(photoFileId));
 
     const userState = await redisStateService.get(userId);
     if (!userState) return;
@@ -46,9 +51,6 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>) {
       );
       return;
     }
-
-    const photoFileId = ctx.message.document.file_id;
-    console.log(photoFileId);
 
     if (userState?.step === "waiting_photo") {
       await redisStateService.set(userId, {
@@ -106,6 +108,17 @@ export function registerDocumentHandler(bot: Telegraf<BotContext>) {
       generatePostcard(ctx, userId, photoFileId, "christmas");
 
       await redisStateService.delete(userId);
+    }
+
+    if (userState?.step === "waiting_photo_for_trend_video") {
+      if (userState.photoFileId) {
+        processTrendVideoGeneration(ctx, userId, userState.photoFileId);
+        await redisStateService.delete(userId);
+      } else {
+        await redisStateService.delete(userId);
+        return;
+      }
+      return;
     }
 
     if (userState.step === "waiting_DM_photo_generation") {

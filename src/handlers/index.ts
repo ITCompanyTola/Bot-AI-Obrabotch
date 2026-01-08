@@ -14,6 +14,7 @@ import { registerBroadcastHandlers } from "./broadcast";
 import { registerDMHandlers } from "./dedMoroz";
 import { registerPostcardHandlers } from "./postcardHandlers";
 import { registerRefferal } from "./refferalHandler";
+import { registerTrendVideoHandlers } from "./trendVideo";
 
 async function sendTGTrackWebhook(update: any) {
   // if (!config.tgtrackApiKey) return;
@@ -116,6 +117,7 @@ export function registerAllHandlers(bot: Telegraf<BotContext>) {
   registerPhotoColorizeHandlers(bot);
   registerPostcardHandlers(bot);
   registerDMHandlers(bot);
+  registerTrendVideoHandlers(bot);
   registerProfileHandlers(bot);
   registerPaymentHandlers(bot);
   registerTextHandlers(bot);

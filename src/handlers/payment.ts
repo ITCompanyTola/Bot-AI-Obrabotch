@@ -102,6 +102,7 @@ async function showRefillAmountSelection(
     | "restoration"
     | "colorize"
     | "dm"
+    | "trendVideo"
     | "postcardPhoto"
     | "postcardChristmas"
     | "postcardText",
@@ -130,6 +131,7 @@ async function showRefillAmountSelection(
     postcardPhoto: "postcard_photo",
     postcardText: "postcard_text",
     postcardChristmas: "postcard_christmas",
+    trendVideo: "trend_video",
   };
 
   const keyboard = [
@@ -209,6 +211,23 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>) {
     const useEdit = userState?.step === "waiting_email";
 
     await showRefillAmountSelection(ctx, "photo", useEdit);
+  });
+
+  bot.action("refill_balance_from_trend_video", async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes("query is too old")) {
+        console.error("Ошибка answerCbQuery:", error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    logToFile(`📝 refill_balance_from_trend_video вызван: userId=${userId}`);
+
+    await showRefillAmountSelection(ctx, "trendVideo", false);
   });
 
   bot.action("refill_balance_from_profile", async (ctx) => {
@@ -387,6 +406,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>) {
       backAction = "refill_balance_from_postcard_photo";
     } else if (userState?.refillSource === "postcardChristmas") {
       backAction = "refill_balance_from_postcard_christmas";
+    } else if (userState?.refillSource === "trendVideo") {
+      backAction = "refill_balance_from_trend_video";
     }
     await requestEmailOrProceed(ctx, 150, backAction);
   });
@@ -424,6 +445,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>) {
       backAction = "refill_balance_from_postcard_photo";
     } else if (userState?.refillSource === "postcardChristmas") {
       backAction = "refill_balance_from_postcard_christmas";
+    } else if (userState?.refillSource === "trendVideo") {
+      backAction = "refill_balance_from_trend_video";
     }
 
     await requestEmailOrProceed(ctx, 300, backAction);
@@ -462,6 +485,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>) {
       backAction = "refill_balance_from_postcard_photo";
     } else if (userState?.refillSource === "postcardChristmas") {
       backAction = "refill_balance_from_postcard_christmas";
+    } else if (userState?.refillSource === "trendVideo") {
+      backAction = "refill_balance_from_trend_video";
     }
 
     await requestEmailOrProceed(ctx, 800, backAction);
@@ -500,6 +525,8 @@ export function registerPaymentHandlers(bot: Telegraf<BotContext>) {
       backAction = "refill_balance_from_postcard_photo";
     } else if (userState?.refillSource === "postcardChristmas") {
       backAction = "refill_balance_from_postcard_christmas";
+    } else if (userState?.refillSource === "trendVideo") {
+      backAction = "refill_balance_from_trend_video";
     }
 
     await requestEmailOrProceed(ctx, 1600, backAction);

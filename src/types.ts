@@ -38,6 +38,7 @@ export type UserStep =
   | "waiting_postcard_text"
   | "waiting_postcard_photo"
   | "waiting_postcard_christmas"
+  | "waiting_photo_for_trend_video"
   | null;
 
 export interface UserState {
@@ -56,6 +57,7 @@ export interface UserState {
     | "restoration"
     | "colorize"
     | "dm"
+    | "trendVideo"
     | "postcardPhoto"
     | "postcardChristmas"
     | "postcardText";

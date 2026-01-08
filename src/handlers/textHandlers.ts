@@ -27,6 +27,7 @@ import { processPostcardCreation } from "../services/fluxService";
 import { generatePostcard } from "../services/chatGPTService";
 import { redisStateService } from "../redis-state.service";
 import { isSubscribed } from "../utils/isSubscribed";
+import { processTrendVideoGeneration } from "../services/klingServiceTrend";
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -128,6 +129,15 @@ export function registerTextHandlers(bot: Telegraf<BotContext>) {
 
     if (userState?.step === "waiting_broadcast_photo") {
       broadcastPhotoHandler(ctx, userId, userState);
+    }
+
+    if (userState?.step === "waiting_photo_for_trend_video") {
+      const photo = ctx.message.photo[ctx.message.photo.length - 1];
+
+      processTrendVideoGeneration(ctx, userId, photo.file_id);
+
+      await redisStateService.delete(userId);
+      return;
     }
 
     if (userState?.step === "waiting_postcard_photo") {
@@ -445,6 +455,10 @@ export function registerTextHandlers(bot: Telegraf<BotContext>) {
 
   bot.on("video", async (ctx) => {
     console.log("Видео получено", ctx.message.video.file_id);
+    console.log(
+      "Video link:",
+      await ctx.telegram.getFileLink(ctx.message.video.file_id)
+    );
     const userId = ctx.from?.id;
     if (!userId) return;
 
@@ -571,7 +585,7 @@ export function registerTextHandlers(bot: Telegraf<BotContext>) {
       });
     } else {
       await ctx.reply(
-        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/+4gfCmvy5mS82NjAy",
         {
           parse_mode: "HTML",
           link_preview_options: { is_disabled: true },
@@ -636,7 +650,7 @@ export function registerTextHandlers(bot: Telegraf<BotContext>) {
       });
     } else {
       await ctx.reply(
-        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/+4gfCmvy5mS82NjAy",
         {
           parse_mode: "HTML",
           link_preview_options: { is_disabled: true },

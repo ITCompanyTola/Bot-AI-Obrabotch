@@ -182,7 +182,7 @@ export async function processPhotoColorize(
       });
     } else {
       await ctx.reply(
-        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/+4gfCmvy5mS82NjAy",
         {
           parse_mode: "HTML",
           link_preview_options: { is_disabled: true },
@@ -303,7 +303,7 @@ export async function processPostcardCreationWithBananaPro(
       });
     } else {
       await ctx.reply(
-        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin",
+        "⏳ Начинаю генерацию... Это займет около 3-х минут.\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/+4gfCmvy5mS82NjAy",
         {
           parse_mode: "HTML",
           link_preview_options: { is_disabled: true },

@@ -46,11 +46,12 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>) {
           Markup.button.callback("Мои видео", "my_photos"),
           Markup.button.callback("Мои треки", "my_tracks"),
         ],
-        [
-          Markup.button.callback("Мои фото Д.Мороза", "my_dm_photos"),
-          Markup.button.callback("Мои видео Д.Мороза", "my_dm_videos"),
-        ],
+        // [
+        //   Markup.button.callback("Мои фото Д.Мороза", "my_dm_photos"),
+        //   Markup.button.callback("Мои видео Д.Мороза", "my_dm_videos"),
+        // ],
         [Markup.button.callback("Мои открытки", "my_postcards")],
+        [Markup.button.callback("Мои трендовые видео", "my_trend_videos")],
         [
           Markup.button.callback(
             "💳 Пополнить баланс",
@@ -61,6 +62,47 @@ export function registerProfileHandlers(bot: Telegraf<BotContext>) {
         [Markup.button.callback("Главное меню", "main_menu")],
       ]),
     });
+  });
+
+  bot.action("my_trend_videos", async (ctx) => {
+    try {
+      await ctx.answerCbQuery();
+    } catch (error: any) {
+      if (!error.description?.includes("query is too old")) {
+        console.error("Ошибка answerCbQuery:", error.message);
+      }
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    const my_trend_videos = await Database.getUserTrendVideos(userId);
+
+    if (my_trend_videos.length === 0) {
+      await ctx.editMessageText(
+        "📄 У вас пока нет трендовых видео",
+        Markup.inlineKeyboard([[Markup.button.callback("Назад", "profile")]])
+      );
+      return;
+    }
+
+    for (const video of my_trend_videos) {
+      try {
+        await ctx.telegram.sendVideo(userId, video.file_id);
+      } catch (error) {
+        console.error("Ошибка отправки трендового видео:", error);
+        await ctx.telegram.sendMessage(
+          userId,
+          `❌ Трендовое видео недоступно (ID: ${video.id})`
+        );
+      }
+    }
+
+    await ctx.telegram.sendMessage(
+      userId,
+      `Ваши Трендовые Видео (${my_trend_videos.length}):`,
+      Markup.inlineKeyboard([[Markup.button.callback("Назад", "profile")]])
+    );
   });
 
   bot.action("my_postcards", async (ctx) => {

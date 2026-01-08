@@ -293,6 +293,7 @@ export class Database {
     userId: number,
     fileType:
       | "photo"
+      | "trend_video"
       | "music"
       | "restoration"
       | "colorize"
@@ -2042,6 +2043,21 @@ export class Database {
       const result = await client.query(
         `SELECT * FROM generated_files
          WHERE user_id = $1 AND file_type = 'postcard_text'
+         ORDER BY created_at ASC`,
+        [userId]
+      );
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async getUserTrendVideos(userId: number): Promise<any[]> {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        `SELECT * FROM generated_files
+         WHERE user_id = $1 AND file_type = 'trend_video'
          ORDER BY created_at ASC`,
         [userId]
       );

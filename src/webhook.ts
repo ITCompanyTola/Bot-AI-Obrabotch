@@ -128,7 +128,7 @@ app.post("/webhook/yookassa", async (req, res) => {
             userId,
             `✅ <b>Платёж успешно получен!</b>\n\n💰 Зачислено: ${amount}₽\n💳 Ваш баланс: ${newBalance.toFixed(
               2
-            )}₽\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/ai_lumin`,
+            )}₽\n\n<b>Следите за обновлениями в нашем Telegram-канале:</b>\nhttps://t.me/+4gfCmvy5mS82NjAy`,
             {
               parse_mode: "HTML",
               link_preview_options: { is_disabled: true },

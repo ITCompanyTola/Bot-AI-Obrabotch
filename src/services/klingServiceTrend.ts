@@ -19,7 +19,7 @@ const API_URL = "https://api.kie.ai/api/v1/jobs";
 const API_KEY = config.klingApiKey;
 
 const VIDEO_URL =
-  "https://api.telegram.org/file/bot7949029273:AAGErbSImETPQg6zeVaTRG_099ta5UtUIhk/documents/file_231.mp4";
+  "https://api.telegram.org/file/bot8338954123:AAEyaIWdOYYOjtsKtmWUEFezRSX5xE0dE8s/documents/file_40360.mp4";
 const PROMPT =
   "Character dancing exactly to the rhythm of the provided song, precise beat synchronization, joyful expressions, smooth natural movements, realistic body motion, high resolution, social media reel style. Maintain full visibility of all limbs at all times, hands and feet fully tracked, no disappearing limbs, no floating or jittering parts, preserve natural anatomy, motion control focused, continuous body connection, stable poses, follow beats strictly, avoid exaggeration. Negative prompt: floating limbs, missing arms, missing legs, broken anatomy, jittery motion, ghosted hands, ghosted feet, unstable poses, exaggerated movements.";
 

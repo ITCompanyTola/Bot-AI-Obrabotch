@@ -10,9 +10,9 @@ import {
 import { Database } from "../database";
 
 const HERO_VIDEO_FILE_ID =
-  "BAACAgIAAxkBAAIaUmlfdS2xKQkInmYDYjbn4N38r7HTAAL-igAC5CP4Su4StAY8vvNFOAQ";
+  "BAACAgIAAxkBAAERaFNpX_E6lAliONESMx_8mFuXLiY-YwACy4cAAuTSAUvn-UVy-qk9XDgE";
 const EXAMPLE_FILE_ID =
-  "AgACAgIAAxkBAAIaU2lfdU_MHhPcWxVsuVy4jGn9qWzUAALzDWsb5CP4SmaU8QVxHtjnAQADAgADeAADOAQ";
+  "AgACAgIAAxkBAAERaHppX_Ffl2tETTz5s0kNzJPXDncn_wAC8w1rG-Qj-Er12IFg70amQAEAAwIAA3gAAzgE";
 
 export async function registerTrendVideoHandlers(bot: Telegraf<BotContext>) {
   bot.action("trend_video", async (ctx) => {

@@ -380,7 +380,7 @@ export async function processTrendVideoGeneration(
   try {
     const deducted = await Database.deductBalance(
       userId,
-      PRICES.PHOTO_ANIMATION,
+      PRICES.TREND_VIDEO,
       "Создание трендового видео"
     );
     if (!deducted) {
@@ -468,13 +468,11 @@ export async function processTrendVideoGeneration(
     console.error("❌ Ошибка генерации видео:", error);
     await Database.addBalance(
       userId,
-      PRICES.PHOTO_ANIMATION,
+      PRICES.TREND_VIDEO,
       "Возврат средств за ошибку генерации",
       "bonus"
     );
-    console.log(
-      `💰 Возвращено ${PRICES.PHOTO_ANIMATION}₽ пользователю ${userId}`
-    );
+    console.log(`💰 Возвращено ${PRICES.TREND_VIDEO}₽ пользователю ${userId}`);
     await ctx.telegram.sendMessage(
       userId,
       "❌ Произошла ошибка при генерации. Средства возвращены на баланс."

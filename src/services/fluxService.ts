@@ -182,7 +182,9 @@ export async function processPostcardCreation(
 
     const colorizedPhotoUrl = await generatePhotoWithFlux(prompt);
 
-    const photoResponse = await axiosRetry(colorizedPhotoUrl, 5);
+    const photoResponse = await axiosRetry(colorizedPhotoUrl, 5, {
+      responseType: "arraybuffer",
+    });
     if (photoResponse == null) {
       throw new Error("Фото не загрузилось");
     }

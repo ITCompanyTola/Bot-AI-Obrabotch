@@ -195,7 +195,9 @@ export async function processPhotoColorize(
       prompt
     );
 
-    const photoResponse = await axiosRetry(colorizedPhotoUrl, 5);
+    const photoResponse = await axiosRetry(colorizedPhotoUrl, 5, {
+      responseType: "arraybuffer",
+    });
     if (photoResponse == null) {
       throw new Error("Фото не загрузилось");
     }
@@ -316,7 +318,9 @@ export async function processPostcardCreationWithBananaPro(
       prompt
     );
 
-    const photoResponse = await axiosRetry(colorizedPhotoUrl, 5);
+    const photoResponse = await axiosRetry(colorizedPhotoUrl, 5, {
+      responseType: "arraybuffer",
+    });
     if (photoResponse == null) {
       throw new Error("Фото не загрузилось");
     }

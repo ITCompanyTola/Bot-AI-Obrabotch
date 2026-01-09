@@ -301,7 +301,9 @@ export async function processDMPhotoCreation(
 
     const DMPhotoUrl = await generateDMPhotoWithBanana(photoUrl.href, prompt);
 
-    const photoResponse = await axiosRetry(DMPhotoUrl, 3);
+    const photoResponse = await axiosRetry(DMPhotoUrl, 3, {
+      responseType: "arraybuffer",
+    });
     if (photoResponse == null) {
       throw new Error("Не удалось загрузить фото");
     }
@@ -449,7 +451,9 @@ export async function processPostcardCreationWithBanana(
 
     const DMPhotoUrl = await generatePostcardWithBanana(photoUrl.href, prompt);
 
-    const photoResponse = await axiosRetry(DMPhotoUrl, 3);
+    const photoResponse = await axiosRetry(DMPhotoUrl, 3, {
+      responseType: "arraybuffer",
+    });
     if (photoResponse == null) {
       throw new Error("Не удалось загрузить фото");
     }

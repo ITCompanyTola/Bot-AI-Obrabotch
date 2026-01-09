@@ -199,7 +199,9 @@ export async function processVideoDMGeneration(
 
     const videoUrl = await generateVideoWithVeo(photoUrl.href, newPrompt);
 
-    const videoResponse = await axiosRetry(videoUrl, 5);
+    const videoResponse = await axiosRetry(videoUrl, 5, {
+      responseType: "arraybuffer",
+    });
     if (videoResponse == null) {
       throw new Error("Видео не загрузилось");
     }

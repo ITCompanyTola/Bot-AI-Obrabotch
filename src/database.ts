@@ -613,6 +613,9 @@ export class Database {
       const christmasPostcardGenAll = await client.query(
         `SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'postcard_christmas'`
       );
+      const trendVideoGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'trend_video'`
+      );
 
       const photoGen7d = await client.query(
         `SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'photo' AND created_at >= $1`,
@@ -644,6 +647,10 @@ export class Database {
       );
       const christmasPostcardGen7d = await client.query(
         `SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'postcard_christmas' AND created_at >= $1`,
+        [sevenDaysAgo]
+      );
+      const trendVideoGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'trend_video' AND created_at >= $1`,
         [sevenDaysAgo]
       );
 
@@ -679,6 +686,10 @@ export class Database {
         `SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'postcard_christmas' AND created_at >= $1`,
         [startOfToday]
       );
+      const trendVideoGenToday = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files WHERE file_type = 'trend_video' AND created_at >= $1`,
+        [startOfToday]
+      );
 
       return {
         all: {
@@ -695,6 +706,7 @@ export class Database {
           christmasPostcardGenerations: parseInt(
             christmasPostcardGenAll.rows[0].count
           ),
+          trendVideoGenerations: parseInt(trendVideoGenAll.rows[0].count),
         },
         last7Days: {
           usersCount: parseInt(usersCount7d.rows[0].count),
@@ -710,6 +722,7 @@ export class Database {
           christmasPostcardGenerations: parseInt(
             christmasPostcardGen7d.rows[0].count
           ),
+          trendVideoGenerations: parseInt(trendVideoGen7d.rows[0].count),
         },
         today: {
           usersCount: parseInt(usersCountToday.rows[0].count),
@@ -727,6 +740,7 @@ export class Database {
           christmasPostcardGenerations: parseInt(
             christmasPostcardGenToday.rows[0].count
           ),
+          trendVideoGenerations: parseInt(trendVideoGenToday.rows[0].count),
         },
       };
     } finally {
@@ -1034,6 +1048,18 @@ export class Database {
        WHERE u.source_key = $1 AND g.file_type = 'postcard_christmas' AND g.created_at >= $2`,
         [keySubstring, updatedTime]
       );
+      const trendVideoGenAll = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'trend_video'`,
+        [keySubstring]
+      );
+      const trendVideoGenAllUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'trend_video' AND g.created_at >= $2`,
+        [keySubstring, updatedTime]
+      );
 
       const photoGen7d = await client.query(
         `SELECT COUNT(*) as count FROM generated_files g 
@@ -1129,6 +1155,18 @@ export class Database {
         `SELECT COUNT(*) as count FROM generated_files g 
        JOIN users u ON g.user_id = u.id 
        WHERE u.source_key = $1 AND g.file_type = 'postcard_christmas' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, sevenDaysAgo, updatedTime]
+      );
+      const trendVideoGen7d = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'trend_video' AND g.created_at >= $2`,
+        [keySubstring, sevenDaysAgo]
+      );
+      const trendVideoGen7dUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'trend_video' AND g.created_at >= $2 AND g.created_at >= $3`,
         [keySubstring, sevenDaysAgo, updatedTime]
       );
 
@@ -1228,6 +1266,18 @@ export class Database {
        WHERE u.source_key = $1 AND g.file_type = 'postcard_christmas' AND g.created_at >= $2 AND g.created_at >= $3`,
         [keySubstring, startOfToday, updatedTime]
       );
+      const trendVideoGenToday = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'trend_video' AND g.created_at >= $2`,
+        [keySubstring, startOfToday]
+      );
+      const trendVideoGenTodayUpdated = await client.query(
+        `SELECT COUNT(*) as count FROM generated_files g 
+       JOIN users u ON g.user_id = u.id 
+       WHERE u.source_key = $1 AND g.file_type = 'trend_video' AND g.created_at >= $2 AND g.created_at >= $3`,
+        [keySubstring, startOfToday, updatedTime]
+      );
 
       return {
         all: {
@@ -1269,6 +1319,10 @@ export class Database {
           christmasPostcardGenerationsUpdated: parseInt(
             christmasPostcardGenAllUpdated.rows[0].count
           ),
+          trendVideoGenerations: parseInt(trendVideoGenAll.rows[0].count),
+          trendVideoGenerationsUpdated: parseInt(
+            trendVideoGenAllUpdated.rows[0].count
+          ),
         },
         last7Days: {
           usersCount: parseInt(usersCount7d.rows[0].count),
@@ -1308,6 +1362,10 @@ export class Database {
           ),
           christmasPostcardGenerationsUpdated: parseInt(
             christmasPostcardGen7dUpdated.rows[0].count
+          ),
+          trendVideoGenerations: parseInt(trendVideoGen7d.rows[0].count),
+          trendVideoGenerationsUpdated: parseInt(
+            trendVideoGen7dUpdated.rows[0].count
           ),
         },
         today: {
@@ -1350,6 +1408,10 @@ export class Database {
           ),
           christmasPostcardGenerationsUpdated: parseInt(
             christmasPostcardGenTodayUpdated.rows[0].count
+          ),
+          trendVideoGenerations: parseInt(trendVideoGenToday.rows[0].count),
+          trendVideoGenerationsUpdated: parseInt(
+            trendVideoGenTodayUpdated.rows[0].count
           ),
         },
       };

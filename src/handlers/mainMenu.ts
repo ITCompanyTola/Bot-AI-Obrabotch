@@ -297,6 +297,9 @@ https://t.me/obrabotych_support
 🎄 Количество генераций рождественских открыток из фото: <b>${
         stats.all.christmasPostcardGenerations
       }</b>
+💃 Количество генераций трендовых видео: <b>${
+        stats.all.trendVideoGenerations
+      }</b>
 
 
 <b>За последние 7 дней</b>
@@ -321,6 +324,10 @@ https://t.me/obrabotych_support
 🎄 Количество генераций рождественских открыток из фото: <b>${
         stats.last7Days.christmasPostcardGenerations
       }</b>
+💃 Количество генераций трендовых видео: <b>${
+        stats.last7Days.trendVideoGenerations
+      }</b>
+
 
 <b>За сегодня ${todayStr}</b>
 👥 Количество пользователей: <b>${stats.today.usersCount}</b>
@@ -341,7 +348,11 @@ https://t.me/obrabotych_support
       }</b>
 🎄 Количество генераций рождественских открыток из фото: <b>${
         stats.today.christmasPostcardGenerations
-      }</b>`.trim();
+      }</b>
+💃 Количество генераций трендовых видео: <b>${
+        stats.today.trendVideoGenerations
+      }</b>
+`.trim();
 
       await ctx.reply(statsMessage, { parse_mode: "HTML" });
     } catch (error) {
@@ -618,6 +629,7 @@ https://t.me/obrabotych_support
 Открытка новогодняя по фото: <code>postcard_photo</code>
 Открытка по тексту: <code>postcard_text</code>
 Открытка рождественская по фото: <code>postcard_christmas</code>
+Трендовое виде: <code>trend_video</code>
 Пополнить баланс: <code>refill_balance_from_profile</code>`.trim();
 
     await ctx.reply(helpMessage, { parse_mode: "HTML" });
@@ -725,15 +737,18 @@ https://t.me/obrabotych_support
 🏞 Количество генераций рестварации: <b>${stats.all.restorationGenerations} / ${
         stats.all.restorationGenerationsUpdated
       }</b>
-🏞 Количество генераций открыток из текста: <b>${
+💌 Количество генераций открыток из текста: <b>${
         stats.all.postcardTextGenerations
       } / ${stats.all.postcardTextGenerationsUpdated}</b>
 🏞 Количество генераций новогодних открыток из фото: <b>${
         stats.all.postcardPhotoGenerations
       } / ${stats.all.postcardPhotoGenerationsUpdated}</b>
-🏞 Количество генераций рождественских открыток из фото: <b>${
+🎄 Количество генераций рождественских открыток из фото: <b>${
         stats.all.christmasPostcardGenerations
       } / ${stats.all.christmasPostcardGenerationsUpdated}</b>
+💃 Количество генераций трендовых видео: <b>${
+        stats.all.trendVideoGenerations
+      } / ${stats.all.trendVideoGenerationsUpdated}</b>
 
 <b>За последние 7 дней</b>
 👥 Количество пользователей: <b>${stats.last7Days.usersCount} / ${
@@ -760,15 +775,19 @@ https://t.me/obrabotych_support
 🏞 Количество генераций рестварации: <b>${
         stats.last7Days.restorationGenerations
       } / ${stats.last7Days.restorationGenerationsUpdated}</b>
-🏞 Количество генераций открыток из текста: <b>${
+💌 Количество генераций открыток из текста: <b>${
         stats.last7Days.postcardTextGenerations
       } / ${stats.last7Days.postcardTextGenerationsUpdated}</b>
 🏞 Количество генераций новогодних открыток из фото: <b>${
         stats.last7Days.postcardPhotoGenerations
       } / ${stats.last7Days.postcardPhotoGenerationsUpdated}</b>
-🏞 Количество генераций рождественских открыток из фото: <b>${
+🎄 Количество генераций рождественских открыток из фото: <b>${
         stats.last7Days.christmasPostcardGenerations
       } / ${stats.last7Days.christmasPostcardGenerationsUpdated}</b>
+💃 Количество генераций трендовых видео: <b>${
+        stats.last7Days.trendVideoGenerations
+      } / ${stats.last7Days.trendVideoGenerationsUpdated}</b>
+}
 
 <b>За сегодня ${todayStr}</b>
 👥 Количество пользователей: <b>${stats.today.usersCount} / ${
@@ -795,16 +814,19 @@ https://t.me/obrabotych_support
 🏞 Количество генераций рестварации: <b>${
         stats.today.restorationGenerations
       } / ${stats.today.restorationGenerationsUpdated}</b>
-🏞 Количество генераций открыток из текста: <b>${
+💌 Количество генераций открыток из текста: <b>${
         stats.today.postcardTextGenerations
       } / ${stats.today.postcardTextGenerationsUpdated}</b>
 🏞 Количество генераций новогодних открыток из фото: <b>${
         stats.today.postcardPhotoGenerations
       } / ${stats.today.postcardPhotoGenerationsUpdated}</b>
-🏞 Количество генераций рождественских открыток из фото: <b>${
+🎄 Количество генераций рождественских открыток из фото: <b>${
         stats.today.christmasPostcardGenerations
       } / ${stats.today.christmasPostcardGenerationsUpdated}</b>
-      `.trim();
+💃 Количество генераций трендовых видео: <b>${
+        stats.today.trendVideoGenerations
+      } / ${stats.today.trendVideoGenerationsUpdated}</b> 
+`.trim();
 
       await ctx.reply(statsMessage, { parse_mode: "HTML" });
     } catch (error) {

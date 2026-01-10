@@ -18,8 +18,9 @@ import path from "path";
 const API_URL = "https://api.kie.ai/api/v1/jobs";
 const API_KEY = config.klingApiKey;
 
-const VIDEO_URL =
-  "https://api.telegram.org/file/bot8338954123:AAEyaIWdOYYOjtsKtmWUEFezRSX5xE0dE8s/videos/file_41276.MP4";
+const VIDEO_REFERENCE_ID =
+  "BAACAgIAAxkBAAER2l1pYiu8xLBYlFxJLIvUVfFQ9pPRmAACIowAAs4gEEvlmehSrwABVaw4BA";
+
 const PROMPT =
   "Character dancing exactly to the rhythm of the provided song, precise beat synchronization, joyful expressions, smooth natural movements, realistic body motion, high resolution, social media reel style. Maintain full visibility of all limbs at all times, hands and feet fully tracked, no disappearing limbs, no floating or jittering parts, preserve natural anatomy, motion control focused, continuous body connection, stable poses, follow beats strictly, avoid exaggeration. Negative prompt: floating limbs, missing arms, missing legs, broken anatomy, jittery motion, ghosted hands, ghosted feet, unstable poses, exaggerated movements.";
 
@@ -40,46 +41,87 @@ const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 ffmpeg.setFfmpegPath(ffmpegPath);
 console.log(`✅ FFmpeg путь: ${ffmpegPath}`);
 
-export async function CreateVideoTask(imageUrl: string): Promise<string> {
-  const payload = {
-    model: "kling-2.6/motion-control",
-    input: {
-      mode: "720p",
-      video_urls: [VIDEO_URL],
-      input_urls: [imageUrl],
-      character_orientation: "video",
-      prompt: PROMPT,
-    },
-  };
+export async function CreateVideoTask(
+  imageUrl: string,
+  ctx: any
+): Promise<string> {
+  try {
+    // 1. Получаем свежую временную ссылку на видео через Telegram API
+    console.log(
+      `📡 Получение ссылки для video_file_id: ${VIDEO_REFERENCE_ID.substring(
+        0,
+        20
+      )}...`
+    );
 
-  console.log(
-    "📤 Kling CreateVideoTask payload:\n",
-    JSON.stringify(payload, null, 2)
-  );
+    const videoFileLink = await ctx.telegram.getFileLink(VIDEO_REFERENCE_ID);
+    const telegramVideoUrl = videoFileLink.href;
 
-  const response = await axios.post(`${API_URL}/createTask`, payload, {
-    headers: {
-      Authorization: `Bearer ${process.env.KLING_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    timeout: 30000,
-  });
+    console.log(`✅ Получена временная ссылка на видео (действительна ~1 час)`);
+    console.log(`🔗 URL: ${telegramVideoUrl.substring(0, 80)}...`);
 
-  const data = response.data;
+    // 2. Формируем запрос с полученной ссылкой
+    const payload = {
+      model: "kling-2.6/motion-control",
+      input: {
+        mode: "720p",
+        video_urls: [telegramVideoUrl], // Используем свежую ссылку
+        input_urls: [imageUrl],
+        character_orientation: "video",
+        prompt: PROMPT,
+      },
+    };
 
-  if (data.code !== 200) {
-    console.error("❌ Kling create task failed:", data);
-    throw new Error(`Kling API error: ${data.msg || "unknown error"}`);
+    console.log(
+      "📤 Kling CreateVideoTask payload:\n",
+      JSON.stringify(
+        { ...payload, input: { ...payload.input, video_urls: ["[REDACTED]"] } },
+        null,
+        2
+      )
+    );
+
+    const response = await axios.post(`${API_URL}/createTask`, payload, {
+      headers: {
+        Authorization: `Bearer ${process.env.KLING_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      timeout: 30000,
+    });
+
+    const data = response.data;
+
+    if (data.code !== 200) {
+      console.error("❌ Kling create task failed:", data);
+      throw new Error(`Kling API error: ${data.msg || "unknown error"}`);
+    }
+
+    if (!data.data?.taskId) {
+      console.error("❌ Kling taskId missing:", data);
+      throw new Error("Kling API did not return taskId");
+    }
+
+    console.log("✅ Kling task created:", data.data.taskId);
+
+    return data.data.taskId;
+  } catch (error: any) {
+    console.error("❌ Ошибка в CreateVideoTask:", error.message);
+
+    // Проверяем, если ошибка связана с файлом
+    if (
+      error.message.includes("file not found") ||
+      error.message.includes("wrong file_id")
+    ) {
+      throw new Error(
+        `Неверный VIDEO_REFERENCE_ID. Получите новый file_id, отправив видео боту. Текущий ID: ${VIDEO_REFERENCE_ID.substring(
+          0,
+          20
+        )}...`
+      );
+    }
+
+    throw error;
   }
-
-  if (!data.data?.taskId) {
-    console.error("❌ Kling taskId missing:", data);
-    throw new Error("Kling API did not return taskId");
-  }
-
-  console.log("✅ Kling task created:", data.data.taskId);
-
-  return data.data.taskId;
 }
 
 async function checkTaskStatus(
@@ -171,11 +213,20 @@ async function waitForTaskCompletion(
 }
 
 export async function generateTrendVideoWithKling(
-  imageUrl: string
+  imageUrl: string,
+  ctx: any
 ): Promise<string> {
   console.log(`📸 Создаю трендовое видео по фото: ${imageUrl}`);
 
-  const taskId = await CreateVideoTask(imageUrl);
+  // Логируем reference ID для отладки
+  console.log(
+    `🎬 Использую видео-шаблон с file_id: ${VIDEO_REFERENCE_ID.substring(
+      0,
+      20
+    )}...`
+  );
+
+  const taskId = await CreateVideoTask(imageUrl, ctx);
   console.log(`✅ Задача создана: ${taskId}`);
 
   const videoUrl = await waitForTaskCompletion(taskId);
@@ -378,6 +429,19 @@ export async function processTrendVideoGeneration(
   photoFileId: string
 ) {
   try {
+    // Проверяем, что VIDEO_REFERENCE_ID установлен
+    if (
+      !VIDEO_REFERENCE_ID ||
+      VIDEO_REFERENCE_ID !==
+        "BAACAgIAAxkBAAER2l1pYiu8xLBYlFxJLIvUVfFQ9pPRmAACIowAAs4gEEvlmehSrwABVaw4BA"
+    ) {
+      await ctx.telegram.sendMessage(
+        userId,
+        "❌ Видео-шаблон не настроен. Обратитесь к администратору."
+      );
+      return;
+    }
+
     const deducted = await Database.deductBalance(
       userId,
       PRICES.TREND_VIDEO,
@@ -394,6 +458,7 @@ export async function processTrendVideoGeneration(
     console.log(
       `⏳ Начинается генерация трендового видео для пользователя ${userId}...`
     );
+
     if (await isSubscribed(userId)) {
       await ctx.reply("⏳ Начинаю генерацию... Это займет около 15 минут.", {
         parse_mode: "HTML",
@@ -410,7 +475,8 @@ export async function processTrendVideoGeneration(
     const photoUrlString = photoUrl.href;
     console.log(`📸 URL фото: ${photoUrlString}`);
 
-    const videoUrl = await generateTrendVideoWithKling(photoUrlString);
+    // Передаем ctx в функцию генерации
+    const videoUrl = await generateTrendVideoWithKling(photoUrlString, ctx);
 
     const tmpFilePath = path.join(tmpdir(), `${uuidv4()}.mp4`);
     const videoResponse = await axiosRetry(videoUrl, 5, {
@@ -464,7 +530,7 @@ export async function processTrendVideoGeneration(
         console.log("🗑️ Удален оригинальный временный файл");
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Ошибка генерации видео:", error);
     await Database.addBalance(
       userId,
@@ -473,9 +539,17 @@ export async function processTrendVideoGeneration(
       "bonus"
     );
     console.log(`💰 Возвращено ${PRICES.TREND_VIDEO}₽ пользователю ${userId}`);
-    await ctx.telegram.sendMessage(
-      userId,
-      "❌ Произошла ошибка при генерации. Средства возвращены на баланс."
-    );
+
+    let errorMessage =
+      "❌ Произошла ошибка при генерации. Средства возвращены на баланс.";
+
+    if (error.message.includes("Неверный VIDEO_REFERENCE_ID")) {
+      errorMessage = `❌ Проблема с видео-шаблоном: ${error.message}`;
+    } else if (error.message.includes("file not found")) {
+      errorMessage =
+        "❌ Видео-шаблон не найден. Администратору необходимо обновить его.";
+    }
+
+    await ctx.telegram.sendMessage(userId, errorMessage);
   }
 }
